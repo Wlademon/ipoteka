@@ -17,15 +17,17 @@ class CreateProgramsTable extends Migration
             $table->bigInteger('company_id')->unsigned();
             $table->foreign('company_id')->references('id')->on('companies')
                 ->onDelete('cascade');
-            $table->string('program_code');
-            $table->string('program_name');
+            $table->string('program_code',64);
+            $table->string('program_name',20);
             $table->string('description', 255)->nullable();
-            $table->json('risks')->nullable();
-            $table->json('issues')->nullable();
-            $table->json('conditions')->nullable();
-            $table->float('insured_sum', 12, 2);
-            $table->boolean('is_child')->default(false)->index();
-            $table->boolean('is_active')->default(true)->index();
+            $table->longText('risks')->nullable();
+            $table->longText('issues')->nullable();
+            $table->longText('conditions')->nullable();
+            $table->boolean('is_property')->index();
+            $table->boolean('is_life')->index();
+            $table->boolean('is_title')->index();
+            $table->boolean('is_active')->default(false)->index();
+            $table->boolean('is_recommended')->default(false)->index();
             $table->timestamps();
             $table->softDeletes();
         });

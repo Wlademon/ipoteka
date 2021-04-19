@@ -14,9 +14,9 @@ class CreatePaymentsTable extends Migration
     {
         Schema::create('payments', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->bigInteger('contract_id', false, true)->comment('Id контракта в таблице contracts');
-            $table->uuid('order_id')->comment('order_id для оплаты uuid');
-            $table->string('invoice_num', 20)->comment('invoice_num для оплаты');
+            $table->bigInteger('contract_id', false, true);
+            $table->string('order_id',255);
+            $table->string('invoice_num', 255);
             $table->timestamps();
             $table->softDeletes();
 
