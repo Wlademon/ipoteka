@@ -73,11 +73,7 @@ class ProgramsSetter extends Command
                 'company_id' => $company->id,
                 'program_code' => $p->programCode,
                 'program_name' => $p->programName,
-                'insured_sum' => $p->insuredSum,
             ], [
-                'is_child' => $p->isChild,
-                'is_adult' => $p->isAdult,
-                'is_family' => $p->isFamily,
                 'is_active' => $p->isActive,
                 'program_uw_code' => $p->programUwCode,
                 'description' => $p->description,
