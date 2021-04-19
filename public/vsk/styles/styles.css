@@ -1,0 +1,222 @@
+body {
+  background: #ffffff;
+  line-height: 1;
+  font-family: DejaVu Sans, sans-serif;
+}
+
+.container {
+  width: 100%;
+  padding-right: 1rem;
+  /*padding-left: 3rem;*/
+  margin-right: auto;
+  margin-left: auto;
+  background: #ffffff;
+}
+
+.main-page {
+
+}
+.main-page__content {
+  color: #000000;
+  font-weight: 400;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 8px;
+  font-style: normal;
+  text-indent: 14.2px;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.main-page__footer {
+  margin-bottom: 30px;
+}
+.main-page__footer__table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  border: solid 1px black;
+  font-size: 9px;
+  font-weight: 400;
+}
+.main-page__footer__table thead {
+  text-align: center;
+  color: #000000;
+  font-weight: 400;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1;
+}
+.main-page__footer__table td {
+  width: 50%;
+  padding: 5px;
+  border: solid 1px black;
+  vertical-align: top;
+}
+.main-page__footer__table__td-signed {
+  position: relative;
+}
+.main-page__footer__table__td-signed__signature {
+  position: absolute;
+  right: 157px;
+  top: 1px;
+  width: 55px;
+}
+.main-page__footer__table__td-signed__seal {
+  position: absolute;
+  right: 38px;
+  width: 112px;
+  top: -20px;
+}
+.main-page__footer-two {
+  text-align: right;
+}
+.main-page__footer-two__img {
+  width: 101px;
+  display: inline !important;
+}
+.main-page__footer-two__license {
+  font-size: 6px;
+  font-style: normal;
+}
+
+.header {
+  margin-bottom: 16px;
+}
+.header__top__logo {
+  width: 230.1px;
+  margin-left: -3px;
+  margin-top: -16.46px;
+}
+.header__top__wrapper {
+
+}
+.header__top__wrapper__requisites {
+  color: #000000;
+  font-weight: 400;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 8px;
+  font-style: normal;
+  width: 100%;
+  table-layout: fixed;
+}
+.header__top__wrapper__number span {
+  color: #0641A9;
+  font-weight: 800;
+  font-size: 16px;
+}
+.header__top__wrapper__number span {
+  color: #000000;
+}
+.header__top__description {
+  font-size: 8px;
+  font-weight: 400;
+  margin-top: 6px;
+  line-height: 1;
+}
+.header__top__table {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.header__top__table tbody th:nth-child(1) {
+  width: 26%;
+}
+/*.header__top__table tr {
+  border-top: solid 1px #000000;
+  border-bottom: solid 1px #000000;
+}*/
+.header__top__table th {
+  color: #000000;
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 9px;
+  font-style: normal;
+  text-align: left;
+  border: solid 1px black;
+}
+.header__top__table td {
+  color: #000000;
+  font-weight: 400;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 9px;
+  font-style: normal;
+  border: solid 1px black;
+}
+.header__top__table_description p {
+  color: #000000;
+  font-weight: 400;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 9px;
+  font-style: normal;
+}
+.header__top__table_description div {
+  text-indent: 28.4px;
+  font-weight: 400;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 10px;
+  font-style: normal;
+  text-align: justify;
+  margin-bottom: 6px;
+}
+
+.content__page {
+  color: #000000;
+  font-size: 11px;
+  line-height: 0.85;
+}
+.content__page p {
+  font-weight: 400;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 7.8px;
+  font-style: normal;
+}
+.content__page h1 {
+  padding-top: 0px;
+  padding-bottom: 0px;
+  line-height: 1;
+  orphans: 2;
+  widows: 2;
+  text-align: left;
+  font-size: 8px;
+  font-weight: 700;
+  margin: 3px;
+}
+.content__page h2 {
+  color: #000000;
+  font-weight: 700;
+  text-decoration: none;
+  vertical-align: baseline;
+  font-size: 8px;
+  font-style: normal;
+  text-align: center;
+  margin: 3px;
+}
+.content__page__table {
+
+}
+.content__page__table td {
+  width: 50%;
+  padding: 5px 5px;
+  vertical-align: top;
+}
+.content__footer {
+  text-align: right;
+  margin-top: 30px;
+  display: flex;
+  justify-content: flex-end;
+}
+.content__footer__img {
+  width: 101px;
+}
+.page-break {
+  page-break-after: always;
+}
