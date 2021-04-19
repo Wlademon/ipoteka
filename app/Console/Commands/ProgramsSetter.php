@@ -34,6 +34,18 @@ class ProgramsSetter extends Command
         parent::__construct();
     }
 
+    public function info($string, $verbosity = null)
+    {
+        Log::info($string);
+        parent::info($string, $verbosity);
+    }
+
+    public function alert($string)
+    {
+        Log::warning($string);
+        parent::alert($string);
+    }
+
     /**
      * CBR Daily Currencies Getter
      *
@@ -45,9 +57,7 @@ class ProgramsSetter extends Command
     public function handle()
     {
         $this->info('Command Programs Setter');
-        Log::info('Command Programs Setter');
         if (!file_exists(storage_path($this->option('path')))) {
-            Log::warning('Command Programs Setter warning - file not exist.');
             $this->alert('Command Programs Setter warning - file not exist.');
             return false;
         }
@@ -74,21 +84,21 @@ class ProgramsSetter extends Command
                 'program_code' => $p->programCode,
                 'program_name' => $p->programName,
             ], [
-                'is_active' => $p->isActive,
-                'program_uw_code' => $p->programUwCode,
                 'description' => $p->description,
+                'risks' => $p->risks,
                 'issues' => $p->issues,
                 'conditions' => $p->conditions,
-                'matrix' => $p->matrix ?? null,
-                'risks' => $p->risks
+                'is_property' => (bool)$p->isProperty,
+                'is_life' => (bool)$p->isLife,
+                'is_title' => (bool)$p->isTitle,
+                'is_active' => (bool)$p->isActive,
+                'is_recommended' => (bool)$p->isRecommended,
             ]);
             $program->owners()->sync($owner->id);
             $company->save();
             $program->save();
             $this->info('add Program ' . $p->programName);
-            Log::info('add Program ' . $p->programName);
         }
         $this->info('Command Programs Setter FINISHED');
-        Log::info('Command Programs Setter FINISHED');
     }
 }

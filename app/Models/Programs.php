@@ -64,59 +64,23 @@ class Programs extends BaseModel
     protected $fillable = [
         'company_id',
         'program_code',
-        'program_uw_code',
         'program_name',
         'description',
         'risks',
         'issues',
         'conditions',
-        'matrix',
-        'insured_sum',
-        'is_child',
-        'is_adult',
-        'is_family',
+        'is_property',
+        'is_life',
+        'is_title',
+        'is_recommended',
         'is_active',
     ];
 
     protected $casts = [
         'conditions' => 'array',
-        'matrix' => 'array',
         'issues' => 'array',
         'risks' => 'array',
         'programCode' => 'string',
-    ];
-
-    protected $visible = [
-        'id',
-        'matrix',
-        'companyCode',
-        'companyId',
-        'companyName',
-        'isChild',
-        'isAdult',
-        'isFamily',
-        'isActive',
-        'insuredSum',
-        'premium',
-        'programCode',
-        'programName',
-        'description',
-        'risks',
-        'issues',
-        'conditions',
-    ];
-
-    protected $appends = [
-        'companyCode',
-        'companyId',
-        'companyName',
-        'insuredSum',
-        'premium',
-        'isChild',
-        'isAdult',
-        'isFamily',
-        'programCode',
-        'programName',
     ];
 
     protected $hidden = [
