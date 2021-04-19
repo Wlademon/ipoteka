@@ -18,7 +18,7 @@ class CreateProgramsTable extends Migration
             $table->foreign('company_id')->references('id')->on('companies')
                 ->onDelete('cascade');
             $table->string('program_code',64);
-            $table->string('program_name',20);
+            $table->string('program_name',255);
             $table->string('description', 255)->nullable();
             $table->longText('risks')->nullable();
             $table->longText('issues')->nullable();
