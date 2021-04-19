@@ -20,16 +20,14 @@ class CreateContractsTable extends Migration
             $table->bigInteger('program_id')->unsigned();
             $table->foreign('program_id')->references('id')->on('programs')
                 ->onDelete('cascade');
-            $table->string('number');
-            $table->bigInteger('uw_contract_id')->nullable()->unsigned();
             $table->smallInteger('type', false, true);
             $table->longText('options')->nullable();
             $table->tinyInteger('status', false, true)->index();
             $table->dateTime('active_from');
             $table->dateTime('active_to');
             $table->dateTime('signed_at');
-            $table->integer('insured_sum', false, true);
-            $table->integer('premium', false, true);
+            $table->float('remainingDebt', 14, 2);
+            $table->float('premium', 14, 2)->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

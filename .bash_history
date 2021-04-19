@@ -162,3 +162,17 @@ php artisan migrate:seed
 php artisan db:seed
 php artisan programs:set
 exit
+composer install
+exit
+composer dump-autoload
+composer install
+composer install --no-script
+composer install --no-scripts
+exit
+composer install --no-scripts
+exit
+composer require php-http/curl-client
+composer require php-http/curl-client --no-scripts
+exit
+php artisan key:generate
+exit
