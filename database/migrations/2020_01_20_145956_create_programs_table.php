@@ -23,6 +23,9 @@ class CreateProgramsTable extends Migration
             $table->longText('risks')->nullable();
             $table->longText('issues')->nullable();
             $table->longText('conditions')->nullable();
+            $table->boolean('is_property')->index();
+            $table->boolean('is_life')->index();
+            $table->boolean('is_title')->index();
             $table->boolean('is_active')->default(false)->index();
             $table->boolean('is_recommended')->default(false)->index();
             $table->timestamps();
