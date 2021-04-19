@@ -17,6 +17,7 @@ composer.phar
 composer
 .composer
 docker
+.bash_history
 
 .htaccess
 /docs
