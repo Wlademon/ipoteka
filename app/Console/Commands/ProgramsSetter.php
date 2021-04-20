@@ -85,6 +85,7 @@ class ProgramsSetter extends Command
                 'program_name' => $p->programName,
             ], [
                 'description' => $p->description,
+                'program_uw_code' => $p->programUwCode,
                 'risks' => $p->risks,
                 'issues' => $p->issues,
                 'conditions' => $p->conditions,

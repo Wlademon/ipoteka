@@ -4,32 +4,24 @@ use OpenApi\Annotations as OA;
  *  @OA\Schema(
  *     required={"success", "programCode", "data", "object"},
  *     schema="Directoryes",
- *     @OA\Property(property="success", type="boolaen", example="true", description="Успешное завершение запроса"),
  *     @OA\Property(property="data", description="Возвращаемые данные", type="array", required={},
  *        @OA\Items(
  *          schema="Directoryes_item",
- *           @OA\Property(property="description", type="string", example="Hello", description="Описание"),
- *           @OA\Property(property="risks", type="array", description="Риски", required={},
- *                @OA\Items(
- *                     @OA\Property(property="id", type="int", example="123", description="Идентификатор"),
- *                     @OA\Property(property="title", type="string", example="Hello", description="Заголовок"),
- *                     @OA\Property(property="description", type="string", example="Hello", description="Описание"),
- *                )
- *           ),
- *           @OA\Property(property="issues", type="array", description="Вопросы", required={},
- *                @OA\Items(
- *                     @OA\Property(property="title", type="string", example="Hello", description="Заголовок")
- *                )
- *           ),
- *           @OA\Property(property="conditions", type="object", description="Условия", required={}),
- *           @OA\Property(property="insuredSum", type="float", example=100000.05, description="Сумма страхования"),
- *           @OA\Property(property="companyCode", type="string", example="Gloria_1", description="Код компании"),
- *           @OA\Property(property="companyId", type="integer", example="123", description="Идентификатор компании"),
- *           @OA\Property(property="companyName", type="string", example="Глория", description="Наименование компании"),
- *           @OA\Property(property="isChild", type="boolean", example="0", description="Детский"),
- *           @OA\Property(property="isActive", type="boolean", example="1", description="Активный"),
- *           @OA\Property(property="programCode", type="string", example="GLORIA_12345_S", description="Код программы"),
- *           @OA\Property(property="programName", type="string", example="Базовая страховка", description="Наименование компании"),
+ *           @OA\Property(property="companyCode", type="string", example="ALFA_MSK", description="Код компании"),
+ *           @OA\Property(property="companyName", type="string", example="АО «АльфаСтрахование»", description="Наименование компании"),
+ *           @OA\Property(property="programCode", type="string", example="ALFA_MORTGAGE_001_01", description="Код программы"),
+ *           @OA\Property(property="programName", type="string", example="Имущество", description="Наименование компании"),
+ *           @OA\Property(property="programUwCode", type="string", example="0", description="Код программы в UW"),
+ *           @OA\Property(property="isActive", type="boolean", example="true", description="Признак отображения программы на сайте"),
+ *           @OA\Property(property="isRecommended", type="boolean", example="false", description="Признак рекомендованной программы на сайте"),
+ *           @OA\Property(property="isProperty", type="boolean", example="true", description="Признак 'Страхование имущества'"),
+ *           @OA\Property(property="isLife", type="boolean", example="false", description="Признак 'Страхование жизни'"),
+ *           @OA\Property(property="isTitle", type="boolean", example="false", description="Признак 'Страхование титула'"),
+ *           @OA\Property(property="description", type="string", example="Особенности и условия программы", description="Описание программы"),
+ *
+ *           @OA\Property(property="conditions", type="object", description="Условия страхования", required={}),
+ *           @OA\Property(property="risks", type="object", description="Риски", required={}),
+ *           @OA\Property(property="issues", type="object", description="Вопросы", required={}),
  *        )
  *     )
  * )

@@ -19,6 +19,7 @@ class CreateProgramsTable extends Migration
                 ->onDelete('cascade');
             $table->string('program_code',64);
             $table->string('program_name',255);
+            $table->string('program_uw_code',200);
             $table->string('description', 255)->nullable();
             $table->longText('risks')->nullable();
             $table->longText('issues')->nullable();
