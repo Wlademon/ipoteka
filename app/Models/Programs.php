@@ -82,6 +82,7 @@ class Programs extends BaseModel
         'is_life' => 'boolean',
         'is_title' => 'boolean',
         'is_recommended' => 'boolean',
+        'program_uw_code' => 'integer',
         'is_active' => 'boolean',
         'conditions' => 'array',
         'issues' => 'array',
@@ -128,79 +129,6 @@ class Programs extends BaseModel
     public function scopeOfCompany($query, $companyId)
     {
         return $query->where('company_id', $companyId);
-    }
-
-    /**
-     * @return string
-     */
-    public function getProgramNameAttribute()
-    {
-        return $this->attributes['program_name'];
-    }
-
-    /**
-     * @return string
-     */
-    public function getProgramCodeAttribute()
-    {
-        return $this->attributes['program_code'];
-    }
-
-    /**
-     * @return string
-     */
-    public function getProgramUwCodeAttribute()
-    {
-        return (int)$this->attributes['program_uw_code'];
-    }
-
-    /**
-     * @return string
-     */
-    public function getPremiumAttribute()
-    {
-        return isset($this->attributes['matrix']) ? json_decode($this->attributes['matrix'])->tariff->premium : null;
-    }
-
-    /**
-     * @return string
-     */
-    public function getInsuredSumAttribute()
-    {
-        return $this->attributes['insured_sum'] ?? null;
-    }
-
-
-    /**
-     * @return string
-     */
-    public function getIsChildAttribute()
-    {
-        return $this->attributes['is_child'];
-    }
-
-    /**
-     * @return string
-     */
-    public function getIsAdultAttribute()
-    {
-        return $this->attributes['is_adult'];
-    }
-
-    /**
-     * @return string
-     */
-    public function getIsFamilyAttribute()
-    {
-        return $this->attributes['is_family'];
-    }
-
-    /**
-     * @return string
-     */
-    public function getIsActiveAttribute()
-    {
-        return (bool)$this->attributes['is_active'];
     }
 
     /**
