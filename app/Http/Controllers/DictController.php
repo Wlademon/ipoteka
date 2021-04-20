@@ -3,6 +3,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\ProgramResource;
 use OpenApi\Annotations as OA;
 use App\Models\Programs;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,7 @@ class DictController extends BaseController
      */
     public function getDictPrograms()
     {
-        $result = Programs::active()->get();
+        $result = ProgramResource::collection(Programs::active()->get());
 
         return $this->successResponse($result);
     }

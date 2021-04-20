@@ -74,9 +74,15 @@ class Programs extends BaseModel
         'is_title',
         'is_recommended',
         'is_active',
+        'program_uw_code',
     ];
 
     protected $casts = [
+        'is_property' => 'boolean',
+        'is_life' => 'boolean',
+        'is_title' => 'boolean',
+        'is_recommended' => 'boolean',
+        'is_active' => 'boolean',
         'conditions' => 'array',
         'issues' => 'array',
         'risks' => 'array',
@@ -145,7 +151,7 @@ class Programs extends BaseModel
      */
     public function getProgramUwCodeAttribute()
     {
-        return $this->attributes['program_uw_code'];
+        return (int)$this->attributes['program_uw_code'];
     }
 
     /**
@@ -194,7 +200,7 @@ class Programs extends BaseModel
      */
     public function getIsActiveAttribute()
     {
-        return $this->attributes['is_active'];
+        return (bool)$this->attributes['is_active'];
     }
 
     /**
