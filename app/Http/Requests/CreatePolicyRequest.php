@@ -29,9 +29,10 @@ namespace App\Http\Requests;
  */
 /**
  * @OA\Schema(
- *     required={},
+ *     required={"buildYear","area","state","city","house","cityKladr"},
  *     schema="ObjectProperty",
  *     type="object",
+ *     description="Страхование имущества",
  *     @OA\Property(property="type",  type="string", example="flat", description="Тип помещения"),
  *     @OA\Property(property="buildYear",  type="integer", example="2000", description="Год постройки"),
  *     @OA\Property(property="isWooden",  type="boolean", example="true", description="Наличие деревянных перекрытий"),
@@ -48,9 +49,10 @@ namespace App\Http\Requests;
 
 /**
  * @OA\Schema(
- *     required={},
+ *     required={"lastName","firstName","birthDate","gender","phone","email","docSeries","docNumber","docIssueDate","docIssuePlace","docIssuePlaceCode","state","city","house","kladr"},
  *     schema="ObjectLife",
  *     type="object",
+ *     description="Страхование жизни",
  *     @OA\Property(property="lastName",  type="string", example="Сергеев", description="Фамилия"),
  *     @OA\Property(property="firstName",  type="string", example="Сергей", description="Имя"),
  *     @OA\Property(property="middleName",  type="string", example="Сергеевич", description="Отчество"),
