@@ -42,6 +42,12 @@ Route::group(['prefix' => 'v1'], function () {
         Route::put('/{id}', 'ProgramController@update');
         Route::delete('/{id}', 'ProgramController@destroy');
     });
+    Route::group(['prefix' => 'object'], function () {
+        Route::get('/', 'ObjectController@index');
+        Route::post('/', 'ObjectController@store');
+        Route::put('/{id}', 'ObjectController@update');
+        Route::delete('/{id}', 'ObjectController@destroy');
+    });
     Route::group(['prefix' => 'owner'], function () {
         Route::get('/', 'OwnerController@index');
         Route::post('/', 'OwnerController@store');

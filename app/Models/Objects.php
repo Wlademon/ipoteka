@@ -6,6 +6,8 @@ namespace App\Models;
 /**
  * App\Models\Payment
  *
+ *
+ *
  * @property int $id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -25,9 +27,44 @@ namespace App\Models;
  */
 class Objects extends BaseModel
 {
+    const TYPE_PROPERTY = 'property';
+    const TYPE_LIFE = 'life';
+
+    const PROPERY_TYPE_FIAT = 'fiat';
+
     protected $fillable = [
+        'contract_id',
         'value',
+        'product',
+        'number',
+        'premium',
+        'external_id',
+        'uw_contract_id',
     ];
+
+    protected $casts = [
+        'value' => 'array'
+    ];
+
+    public static function propertyTypes($isImplode = false)
+    {
+        $types = [self::PROPERY_TYPE_FIAT];
+        if ($isImplode) {
+            return implode(',', $types);
+        }
+
+        return $types;
+    }
+
+    public static function types($isImplode = false)
+    {
+        $types = [self::TYPE_LIFE, self::TYPE_PROPERTY];
+        if ($isImplode) {
+            return implode(',', $types);
+        }
+
+        return $types;
+    }
 
     public function contract()
     {
