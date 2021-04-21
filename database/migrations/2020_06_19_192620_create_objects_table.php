@@ -23,9 +23,7 @@ class CreateObjectsTable extends Migration
             $table->bigInteger('uw_contract_id',false, true)->nullable();
             $table->timestamps();
             $table->softDeletes();
-
             $table->foreign('contract_id')->references('id')->on('contracts')->onDelete('cascade')->onUpdate('cascade');
-
         });
     }
 
