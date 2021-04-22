@@ -36,11 +36,11 @@ class InnerDriver extends BaseDriver
             ]
         ];
 
-        $program = Programs::active()
-            ->whereProgramCode($data['programCode'])
-            ->where('remaining_debt', '>=', $data['remainingDebt'])
-            ->orderBy('remaining_debt')
-            ->first();
+//        $program = Programs::active()
+//            ->whereProgramCode($data['programCode'])
+//            ->where('remaining_debt', '>=', $data['remainingDebt'])
+//            ->orderBy('remaining_debt')
+//            ->first();
 
         if (!$program) {
             self::abortLog('Program not found for data', InnerDriverException::class);

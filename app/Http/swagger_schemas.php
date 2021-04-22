@@ -52,7 +52,7 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="data", description="Возвращаемые данные", type="object", required={},
  *        @OA\Property(property="contractId", type="int", example=100, description="Идентификатор сделки"),
  *        @OA\Property(property="policyNumber", type="string", example="FRFFR-FDDFFDD-FG456-F344F", description="Номер полиса"),
- *        @OA\Property(property="premiumSum", type="float", example=1000.01, description="Премия"),
+ *        @OA\Property(property="premiumSum", type="float", example=1000.01, description="Премия")
  *     )
  * )
  */
@@ -63,27 +63,23 @@ use OpenApi\Annotations as OA;
  *     schema="GetPolice",
  *     @OA\Property(property="success", type="boolaen", example="true", description="Успешное завершение запроса"),
  *     @OA\Property(property="data", description="Возвращаемые данные", type="object", required={},
- *        @OA\Property(property="id", type="int", example=100, description="Идентификатор"),
- *        @OA\Property(property="activeFrom", type="date", example="2021-10-10", description="Активность от"),
- *        @OA\Property(property="activeTo", type="date", example="2021-12-10", description="Активность до"),
- *        @OA\Property(property="objectsValue", type="array", description="Объекты страхования",
- *              @OA\Items()
- *          ),
- *        @OA\Property(property="objectFullName", type="array", description="Ф.И.О. застрахованных",
- *              @OA\Items()
- *          ),
- *        @OA\Property(property="companyCode", type="string", example="GLORIA_1", description="Код компании"),
- *        @OA\Property(property="signedAt", type="date", example="2021-10-5", description="Дата подписания"),
- *        @OA\Property(property="programName", type="string", example="Базовая страховка", description="Наименование программы"),
- *        @OA\Property(property="premium", type="float", example=1000.01, description="Премия"),
- *        @OA\Property(property="paymentStatus", type="int", example=1, description="Статус платежа"),
- *        @OA\Property(property="policyNumber", type="string", example="FRFFR-FDDFFDD-FG456-F344F", description="Номер полиса"),
- *        @OA\Property(property="trafficSource", type="string", example="http://ru", description="Источник"),
- *        @OA\Property(property="contractId", type="int", example=123, description="Идентификатор сделки"),
- *        @OA\Property(property="uwContractId", type="int", example=123, description="Идентификатор сделки uw"),
- *        @OA\Property(ref="#/components/schemas/Options"),
- *        @OA\Property(property="subjectValue", type="object", description="Субъект страхования"),
- *        @OA\Property(property="calcCoeff", type="object", type="object", description="Коэффициенты расчета")
+ *        @OA\Property(property="ownerCode", type="string", example="STRAHOVKA", description="Код владельца"),
+ *        @OA\Property(property="companyCode", type="string", example="ALFA_MSK", description="Код компании"),
+ *        @OA\Property(property="programCode", type="string", example="ALFA_MORTGAGE_001_01", description="Идентификатор Кода программы"),
+ *        @OA\Property(property="activeFrom", type="date", example="2021-09-15", description="Дата начала действия договора Ипотеки"),
+ *        @OA\Property(property="activeTo", type="date", example="2022-09-14", description="Дата окончания действия договора Ипотеки"),
+ *        @OA\Property(property="signetAt", type="date", example="2021-09-15", description="Дата заключения договора"),
+ *        @OA\Property(property="remainingDebt", type="float", example=1500000, description="Остаток  задолженности по договору ипотеки"),
+ *        @OA\Property(property="mortgageAgreementNumber", type="string", example="125-ИПО-1980", description="Номер договора ипотеки"),
+ *        @OA\Property(property="isOwnerShip", type="boolean", example=true, description="Признак наличия права собственности (true - есть право собственности на имущество)"),
+ *        @OA\Property(property="mortgageeBank", type="string", example="ПАО Сбербанк", description="Банк-залогодержатель (выгодоприобретатель)"),
+ *        @OA\Property(property="premium", type="float", example=3000.5, description="Премия по договору"),
+ *        @OA\Property(property="status", type="integer", example=2, description="Статус договора"),
+ *        @OA\Property(property="objects", type="object", description="Объекты страхования",
+ *              @OA\Property(property="property", description="Жилье", ref="#/components/schemas/Property"),
+ *              @OA\Property(property="life", description="Жизнь", ref="#/components/schemas/Life")
+ *        ),
+ *        @OA\Property(property="subject", ref="#/components/schemas/Subject", description="Субъект страхования")
  *     )
  * )
  */

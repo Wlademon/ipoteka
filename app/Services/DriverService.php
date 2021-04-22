@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Drivers\IDriver;
+use App\Drivers\DriverInterface;
 use App\Drivers\InnerDriver;
+use App\Drivers\Instances\Sberbank;
 use App\Drivers\ReninsDriver;
 use App\Drivers\ResoDriver;
 use App\Drivers\Traits\LoggerTrait;
@@ -28,11 +29,11 @@ class DriverService
     const DRIVERS = [
         'reso_garantija' => ResoDriver::class,
         'rensins' => ReninsDriver::class,
-        'vsk' => InnerDriver::class,
-        'alfa_msk' => InnerDriver::class,
+        'SBERINS' => Sberbank::class,
+        'alfa_msk' => Sberbank::class,
     ];
 
-    private ?IDriver $driver = null;
+    private ?DriverInterface $driver = null;
 
     /**
      * @param string|null $driver
@@ -54,7 +55,7 @@ class DriverService
         $this->driver = new $driver;
     }
 
-    protected function getDriverByCode(string $code, bool $reset = false): IDriver
+    protected function getDriverByCode(string $code, bool $reset = false): DriverInterface
     {
         $actualCode = trim(strtolower($code));
         if (!$this->driver || $reset) {
@@ -65,9 +66,9 @@ class DriverService
     }
 
     /**
-     * @return IDriver
+     * @return DriverInterface
      */
-    public function getDriver(): ?IDriver
+    public function getDriver(): ?DriverInterface
     {
         return $this->driver;
     }
@@ -136,7 +137,7 @@ class DriverService
             self::abortLog("Program not found with code {$data['programCode']}", DriverServiceException::class, Response::HTTP_NOT_FOUND);
         }
 
-        return $this->getDriverByCode($program->company->code)->createPolicy($data);
+        return $this->getDriverByCode($program->company->code)->createPolicy(array($data));
     }
 
     public function printPdf(Contracts $contract, bool $sample, bool $reset = false, ?string $filePath = null): string

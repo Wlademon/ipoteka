@@ -12,13 +12,12 @@ use Kyslik\LaravelFilterable\Filterable;
  *
  * @property int $id
  * @property int|null $programId
- * @property string $number
  * @property int $type
  * @property int $ownerId
  * @property array|null $options
  * @property int $status
  * @property string $statusText
- * @property int $insured_sum
+ * @property int $remaining_debt
  * @property int $premium
  * @property int $integration_id
  * @property array|null $calcCoeff
@@ -45,7 +44,6 @@ use Kyslik\LaravelFilterable\Filterable;
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereActiveTo($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereNumber($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereObject($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereOptions($value)
  * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereProgramId($value)
@@ -73,9 +71,7 @@ class Contracts extends BaseModel
      * @var array
      */
     protected $attributes = [
-        'number' => '',
         'type' => self::TYPE_NS,
-        'owner_id' => null,
         'status' => self::STATUS_DRAFT,
         'active_from' => null,
         'active_to' => null,
@@ -86,13 +82,12 @@ class Contracts extends BaseModel
     protected $dates = ['active_from', 'active_to', 'signet_at', 'created_at', 'updated_at'];
 
     protected $fillable = [
-        'number',
+        'remaining_debt',
         'premium',
         'active_from',
         'active_to',
         'signed_at',
         'program_id',
-        'owner_id',
         'company_id',
         'uw_contract_id',
         'options',

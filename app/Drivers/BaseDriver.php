@@ -25,7 +25,7 @@ use Strahovka\Payment\PayService;
  * Class BaseDriver
  * @package App\Drivers
  */
-abstract class BaseDriver implements IDriver
+abstract class BaseDriver implements DriverInterface
 {
     use LoggerTrait;
     use PlugDriverTrait;
@@ -151,39 +151,39 @@ abstract class BaseDriver implements IDriver
         return $contract->save();
     }
 
-    public function getPayLink(PayService $service, Contracts $contract, Request $request): array
-    {
-        // Не более 20 символов!
-        $invoiceNum = sprintf("%s%03d%06d/%s", 'NS', $contract->company_id, $contract->id, Carbon::now()->format('His'));
-
-        if (in_array(env('APP_ENV'), ['local', 'testing'])) {
-            $invoiceNum = time() % 100 . $invoiceNum;
-        }
-
-        $data = [
-            'successUrl' => env('STR_HOST', 'https://strahovka.ru') . $request->get('successUrl'),
-            'failUrl' => env('STR_HOST', 'https://strahovka.ru') . $request->get('failUrl'),
-            'phone' => str_replace([' ', '-'], '', $contract['subject']['phone']),
-            'fullName' => $contract['subject_fullname'],
-            'passport' => $contract['subject_passport'],
-            'name' => "Полис по Телемед №{$contract->id}",
-            'description' => "Оплата за полис {$contract->company->name} №{$contract->id}",
-            'amount' => $contract['premium'],
-            'merchantOrderNumber' => $invoiceNum,
-        ];
-        Log::info(__METHOD__ . '. Data for acquiring', [$data]);
-        $response = $service->getPayLink($data);
-
-        if (isset($response->errorCode) && $response->errorCode !== 0) {
-            throw new \Exception($response->errorMessage . ' (code: ' . $response->errorCode . ')', 500);
-        }
-
-        return [
-            'invoice_num' => $invoiceNum,
-            'order_id' => $response->orderId,
-            'form_url' => $response->formUrl,
-        ];
-    }
+//    public function getPayLink(PayService $service, Contracts $contract, Request $request): array
+//    {
+//        // Не более 20 символов!
+//        $invoiceNum = sprintf("%s%03d%06d/%s", 'NS', $contract->company_id, $contract->id, Carbon::now()->format('His'));
+//
+//        if (in_array(env('APP_ENV'), ['local', 'testing'])) {
+//            $invoiceNum = time() % 100 . $invoiceNum;
+//        }
+//
+//        $data = [
+//            'successUrl' => env('STR_HOST', 'https://strahovka.ru') . $request->get('successUrl'),
+//            'failUrl' => env('STR_HOST', 'https://strahovka.ru') . $request->get('failUrl'),
+//            'phone' => str_replace([' ', '-'], '', $contract['subject']['phone']),
+//            'fullName' => $contract['subject_fullname'],
+//            'passport' => $contract['subject_passport'],
+//            'name' => "Полис по Телемед №{$contract->id}",
+//            'description' => "Оплата за полис {$contract->company->name} №{$contract->id}",
+//            'amount' => $contract['premium'],
+//            'merchantOrderNumber' => $invoiceNum,
+//        ];
+//        Log::info(__METHOD__ . '. Data for acquiring', [$data]);
+//        $response = $service->getPayLink($data);
+//
+//        if (isset($response->errorCode) && $response->errorCode !== 0) {
+//            throw new \Exception($response->errorMessage . ' (code: ' . $response->errorCode . ')', 500);
+//        }
+//
+//        return [
+//            'invoice_num' => $invoiceNum,
+//            'order_id' => $response->orderId,
+//            'form_url' => $response->formUrl,
+//        ];
+//    }
 
     /**
      * Поиск ошибок при создании полиса
@@ -315,7 +315,7 @@ abstract class BaseDriver implements IDriver
 
         $this->calcData = $this->calculate($this->data);
 
-//        $this->program = Programs::with('company')->findOrFail($this->calcData['data']['contractId']);
+        $this->program = Programs::with('company')->findOrFail($this->calcData['data']['contractId']);
 //        $this->company = $this->program->company;
 
         $ownerCode = Arr::get($this->data, 'ownerCode', 'STRAHOVKA');
