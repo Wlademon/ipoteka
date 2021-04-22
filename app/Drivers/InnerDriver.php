@@ -25,11 +25,23 @@ class InnerDriver extends BaseDriver
      */
     public function calculate(array $data): array
     {
+
+        return [
+            "success" => true,
+            "data" => [
+                "contractId" => "",
+                "premiumSum" => 3000.50,
+                "lifePremium" => 2000.10,
+                "propertyPremium" => 1000.40
+            ]
+        ];
+
         $program = Programs::active()
             ->whereProgramCode($data['programCode'])
-            ->where('insured_sum', '>=', $data['insuredSum'])
-            ->orderBy('insured_sum')
+            ->where('remaining_debt', '>=', $data['remainingDebt'])
+            ->orderBy('remaining_debt')
             ->first();
+
         if (!$program) {
             self::abortLog('Program not found for data', InnerDriverException::class);
         }
@@ -80,6 +92,7 @@ class InnerDriver extends BaseDriver
     protected function validate(): bool
     {
         $validActiveFromMax = Carbon::now()->startOfDay()->addMonths(3);
+        dd($this->activeFrom, $validActiveFromMax);
         if ($this->activeFrom > $validActiveFromMax) {
             self::abortLog(
                 "Дата начала полиса не может быть позже чем дата заключения (сегодня) + 3 месяца",
@@ -132,7 +145,8 @@ class InnerDriver extends BaseDriver
         bool $sample,
         bool $reset = false,
         ?string $filePath = null
-    ): string {
+    ): string
+    {
         $sampleText = $sample ? '_sample' : '';
         if (!$filePath) {
             $filename = public_path() . '/' . config('ns.pdf.path') . sha1(

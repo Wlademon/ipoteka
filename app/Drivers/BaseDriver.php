@@ -312,13 +312,18 @@ abstract class BaseDriver implements IDriver
         $this->activeFrom = Carbon::parse($this->data['activeFrom']);
         $this->activeTo = Carbon::parse($this->data['activeTo']);
         $this->signedAt = Carbon::now()->startOfDay();
+
         $this->calcData = $this->calculate($this->data);
-        $this->program = Programs::with('company')->findOrFail($this->calcData['programId']);
-        $this->company = $this->program->company;
+
+//        $this->program = Programs::with('company')->findOrFail($this->calcData['data']['contractId']);
+//        $this->company = $this->program->company;
+
         $ownerCode = Arr::get($this->data, 'ownerCode', 'STRAHOVKA');
+
         $this->owner = Owners::where('code', $ownerCode)->first();
         $siteService = new SiteService();
         $user = $siteService->getUserData($this->data['subject']);
+
         if ($user) {
             $this->data['subject']['login'] = Arr::get($user, 'login');
             $this->data['subject']['subjectId'] = Arr::get($user, 'subjectId');
