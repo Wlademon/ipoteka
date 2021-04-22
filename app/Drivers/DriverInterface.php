@@ -64,4 +64,11 @@ interface DriverInterface
      * @return string Сообщение
      */
     public function sendPolice(Contracts $contract): string;
+
+    /**
+     * @param Contracts $contract
+     * @return array
+     */
+    public function getStatus(Contracts $contract): array;
+
 }
