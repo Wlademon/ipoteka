@@ -25,7 +25,7 @@ use Strahovka\Payment\PayService;
  * Class BaseDriver
  * @package App\Drivers
  */
-abstract class BaseDriver implements IDriver
+abstract class BaseDriver implements DriverInterface
 {
     use LoggerTrait;
     use PlugDriverTrait;

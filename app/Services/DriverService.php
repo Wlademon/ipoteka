@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Drivers\IDriver;
+use App\Drivers\DriverInterface;
 use App\Drivers\InnerDriver;
 use App\Drivers\ReninsDriver;
 use App\Drivers\ResoDriver;
@@ -32,7 +32,7 @@ class DriverService
         'alfa_msk' => InnerDriver::class,
     ];
 
-    private ?IDriver $driver = null;
+    private ?DriverInterface $driver = null;
 
     /**
      * @param string|null $driver
@@ -54,7 +54,7 @@ class DriverService
         $this->driver = new $driver;
     }
 
-    protected function getDriverByCode(string $code, bool $reset = false): IDriver
+    protected function getDriverByCode(string $code, bool $reset = false): DriverInterface
     {
         $actualCode = trim(strtolower($code));
         if (!$this->driver || $reset) {
@@ -65,9 +65,9 @@ class DriverService
     }
 
     /**
-     * @return IDriver
+     * @return DriverInterface
      */
-    public function getDriver(): ?IDriver
+    public function getDriver(): ?DriverInterface
     {
         return $this->driver;
     }
