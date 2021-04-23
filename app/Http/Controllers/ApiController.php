@@ -2,23 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use App\Drivers\Traits\LoggerTrait;
+use App\Http\Requests\CalculateRequest;
 use App\Http\Requests\CreatePolicyRequest;
 use App\Models\Contracts;
 use App\Models\Payments;
 use App\Services\DriverService;
+use App\Services\PayService\PayLinks;
 use Exception;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 use Strahovka\Payment\PayService;
 
+/**
+ * Class ApiController
+ * @package App\Http\Controllers
+ */
 class ApiController extends BaseController
 {
+    use LoggerTrait;
 
-    protected $payService;
-    protected $driverService;
+    protected PayService $payService;
+    protected DriverService $driverService;
 
     /**
      * Create a new controller instance.
@@ -61,7 +68,35 @@ class ApiController extends BaseController
      */
     public function postPolicyCreate(CreatePolicyRequest $request): Response
     {
-        return $this->successResponse($this->driverService->savePolicy($request));
+        return $this->successResponse($this->driverService->savePolicy($request->validated()));
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/v1/policies/calculate",
+     *     operationId="/v1/policies/calculate",
+     *     summary="Расчет полиса",
+     *     tags={"Полисы"},
+     *     @OA\RequestBody(
+     *       required=true,
+     *       @OA\JsonContent(ref="#/components/schemas/CalculateRequest")
+     *   ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Метод позволяет рассчитать (предварительную) премию по входящим пораметра",
+     *         @OA\JsonContent(
+     *              ref="#/components/schemas/CalculatedPolice"
+     *          )
+     *     )
+     * )
+     *
+     * @param CalculateRequest $request
+     * @return \Illuminate\Contracts\Foundation\Application|ResponseFactory|Response
+     * @throws Exception
+     */
+    public function postCalculate(CalculateRequest $request): Response
+    {
+        return $this->successResponse($this->driverService->calculate($request->validated()));
     }
 
     /**
@@ -93,10 +128,11 @@ class ApiController extends BaseController
      * @return ResponseFactory|Response
      * @throws Exception
      */
-    public function getPolicy(Request $request, $contractId)
+    public function getPolicy(Request $request, $contractId): Response
     {
-        Log::info(__METHOD__ . ". Find Contract with ID: {$contractId}");
+        self::log("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
+
         return $this->successResponse($contract);
     }
 
@@ -129,10 +165,11 @@ class ApiController extends BaseController
      * @return ResponseFactory|Response
      * @internal param Contracts $contract
      */
-    public function getPolicyStatus(Request $request, $contractId)
+    public function getPolicyStatus(Request $request, $contractId): Response
     {
-        Log::info(__METHOD__ . ". Find Contract with ID: {$contractId}");
+        self::log("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
+
         return $this->successResponse($this->driverService->getStatus($contract));
     }
 
@@ -166,22 +203,25 @@ class ApiController extends BaseController
      * @internal param Contracts $contract
      * @internal param $contractId
      */
-    public function postPolicyAccept(Payments $payment, $orderId)
+    public function postPolicyAccept(Payments $payment, $orderId): Response
     {
-        Log::info(__METHOD__ . ". Find Payment with OrderID: {$orderId}");
+        self::log("Find Payment with OrderID: {$orderId}");
         $res = $payment->whereOrderId($orderId)->firstOrFail();
-        Log::info(__METHOD__ . ". Find Contract with ID: {$res->contract_id}");
+
+        self::log("Find Contract with ID: {$res->contract_id}");
         $contract = Contracts::with('company')->whereId($res->contract_id)->whereStatus(
             Contracts::STATUS_DRAFT
         )->firstOrFail();
-        Log::info(__METHOD__ . ". Start check payment status with OrderID: {$orderId}");
+
+        self::log("Start check payment status with OrderID: {$orderId}");
         $status = $this->payService->getOrderStatus($orderId);
-        Log::info(__METHOD__ . ". Status: {$status['status']}");
+        self::log("Status: {$status['status']}");
+
         if (isset($status['isPayed']) && $status['isPayed']) {
             return $this->successResponse($this->driverService->acceptPayment($contract));
-        } else {
-            return $this->errorResponse(500, [], [], 'Оплата заказа не обработана. Статус: ' . $status["status"]);
         }
+
+        return $this->errorResponse(500, [], [], 'Оплата заказа не обработана. Статус: ' . $status["status"]);
     }
 
     /**
@@ -212,13 +252,14 @@ class ApiController extends BaseController
      * @internal param $orderId
      * @internal param Contracts $contract
      */
-    public function postPolicySend(Request $request, $contractId)
+    public function postPolicySend(Request $request, $contractId): Response
     {
-        Log::info(__METHOD__ . ". Find Contract with ID: {$contractId}");
+        self::log("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
-        $result = $this->driverService->sendMail($contract);
 
-        Log::info(__METHOD__ . ". Response", [$result]);
+        $result = $this->driverService->sendMail($contract);
+        self::log("Response", [$result]);
+
         return $this->successResponse($result);
     }
 
@@ -260,34 +301,22 @@ class ApiController extends BaseController
      * @throws Exception
      * @internal param Contracts $contract
      */
-    public function getPolicyPayLink(Request $request, $contractId)
+    public function getPolicyPayLink(Request $request, $contractId): Response
     {
-        Log::info(__METHOD__ . ". Find Contract with ID: {$contractId}");
+        self::log("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
-        $this->driverService->triggerGetLink($contract);
-        try {
-            if (!Payments::whereContractId($contract->id)->first()) {
-                [
-                    'invoice_num' => $invoiceNum,
-                    'order_id' => $orderId,
-                    'form_url' => $formUrl,
-                ] = $this->driverService->getPayLink($this->payService, $contract, $request);
-
-                $payment = Payments::whereContractId($contract->id)->firstOrCreate(
-                    ['contract_id' => $contract->id],
-                    ['invoice_num' => $invoiceNum, 'order_id' => $orderId]
-                );
-                $payment->contract()->associate($contract);
-                $payment->save();
-            } else {
-                throw new RuntimeException('Данный заказ уже обработан', Response::HTTP_BAD_REQUEST);
-            }
-        } catch (Exception $e) {
-            Log::error($e->getMessage() . ' (code: ' . $e->getCode() . ')');
-            throw new RuntimeException($e->getMessage(), $e->getCode());
+        if (Payments::whereContractId($contract->id)->first()) {
+            self::abortLog('Данный заказ уже обработан (code: ' . Response::HTTP_BAD_REQUEST . ')', RuntimeException::class);
         }
-        $result = ['url' => $formUrl, 'orderId' => $orderId];
-        Log::info(__METHOD__ . '. Response', [$result]);
+        try {
+            $links = new PayLinks($request->query('successUrl'), $request->query('failUrl'));
+            $linkResult = $this->driverService->getPayLink($contract, $links);
+            Payments::createPayment($linkResult, $contract);
+        } catch (Exception $e) {
+            self::abortLog($e->getMessage() . ' (code: ' . $e->getCode() . ')', RuntimeException::class);
+        }
+        $result = ['url' => $linkResult->getUrl(), 'orderId' => $linkResult->getOrderId()];
+        self::log('Response', [$result]);
 
         return $this->successResponse($result);
     }
@@ -329,22 +358,16 @@ class ApiController extends BaseController
      * @return ResponseFactory|Response
      * @internal param Contracts $contract
      */
-    public function getPolicyPdf(Request $request, $contractId)
+    public function getPolicyPdf(Request $request, $contractId): Response
     {
-        Log::info(__METHOD__ . ". Find Contract with ID: {$contractId}");
+        self::log("Find Contract with ID: {$contractId}");
         $isSample = filter_var($request->get('sample', false), FILTER_VALIDATE_BOOLEAN);
-        $contract = Contracts::findOrFail($contractId);
-        Log::info(__METHOD__ . '. Params', [$contract]);
 
-        if (!$isSample && $contract->status !== Contracts::STATUS_CONFIRMED) {
-            throw new RuntimeException(
-                'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
-                Response::HTTP_BAD_REQUEST
-            );
-        }
+        $contract = Contracts::findOrFail($contractId);
+        self::log('Params', [$contract]);
 
         $response = $this->driverService->printPdf($contract, $isSample);
-        Log::info(__METHOD__ . '. Policy generated!');
+        self::log('Policy generated!');
 
         return $this->successResponse(['url' => $response]);
     }

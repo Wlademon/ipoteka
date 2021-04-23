@@ -70,5 +70,4 @@ interface DriverInterface
      * @return array
      */
     public function getStatus(Contracts $contract): array;
-
 }
