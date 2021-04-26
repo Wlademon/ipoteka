@@ -8,7 +8,6 @@ class CreatedPolicy implements CreatedPolicyInterface
 {
 
     protected ?int $contractId;
-    protected ?float $premiumSum;
     protected ?float $lifePremium;
     protected ?float $propertyPremium;
     protected ?string $lifePolicyNumber;
@@ -24,7 +23,6 @@ class CreatedPolicy implements CreatedPolicyInterface
     )
     {
         $this->contractId = $contractId;
-        $this->premiumSum = $premiumSum;
         $this->propertyPremium = $propertyPremium;
         $this->lifePremium = $lifePremium;
         $this->lifePolicyNumber = $lifePolicyNumber;

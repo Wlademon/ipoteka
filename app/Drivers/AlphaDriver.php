@@ -50,7 +50,7 @@ class AlphaDriver implements DriverInterface
                 'json' => $calculator->getData()
             ]
         );
-        if($result->getStatusCode() !== 200) {
+        if ($result->getStatusCode() !== 200) {
             throw new AlphaException('Error calc');
         }
         $decodeResult = json_decode($result->getBody()->getContents(), true);
@@ -69,12 +69,12 @@ class AlphaDriver implements DriverInterface
         $calculator->setBank($data['mortgageeBank'], $data['remainingDebt']);
         $calculator->setCalcDate($data['activeFrom']);
 
-        if($dataCollect->pluck('objects')->has('life')) {
+        if ($dataCollect->pluck('objects')->has('life')) {
             $life = $dataCollect->pluck('objects')->pluck('life');
             $calculator->setInsurant($life->get('gender'), $life->get('gender'));
             $calculator->setLifeRisk($life->get('professions', []), $life->get('sports', []));
         }
-        if($dataCollect->pluck('objects')->has('property')) {
+        if ($dataCollect->pluck('objects')->has('property')) {
             $property = $dataCollect->pluck('objects')->pluck('property');
             $calculator->setInsurance();
             $calculator->setPropertyRisk(
@@ -85,6 +85,7 @@ class AlphaDriver implements DriverInterface
         }
         return $calculator;
     }
+
     /**
      * @inheritDoc
      */
@@ -106,19 +107,18 @@ class AlphaDriver implements DriverInterface
         $policy->setCalcDate($data['activeFrom']);
         $policy->setInsurer($subject->get('city'), $subject->get('street'));
         $policy->setEmail($dataCollect->get('email'));
-        $policy->setFirstName($dataCollect->get('firstName'));
-        $policy->setLastName($dataCollect->get('lastName'));
-        $policy->setMiddleName($dataCollect->get('middleName'));
+        $policy->setFullName($dataCollect->get('firstName'),$dataCollect->get('lastName'),$dataCollect->get('middleName'));
         $policy->setPersonDocument($subject->get('docIssueDate'), $subject->get('docNumber'), $subject->get('docSeries'));
         $policy->setPhone($dataCollect->get('phone'));
-        $policy->setAddress(
-            $dataCollect->get('city') . ','
-            . $dataCollect->get('state') . ','
-            . $dataCollect->get('street') . ','
-            . $dataCollect->get('house') . ','
-            . $dataCollect->get('block') . ','
-            . $dataCollect->get('apartment')
-        );
+        $policy->setAddress(implode(',', [
+            $dataCollect->get('city'),
+            $dataCollect->get('state'),
+            $dataCollect->get('street'),
+            $dataCollect->get('house'),
+            $dataCollect->get('block'),
+            $dataCollect->get('apartment')
+        ]));
+
         $policy->setAddressSquare($dataCollect->pluck('objects')->pluck('property')->get('area'));
         $policy->setDateCreditDoc($dataCollect->get('dateCreditDoc')); //?
         $policy->setNumberCreditDoc($dataCollect->get('numberCreditDoc')); //?
@@ -128,7 +128,7 @@ class AlphaDriver implements DriverInterface
                 'json' => $policy->getData()
             ]
         );
-        if($result->getStatusCode() !== 200) {
+        if ($result->getStatusCode() !== 200) {
             throw new AlphaException('Error create policy');
         }
         $decodeResult = json_decode($result->getBody()->getContents(), true);
@@ -148,7 +148,8 @@ class AlphaDriver implements DriverInterface
      */
     public function printPolicy(
         Contracts $contract, bool $sample, bool $reset, ?string $filePath = null
-    ): string {
+    ): string
+    {
 
     }
 

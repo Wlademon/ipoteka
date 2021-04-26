@@ -5,7 +5,7 @@ namespace App\Drivers\Source\Alpha;
 use App\Exceptions\Drivers\AlphaException;
 use Illuminate\Support\Carbon;
 
-class AlphaCalculator extends \Illuminate\Database\Eloquent\Model
+class AlphaCalculator
 {
     const SALE_TYPE_FIRST = 'FIRST';
     const BILDING_TYPE = 'FLAT';
@@ -106,20 +106,13 @@ class AlphaCalculator extends \Illuminate\Database\Eloquent\Model
         $this->data['email'] = $email;
     }
 
-    public function setFirstName(string $name)
+    public function setFullName(string $name, string $lastName, string $middleName)
     {
         $this->data['firstName'] = $name;
-    }
-
-    public function setLastName(string $lastName)
-    {
         $this->data['lastName'] = $lastName;
-    }
-
-    public function setMiddleName(string $middleName)
-    {
         $this->data['middleName'] = $middleName ?? '';
     }
+
 
     public function setPersonDocument(string $dateOfIssue,int $number,int $seria)
     {
