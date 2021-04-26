@@ -5,18 +5,18 @@ namespace App\Drivers\Source\Alpha;
 use App\Exceptions\Drivers\AlphaException;
 use Illuminate\Support\Carbon;
 
-class AlphaCalculator
+class AlphaCalculator extends \Illuminate\Database\Eloquent\Model
 {
     const SALE_TYPE_FIRST = 'FIRST';
     const BILDING_TYPE = 'FLAT';
     const SALE_TYPE_SECOND = 'SECOND';
-    
+
     const GENDER_MAN = 'M';
     const GENDER_WOMAN = 'W';
-    
-    
+
+
     protected array $data = [];
-    
+
     public function __construct(\Illuminate\Config\Repository $repository, string $prefix = '')
     {
         throw_if(
@@ -27,13 +27,13 @@ class AlphaCalculator
             !$repository->get($prefix . 'managerId', false),
             new AlphaException('Not set agentContractId property')
         );
-        
+
         $this->data['agent'] = [
             'agentContractId' => $repository->get($prefix . 'agentContractId'),
             'managerId' => $repository->get($prefix . 'managerId')
         ];
     }
-    
+
     /**
      * @return array
      */
@@ -41,7 +41,7 @@ class AlphaCalculator
     {
         return $this->data;
     }
-    
+
     public function setBank(string $name, float $creditSum)
     {
         $this->data['bank'] = [
@@ -49,7 +49,7 @@ class AlphaCalculator
             'creditValue' => $creditSum
         ];
     }
-    
+
     public function setCalcDate(string $beginDate)
     {
         $this->data['calculation'] = [
@@ -57,7 +57,7 @@ class AlphaCalculator
             'calcDate' => (new Carbon())->format('Y-m-d')
         ];
     }
-    
+
     public function setInsurance(string $saleType = self::SALE_TYPE_SECOND)
     {
         $this->data['insurance'] = [
@@ -65,7 +65,7 @@ class AlphaCalculator
             'saleType' => $saleType
         ];
     }
-    
+
     public function setInsurant(bool $gender, string $dateBirth)
     {
         $this->data['insurant'] = [
@@ -73,7 +73,7 @@ class AlphaCalculator
             'insurantDateBirth' => Carbon::parse($dateBirth)->format('Y-m-d'),
         ];
     }
-    
+
     public function setLifeRisk(array $profession = [], array $sport = [])
     {
         $this->data['lifeRisk'] = [
@@ -82,7 +82,7 @@ class AlphaCalculator
             'sport' => $sport
         ];
     }
-    
+
     public function setPropertyRisk(string $address, bool $goruch, ?int $year)
     {
         throw_if($year && ($year < 1950 || $year > 2100), new AlphaException('Год постройки больше максимального или меньше минимального порога'));
@@ -91,5 +91,67 @@ class AlphaCalculator
             'goruch' => $goruch,
             'year' => $year
         ];
+    }
+
+    public function setInsurer(string $city, string $street)
+    {
+        $this->data['insurer']['address'] = [
+            'city' => $city,
+            'street' => $street
+        ];
+    }
+
+    public function setEmail(string $email)
+    {
+        $this->data['email'] = $email;
+    }
+
+    public function setFirstName(string $name)
+    {
+        $this->data['firstName'] = $name;
+    }
+
+    public function setLastName(string $lastName)
+    {
+        $this->data['lastName'] = $lastName;
+    }
+
+    public function setMiddleName(string $middleName)
+    {
+        $this->data['middleName'] = $middleName ?? '';
+    }
+
+    public function setPersonDocument(string $dateOfIssue,int $number,int $seria)
+    {
+        $this->data['personDocument'] = [
+            'dateOfIssue' => $dateOfIssue,
+            'number' => $number,
+            'seria' => $seria
+        ];
+    }
+
+    public function setPhone(string $phone)
+    {
+        $this->data['phone'] = $phone;
+    }
+
+    public function setAddress(string $address)
+    {
+        $this->data['address'] = $address;
+    }
+
+    public function setAddressSquare(float $addressSquare)
+    {
+        $this->data['addressSquare'] = $addressSquare;
+    }
+
+    public function setDateCreditDoc(string $dateCreditDoc)
+    {
+        $this->data['dateCreditDoc'] = $dateCreditDoc;
+    }
+
+    public function setNumberCreditDoc(string $numberCreditDoc)
+    {
+        $this->data['numberCreditDoc'] = $numberCreditDoc;
     }
 }
