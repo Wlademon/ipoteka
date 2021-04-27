@@ -131,6 +131,10 @@ class AlphaDriver implements DriverInterface
         }
         $decodePostResult = json_decode($postResult->getBody()->getContents(), true);
 
+        if (!$decodePostResult->has('upid')) {
+            throw new AlphaException('Response has not upid');
+        }
+
         $getResult = $this->client->get(
             $this->host . self::GET_POLICY_URL, [
                 'upid' => Arr::get($decodePostResult, 'upid'),
