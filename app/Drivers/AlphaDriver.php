@@ -25,7 +25,8 @@ class AlphaDriver implements DriverInterface
     use DriverTrait;
 
     const CALC_URL = '/msrv/mortgage/partner/calc';
-    const POLICY_URL = '/msrv/mortgage/partner/calc';
+    const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
+    const GET_POLICY_URL = '/msrv/mortgage/partner/contractStatus?upid=360';
     protected string $host;
     protected Client $client;
 
@@ -100,6 +101,7 @@ class AlphaDriver implements DriverInterface
      */
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
+
         $dataCollect = collect($data);
         $policy = $this->CollectData($data);
         $subject = $dataCollect->pluck('subject');
@@ -110,37 +112,46 @@ class AlphaDriver implements DriverInterface
         $policy->setFullName($dataCollect->get('firstName'), $dataCollect->get('lastName'), $dataCollect->get('middleName'));
         $policy->setPersonDocument($subject->get('docIssueDate'), $subject->get('docNumber'), $subject->get('docSeries'));
         $policy->setPhone($dataCollect->get('phone'));
-        $policy->setAddress(implode(',', [
-            $dataCollect->get('city'),
-            $dataCollect->get('state'),
-            $dataCollect->get('street'),
-            $dataCollect->get('house'),
-            $dataCollect->get('block'),
-            $dataCollect->get('apartment')
-        ]));
+        $policy->setAddress($dataCollect->only(['city', 'state', 'street', 'house', 'block', 'apartment'])->join(', '));
 
         $policy->setAddressSquare($dataCollect->pluck('objects')->pluck('property')->get('area'));
         $policy->setDateCreditDoc($dataCollect->get('dateCreditDoc')); //?
         $policy->setNumberCreditDoc($dataCollect->get('numberCreditDoc')); //?
 
-        $result = $this->client->post(
-            $this->host . self::POLICY_URL, [
+        $postResult = $this->client->post(
+            $this->host . self::POST_POLICY_URL, [
                 'json' => $policy->getData()
             ]
         );
-        if ($result->getStatusCode() !== 200) {
+        if ($postResult->getStatusCode() !== 200) {
             throw new AlphaException('Error create policy');
         }
-        $decodeResult = json_decode($result->getBody()->getContents(), true);
+        $decodePostResult = json_decode($postResult->getBody()->getContents(), true);
+
+        $getResult = $this->client->get(
+            $this->host . self::GET_POLICY_URL, [
+                'upid' => Arr::get($decodePostResult, 'upid'),
+            ]
+        );
+        if ($getResult->getStatusCode() !== 200) {
+            throw new AlphaException('Error get data from createPolicy');
+        }
+        $decodeGetResult = json_decode($getResult->getBody()->getContents(), true);
 
         return new CreatedPolicy(
-            null,
-            null,
-            Arr::get($decodeResult, 'lifePremium', 0),
-            Arr::get($decodeResult, 'propertyPremium', 0),
-            null,
-            null
+            $contract->id,
+            Arr::get($decodeGetResult, 'lifePremium', 0),
+            Arr::get($decodeGetResult, 'propertyPremium', 0),
+            Arr::get($decodeGetResult['lifeContract'], 'contractNumber', 0),
+            Arr::get($decodeGetResult['propertyContract'], 'contractNumber', 0),
+            Arr::get($decodeGetResult['lifeContract'], 'contractId', 0),
+            Arr::get($decodeGetResult['propertyContract'], 'contractId', 0),
         );
+    }
+
+    public function sendRequest($host)
+    {
+
     }
 
     /**
