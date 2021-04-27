@@ -4,27 +4,21 @@ namespace App\Services;
 
 use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
-use App\Drivers\InnerDriver;
-use App\Drivers\ReninsDriver;
-use App\Drivers\ResoDriver;
 use App\Drivers\Traits\LoggerTrait;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
-use App\Mail\Email;
 use App\Models\Contracts;
+use App\Models\Objects;
 use App\Models\Programs;
+use App\Models\Subjects;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use Exception;
 use http\Exception\RuntimeException;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use stdClass;
-use Strahovka\Payment\PayService;
-
 /**
  * Class DriverService
  * @package App\Services
@@ -152,11 +146,50 @@ class DriverService
     public function savePolicy(array $data): array
     {
         try {
+            \DB::beginTransaction();
+            $model = new Contracts();
+            $model->fill($data);
             $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
-            return $this->getDriverByCode($program->company->code)->createPolicy($data);
+            $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
+            $policeData = collect($data);
+            $objects = $policeData->only(['objects'])->flatten(1);
+            $objectLife = $this->getObjectModel($objects, 'life');
+            if ($objectLife) {
+                $objectLife->contract()->associate($model);
+                $objectLife->loadFromDriverResult($result);
+                $objectLife->saveOrFail();
+            }
+            $objectProp = $this->getObjectModel($objects, 'property');
+            if ($objectProp) {
+                $objectProp->contract()->associate($model);
+                $objectProp->loadFromDriverResult($result);
+                $objectProp->saveOrFail();
+            }
+            $subject = (new Subjects())->fill(['value' => $policeData->get('subject')]);
+            $subject->contract()->associate($model);
+            $subject->saveOrFail();
+
+            $model->saveOrFail();
+            \DB::commit();
         } catch (\Throwable $throwable) {
+            \DB::rollBack();
             self::abortLog($throwable->getMessage(), DriverServiceException::class);
         }
+
+        return $result->toArray();
+    }
+
+    protected function getObjectModel(Collection $collection, string $type): ?Objects
+    {
+        $object = $collection->get($type);
+        if (!$object) {
+            return $object;
+        }
+        $model = new Objects();
+        $model->product = $type;
+        $model->value = $object;
+
+        return $model;
     }
 
     /**
