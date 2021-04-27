@@ -43,8 +43,8 @@ class AlphaDriver implements DriverInterface
      */
     public function calculate(array $data): CalculatedInterface
     {
-        $calculator = $this->CollectData($data);
 
+        $calculator = $this->collectData($data);
         $result = $this->client->post(
             $this->host . self::CALC_URL, [
                 'json' => $calculator->getData()
@@ -62,7 +62,7 @@ class AlphaDriver implements DriverInterface
         );
     }
 
-    protected function CollectData(array $data): AlphaCalculator
+    protected function collectData(array $data): AlphaCalculator
     {
         $dataCollect = collect($data);
         $calculator = new AlphaCalculator(config(), '');
@@ -83,6 +83,7 @@ class AlphaDriver implements DriverInterface
                 $property->get('buildYear')
             );
         }
+
         return $calculator;
     }
 
@@ -97,17 +98,16 @@ class AlphaDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function createPolicy(array $data): CreatedPolicyInterface
+    public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
         $dataCollect = collect($data);
         $policy = $this->CollectData($data);
         $subject = $dataCollect->pluck('subject');
-
         $policy->setBank($data['mortgageeBank'], $data['remainingDebt']);
         $policy->setCalcDate($data['activeFrom']);
         $policy->setInsurer($subject->get('city'), $subject->get('street'));
         $policy->setEmail($dataCollect->get('email'));
-        $policy->setFullName($dataCollect->get('firstName'),$dataCollect->get('lastName'),$dataCollect->get('middleName'));
+        $policy->setFullName($dataCollect->get('firstName'), $dataCollect->get('lastName'), $dataCollect->get('middleName'));
         $policy->setPersonDocument($subject->get('docIssueDate'), $subject->get('docNumber'), $subject->get('docSeries'));
         $policy->setPhone($dataCollect->get('phone'));
         $policy->setAddress(implode(',', [

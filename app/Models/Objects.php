@@ -3,6 +3,8 @@
 namespace App\Models;
 
 
+use App\Drivers\DriverResults\CreatedPolicyInterface;
+
 /**
  * App\Models\Payment
  *
@@ -79,5 +81,18 @@ class Objects extends BaseModel
     public function getValueAttribute()
     {
         return json_decode($this->attributes['value'], true);
+    }
+
+    public function loadFromDriverResult(CreatedPolicyInterface $createdPolicy)
+    {
+        if ($this->product === self::TYPE_PROPERTY) {
+            $this->number = $createdPolicy->getPropertyPolicyNumber();
+            $this->premium = $createdPolicy->getPropertyPremium();
+            $this->external_id = $createdPolicy->getPropertyPolicyId();
+        } else {
+            $this->number = $createdPolicy->getLifePolicyNumber();
+            $this->premium = $createdPolicy->getLifePremium();
+            $this->external_id = $createdPolicy->getLifePolicyId();
+        }
     }
 }

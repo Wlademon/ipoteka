@@ -12,6 +12,8 @@ class CreatedPolicy implements CreatedPolicyInterface
     protected ?float $propertyPremium;
     protected ?string $lifePolicyNumber;
     protected ?string $propertyPolicyNumber;
+    protected ?string $lifePolicyId;
+    protected ?string $propertyPolicyId;
 
     public function __construct(
         ?int $contractId,
@@ -19,7 +21,9 @@ class CreatedPolicy implements CreatedPolicyInterface
         ?float $lifePremium = null,
         ?float $propertyPremium = null,
         ?string $lifePolicyNumber = null,
-        ?string $propertyPolicyNumber= null
+        ?string $propertyPolicyNumber= null,
+        ?string $lifePolicyId,
+        ?string $propertyPolicyId
     )
     {
         $this->contractId = $contractId;
@@ -27,6 +31,8 @@ class CreatedPolicy implements CreatedPolicyInterface
         $this->lifePremium = $lifePremium;
         $this->lifePolicyNumber = $lifePolicyNumber;
         $this->propertyPolicyNumber = $propertyPolicyNumber;
+        $this->lifePolicyId = $lifePolicyId;
+        $this->propertyPolicyId = $propertyPolicyId;
     }
 
     public function toArray()
@@ -127,4 +133,29 @@ class CreatedPolicy implements CreatedPolicyInterface
         $this->propertyPolicyNumber = $propertyPolicyNumber;
     }
 
+    public function getPropertyPolicyId(): string
+    {
+        return $this->propertyPolicyId;
+    }
+
+    /**
+     * @param $lifePolicyNumber string|null
+     */
+    public function setPropertyPolicyId(?string $propertyPolicyId)
+    {
+        $this->propertyPolicyId = $propertyPolicyId;
+    }
+
+    public function getLifePolicyId(): string
+    {
+        return $this->lifePolicyId;
+    }
+
+    /**
+     * @param $lifePolicyId string|null
+     */
+    public function setLifePolicyId(?string $lifePolicyId)
+    {
+        $this->lifePolicyId = $lifePolicyId;
+    }
 }
