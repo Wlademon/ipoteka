@@ -21,8 +21,8 @@ class CreatedPolicy implements CreatedPolicyInterface
         ?float $propertyPremium = null,
         ?string $lifePolicyNumber = null,
         ?string $propertyPolicyNumber= null,
-        ?string $lifePolicyId,
-        ?string $propertyPolicyId
+        $lifePolicyId,
+        $propertyPolicyId
     )
     {
         $this->contractId = $contractId;
@@ -140,7 +140,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $lifePolicyNumber string|null
      */
-    public function setPropertyPolicyId(?string $propertyPolicyId)
+    public function setPropertyPolicyId(string $propertyPolicyId)
     {
         $this->propertyPolicyId = $propertyPolicyId;
     }
@@ -153,7 +153,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $lifePolicyId string|null
      */
-    public function setLifePolicyId(?string $lifePolicyId)
+    public function setLifePolicyId(string $lifePolicyId)
     {
         $this->lifePolicyId = $lifePolicyId;
     }
