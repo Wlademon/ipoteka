@@ -70,13 +70,16 @@ class AlphaDriver implements DriverInterface
         $calculator->setBank($data['mortgageeBank'], $data['remainingDebt']);
         $calculator->setCalcDate($data['activeFrom']);
 
-        if ($dataCollect->flatten()->has('life')) {
-            $life = $dataCollect->flatten(2);
+        $objects = $dataCollect->only(['objects'])->flatten();
+
+
+        if ($objects->has('life')) {
+            $life = $objects->only(['life'])->flatten();
             $calculator->setInsurant($life->get('gender'), $life->get('gender'));
             $calculator->setLifeRisk($life->get('professions', []), $life->get('sports', []));
         }
-        if ($dataCollect->flatten()->has('property')) {
-            $property = $dataCollect->flatten(2);
+        if ($objects->has('property')) {
+            $property = $objects->only(['property'])->flatten();
             $calculator->setInsurance();
             $calculator->setPropertyRisk(
                 null,
