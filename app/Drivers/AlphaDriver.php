@@ -12,6 +12,7 @@ use App\Drivers\Traits\DriverTrait;
 use App\Exceptions\Drivers\AlphaException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
+use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
@@ -34,7 +35,8 @@ class AlphaDriver implements DriverInterface
     {
         $this->client = $client;
         throw_if(
-            !$repository->get($prefix . '.host', false), new AlphaException('Not set host property')
+            !$repository->get($prefix . '.host', false),
+            new AlphaException('Not set host property')
         );
         $this->host = $repository->get($prefix . '.host');
     }
@@ -71,8 +73,6 @@ class AlphaDriver implements DriverInterface
         $calculator->setCalcDate($dataCollect->get('activeFrom'));
 
         $objects = $dataCollect->only(['objects'])->flatten();
-
-
         if ($objects->has('life')) {
             $life = $objects->only(['life'])->flatten();
             $calculator->setInsurant($life->get('gender'), $life->get('birthDate'));
@@ -104,7 +104,6 @@ class AlphaDriver implements DriverInterface
      */
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
-
         $dataCollect = collect($data);
         $policy = $this->CollectData($data);
         $subject = $dataCollect->only('subject')->flatten();
@@ -121,8 +120,8 @@ class AlphaDriver implements DriverInterface
             $policy->setAddressSquare($property->get('area'));
         }
 
-        $policy->setDateCreditDoc($dataCollect->get('dateCreditDoc')); //?
-        $policy->setNumberCreditDoc($dataCollect->get('numberCreditDoc')); //?
+        $policy->setDateCreditDoc((new Carbon())->format('Y-d-m')); //?
+        $policy->setNumberCreditDoc($dataCollect->get('mortgageAgreementNumber')); //?
 
         $postResult = $this->client->post(
             $this->host . self::POST_POLICY_URL, [

@@ -106,7 +106,12 @@ class AlphaCalculator
         $this->data['email'] = $email;
     }
 
-    public function setFullName(string $name, string $lastName, string $middleName)
+    /**
+     * @param string $name
+     * @param string $lastName
+     * @param string|null $middleName
+     */
+    public function setFullName(string $name, string $lastName, ?string $middleName)
     {
         $this->data['firstName'] = $name;
         $this->data['lastName'] = $lastName;

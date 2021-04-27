@@ -162,7 +162,9 @@ class CreatePolicyRequest extends Request
             'objects.life.kladr' => ['required_if:objects.life', 'string'],
             'objects.life.apartment' => ['string','nullable'],
             'objects.life.sports' => ['array'],
+            'objects.life.sports.*' => ['string'],
             'objects.life.professions' => ['array'],
+            'objects.life.professions.*' => ['string'],
             // Insured rules
             'objects.*.block' => ['string','nullable'],
             'objects.*.city' => ['required', 'string'],

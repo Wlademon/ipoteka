@@ -17,12 +17,13 @@ class CreatedPolicy implements CreatedPolicyInterface
 
     public function __construct(
         ?int $contractId,
+        string $lifePolicyId,
+        string $propertyPolicyId,
         ?float $lifePremium = null,
         ?float $propertyPremium = null,
         ?string $lifePolicyNumber = null,
-        ?string $propertyPolicyNumber= null,
-        $lifePolicyId,
-        $propertyPolicyId
+        ?string $propertyPolicyNumber = null
+
     )
     {
         $this->contractId = $contractId;
@@ -41,8 +42,8 @@ class CreatedPolicy implements CreatedPolicyInterface
             'premiumSum'           => $this->getPremiumSum(),
             'lifePremium'          => (float)$this->lifePremium,
             'propertyPremium'      => (float)$this->propertyPremium,
-            'lifePolicyNumber'     => (string)$this->lifePolicyNumber,
-            'propertyPolicyNumber' => (string)$this->propertyPolicyNumber,
+            'lifePolicyNumber'     => $this->lifePolicyNumber,
+            'propertyPolicyNumber' => $this->propertyPolicyNumber,
         ];
     }
 
@@ -57,7 +58,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $contractId int|null
      */
-    public function setContractId(?int $contractId)
+    public function setContractId(int $contractId)
     {
         $this->contractId = $contractId;
     }
@@ -78,7 +79,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $lifePremium float|null
      */
-    public function setLifePremium(?float $lifePremium)
+    public function setLifePremium(float $lifePremium)
     {
         $this->lifePremium = $lifePremium;
     }
@@ -94,7 +95,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $propertyPremium float|null
      */
-    public function setPropertyPremium(?float $propertyPremium)
+    public function setPropertyPremium(float $propertyPremium)
     {
         $this->propertyPremium = $propertyPremium;
     }
@@ -108,9 +109,9 @@ class CreatedPolicy implements CreatedPolicyInterface
     }
 
     /**
-     * @param $lifePolicyNumber string|null
+     * @param $lifePolicyNumber string
      */
-    public function setLifePolicyNumber(?string $lifePolicyNumber)
+    public function setLifePolicyNumber(string $lifePolicyNumber)
     {
         $this->lifePolicyNumber = $lifePolicyNumber;
     }
@@ -127,7 +128,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $propertyPolicyNumber string|null
      */
-    public function setPropertyPolicyNumber(?string $propertyPolicyNumber)
+    public function setPropertyPolicyNumber(string $propertyPolicyNumber)
     {
         $this->propertyPolicyNumber = $propertyPolicyNumber;
     }
