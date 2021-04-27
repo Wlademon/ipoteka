@@ -70,13 +70,13 @@ class AlphaDriver implements DriverInterface
         $calculator->setBank($data['mortgageeBank'], $data['remainingDebt']);
         $calculator->setCalcDate($data['activeFrom']);
 
-        if ($dataCollect->pluck('objects')->has('life')) {
-            $life = $dataCollect->pluck('objects')->pluck('life');
+        if ($dataCollect->flatten()->has('life')) {
+            $life = $dataCollect->flatten(2);
             $calculator->setInsurant($life->get('gender'), $life->get('gender'));
             $calculator->setLifeRisk($life->get('professions', []), $life->get('sports', []));
         }
-        if ($dataCollect->pluck('objects')->has('property')) {
-            $property = $dataCollect->pluck('objects')->pluck('property');
+        if ($dataCollect->flatten()->has('property')) {
+            $property = $dataCollect->flatten(2);
             $calculator->setInsurance();
             $calculator->setPropertyRisk(
                 null,
@@ -104,7 +104,7 @@ class AlphaDriver implements DriverInterface
 
         $dataCollect = collect($data);
         $policy = $this->CollectData($data);
-        $subject = $dataCollect->pluck('subject');
+        $subject = $dataCollect->flatten();
         $policy->setBank($data['mortgageeBank'], $data['remainingDebt']);
         $policy->setCalcDate($data['activeFrom']);
         $policy->setInsurer($subject->get('city'), $subject->get('street'));
@@ -114,7 +114,7 @@ class AlphaDriver implements DriverInterface
         $policy->setPhone($dataCollect->get('phone'));
         $policy->setAddress($dataCollect->only(['city', 'state', 'street', 'house', 'block', 'apartment'])->join(', '));
 
-        $policy->setAddressSquare($dataCollect->pluck('objects')->pluck('property')->get('area'));
+        $policy->setAddressSquare($dataCollect->flatten(2)->get('area'));
         $policy->setDateCreditDoc($dataCollect->get('dateCreditDoc')); //?
         $policy->setNumberCreditDoc($dataCollect->get('numberCreditDoc')); //?
 
