@@ -26,7 +26,7 @@ class AlphaDriver implements DriverInterface
 
     const CALC_URL = '/msrv/mortgage/partner/calc';
     const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
-    const GET_POLICY_URL = '/msrv/mortgage/partner/contractStatus?upid=360';
+    const GET_POLICY_URL = '/msrv/mortgage/partner/contractStatus';
     protected string $host;
     protected Client $client;
 
@@ -67,15 +67,15 @@ class AlphaDriver implements DriverInterface
     {
         $dataCollect = collect($data);
         $calculator = new AlphaCalculator(config(), '');
-        $calculator->setBank($data['mortgageeBank'], $data['remainingDebt']);
-        $calculator->setCalcDate($data['activeFrom']);
+        $calculator->setBank($dataCollect->get('mortgageeBank'), $dataCollect->get('remainingDebt'));
+        $calculator->setCalcDate($dataCollect->get('activeFrom'));
 
         $objects = $dataCollect->only(['objects'])->flatten();
 
 
         if ($objects->has('life')) {
             $life = $objects->only(['life'])->flatten();
-            $calculator->setInsurant($life->get('gender'), $life->get('gender'));
+            $calculator->setInsurant($life->get('gender'), $life->get('birthDate'));
             $calculator->setLifeRisk($life->get('professions', []), $life->get('sports', []));
         }
         if ($objects->has('property')) {
@@ -107,17 +107,20 @@ class AlphaDriver implements DriverInterface
 
         $dataCollect = collect($data);
         $policy = $this->CollectData($data);
-        $subject = $dataCollect->flatten();
-        $policy->setBank($data['mortgageeBank'], $data['remainingDebt']);
-        $policy->setCalcDate($data['activeFrom']);
-        $policy->setInsurer($subject->get('city'), $subject->get('street'));
-        $policy->setEmail($dataCollect->get('email'));
-        $policy->setFullName($dataCollect->get('firstName'), $dataCollect->get('lastName'), $dataCollect->get('middleName'));
-        $policy->setPersonDocument($subject->get('docIssueDate'), $subject->get('docNumber'), $subject->get('docSeries'));
-        $policy->setPhone($dataCollect->get('phone'));
-        $policy->setAddress($dataCollect->only(['city', 'state', 'street', 'house', 'block', 'apartment'])->join(', '));
+        $subject = $dataCollect->only('subject')->flatten();
+        $property = $dataCollect->only('objects')->flatten()->only(['property'])->flatten();
 
-        $policy->setAddressSquare($dataCollect->flatten(2)->get('area'));
+        $policy->setInsurer($subject->get('city'), $subject->get('street'));
+        $policy->setEmail($subject->get('email'));
+        $policy->setFullName($subject->get('firstName'), $subject->get('lastName'), $subject->get('middleName'));
+        $policy->setPersonDocument($subject->get('docIssueDate'), $subject->get('docNumber'), $subject->get('docSeries'));
+        $policy->setPhone($subject->get('phone'));
+
+        if ($property->isNotEmpty()) {
+            $policy->setAddress($property->only(['city', 'state', 'street', 'house', 'block', 'apartment'])->join(','));
+            $policy->setAddressSquare($property->get('area'));
+        }
+
         $policy->setDateCreditDoc($dataCollect->get('dateCreditDoc')); //?
         $policy->setNumberCreditDoc($dataCollect->get('numberCreditDoc')); //?
 
@@ -166,8 +169,7 @@ class AlphaDriver implements DriverInterface
      */
     public function printPolicy(
         Contracts $contract, bool $sample, bool $reset, ?string $filePath = null
-    ): string
-    {
+    ): string {
 
     }
 
