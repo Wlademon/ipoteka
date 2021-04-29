@@ -9,10 +9,14 @@ use App\Models\Contracts;
 use App\Models\Payments;
 use App\Services\DriverService;
 use App\Services\PayService\PayLinks;
+use Carbon\Carbon;
+use CodeDredd\Soap\Facades\Soap;
+use CodeDredd\Soap\SoapClient;
 use Exception;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Ramsey\Uuid\Generator\RandomBytesGenerator;
 use RuntimeException;
 use Strahovka\Payment\PayService;
 
@@ -130,6 +134,144 @@ class ApiController extends BaseController
      */
     public function getPolicy(Request $request, $contractId): Response
     {
+        /**
+         * array:2 [
+         * 0 => "orderResult refundOrder(refundOrderParams $order)"
+         * 1 => "createBindingNoPaymentResponse createBindingNoPayment(createBindingNoPaymentRequest $request)"
+         * 2 => "orderResult unBindCard(string $bindingId)"
+         * 3 => "registerOrderResponse registerOrder(orderParams $order)"
+         * 4 => "orderResult addParams(addParamsRequest $request)"
+         * 5 => "androidPayPaymentResponse androidPay(androidPayPaymentRequest $arg0)"
+         * 6 => "googlePayResponse googlePay(googlePayRequest $arg0)"
+         * 7 => "applePayPaymentResponse applePay(applePayPaymentRequest $arg0)"
+         * 8 => "paymentOrderResult paymentOrderBinding(paymentOrderBindingParams $order)"
+         * 9 => "getBindingsResponse getBindings(getBindingsRequest $request)"
+         * 10 => "orderInfoArray getLastOrders(dateTime $from, dateTime $to)"
+         * 11 => "getOrderStatusExtendedResponse getOrderStatusExtended(getOrderStatusExtendedRequest $order)"
+         * 12 => "registerOrderResponse registerOrderPreAuth(orderParams $order)"
+         * 13 => "extendBindingResponse extendBinding(extendBindingRequest $request)"
+         * 14 => "verifyEnrollmentResponse verifyEnrollment(string $pan)"
+         * 15 => "getLastOrdersForMerchantsResponse getLastOrdersForMerchants(getLastOrdersForMerchantsRequest $request)"
+         * 16 => "orderResult updateSSLCardList(string $mdorder)"
+         * 17 => "getBindingsResponse getBindingsByCardOrId(getBindingsByCardOrIdRequest $request)"
+         * 18 => "orderResult reverseOrder(reversalOrderParams $order)"
+         * 19 => "orderResult bindCard(string $bindingId)"
+         * 20 => "finishThreeDSResponse finishThreeDs(finishThreeDSRequest $request)"
+         * 21 => "orderResult updateBlackCardList(string $mdorder)"
+         * 22 => "paymentOrderOtherWayResult paymentOrderOtherWay(paymentOrderOtherWayParams $order)"
+         * 23 => "orderResult checkAuthenticate(loginParams $login)"
+         * 24 => "orderResult updateWhiteCardList(string $mdorder)"
+         * 25 => "orderResult depositOrder(depositOrderParams $order)"
+         * 26 => "orderStatusResponse getOrderStatus(orderStatusRequest $order)"
+         * 27 => "paymentOrderResult paymentOrder(paymentOrderParams $order)"
+         * ]
+         */
+
+        /**
+         * Request параметры для registerOrder
+         *  struct orderParams {
+        string returnUrl;
+        string failUrl;
+        string merchantLogin;
+        string email;
+        serviceParam params;
+        string clientId;
+        orderBundle orderBundle;
+        features features;
+        string merchantOrderNumber;
+        string description;
+        long amount;
+        string currency;
+        string language;
+        string pageView;
+        int sessionTimeoutSecs;
+        string bindingId;
+        dateTime expirationDate;
+        dateTime autocompletionDate;
+        YesNo accidentPolicyPermission;
+        YesNo propertyPolicyPermission;
+        YesNo isOperDocument;
+        decimal lifeLineDonationAmount;
+        string clientEmail;
+        }
+         */
+        $password = "ALFAE313";
+        $nonce = base64_encode(pack("L", rand(0,1000)));
+        $created = Carbon::now()->format('Y-m-d\TH:i:s.v\Z');
+        $passwordDigest = base64_encode(sha1($nonce . $created . $password, true));
+        dd($passwordDigest);
+
+
+        $passwordDigest2 = base64_encode(sha1($nonce . $created . $password, true));
+
+        $options = array(
+            'soap_version'=>SOAP_1_1,
+            'exceptions'=>false,
+            'trace'=>1,
+            'cache_wsdl'=>WSDL_CACHE_NONE
+        );
+        $soap = new \SoapClient('https://b2b-test2.alfastrah.ru/cxf/partner/MerchantServices?wsdl',$options);
+
+        $headerVar = new \SoapVar("<IdentityHeader>
+<SOAP-ENV:Header>
+<wsse:Security xmlns:wsse='http://docs.oasis-open.org/wss/2004/01/oasis-200401-
+wss-wssecurity-secext-1.0.xsd' xmlns:wsu='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'>
+ <wsse:UsernameToken wsu:Id='UsernameToken-DD4E97480F1F85448316117490736656'>
+ <wsse:Username>E_PARTNER</wsse:Username>
+ <wsse:Password Type='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile1.0#PasswordDigest'>$passwordDigest</wsse:Password>
+ <wsse:Nonce EncodingType='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-messagesecurity-1.0#Base64Binary'>$nonce</wsse:Nonce>
+ <wsu:Created>$created</wsu:Created>
+ </wsse:UsernameToken>
+ </wsse:Security>
+ </SOAP-ENV:Header>
+ </IdentityHeader>",
+            XSD_ANYXML);
+        $header = new \SoapHeader('https://b2b-test2.alfastrah.ru/cxf/partner/MerchantServices?wsdl','MerchantServiceImplService',$headerVar, true);
+        $soap->__setSoapHeaders($header);
+
+//        $reg = $soap->registerOrder();
+        try{
+            $result = $soap->__SoapCall('registerOrder', []);
+        }catch (\Exception $e){
+            throw new \Exception($soap->__getLastRequestHeaders());
+        }
+        dd($result, $soap);
+//
+//        $soap = new \SoapClient('https://www.dataaccess.com/webservicesserver/NumberConversion.wso?wsdl');
+//
+//        $reg = $soap->NumberToWords(['ubiNum' => 500]);
+//        dd($reg);
+
+//        ->withHeaders([
+//        "<soapenv:Header>
+// <wsse:Security soapenv:mustUnderstand='1' xmlns:wsse='http://docs.oasis-open.org/wss/2004/01/oasis-200401-
+//wss-wssecurity-secext-1.0.xsd' xmlns:wsu='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurityutility-1.0.xsd'>
+// <wsse:UsernameToken wsu:Id='UsernameToken-DD4E97480F1F85448316117490736656'>
+// <wsse:Username>E_PARTNER</wsse:Username>
+// <wsse:Password Type='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile1.0#PasswordDigest'>$password</wsse:Password>
+// <wsse:Nonce EncodingType='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-messagesecurity-1.0#Base64Binary'>$nonce</wsse:Nonce>
+// <wsu:Created>$created</wsu:Created>
+// </wsse:UsernameToken>
+// </wsse:Security>
+//</soapenv:Header>"
+//    ])
+
+//        $response = Soap::baseWsdl('https://www.dataaccess.com/webservicesserver/NumberConversion.wso?wsdl')
+//        $response = Soap::baseWsdl('https://b2b-test2.alfastrah.ru/cxf/partner/MerchantServices?wsdl')
+//            ->withHeaders([
+//            'Header' => "<IdentityHeader><SOAP-ENV:Header><wsse:Security SOAP-ENV:mustUnderstand='1' xmlns:wsse='http://docs.oasis-open.org/wss/2004/01/oasis-200401-
+//wss-wssecurity-secext-1.0.xsd' xmlns:wsu='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'>
+// <wsse:UsernameToken wsu:Id='UsernameToken-DD4E97480F1F85448316117490736656'>
+// <wsse:Username>E_PARTNER</wsse:Username>
+// <wsse:Password Type='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile1.0#PasswordDigest'>$passwordDigest</wsse:Password>
+// <wsse:Nonce EncodingType='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-messagesecurity-1.0#Base64Binary'>$nonce</wsse:Nonce>
+// <wsu:Created>$created</wsu:Created>
+// </wsse:UsernameToken>
+// </wsse:Security></SOAP-ENV:Header></IdentityHeader>"
+//        ])
+//            ->registerOrder([]);
+//            ->NumberToWords(['ubiNum' => 1100]);
+//        dd($response->body());
         self::log("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
 
