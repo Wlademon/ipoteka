@@ -195,14 +195,31 @@ class ApiController extends BaseController
         string clientEmail;
         }
          */
+
+//        $nonce = base64_encode(pack("H*", mt_rand()));
+//        $created = Carbon::now()->format('Y-m-d\TH:i:s.v\Z');
+//        $passwordDigest = base64_encode(sha1($nonce . $created . $password));
         $password = "ALFAE313";
-        $nonce = base64_encode(pack("L", rand(0,1000)));
-        $created = Carbon::now()->format('Y-m-d\TH:i:s.v\Z');
-        $passwordDigest = base64_encode(sha1($nonce . $created . $password, true));
-        dd($passwordDigest);
+        $login = 'E_PARTNER';
+
+        $nonce = mt_rand();
+        $idToken = md5(base64_encode(pack('H*',$nonce)));
+        $nonceXML = base64_encode(pack('H*', $nonce));
+        $timeTmp = new \DateTime('now');
+
+        $timestamp = $timeTmp->format('Y-m-d\TH:i:s\Z'); // 2016-02-25T11:24:18Z date('c');
+        unset($timeTmp);
+
+        $packedNonce = pack('H*', $nonce);
+        $packedTimestamp = pack('a*', $timestamp);
+        $packedPassword = pack('a*', $password);
+
+        $hash = sha1( $packedNonce . $packedTimestamp . $packedPassword );
+        $packedHash = pack('H*', $hash);
+
+        $passDigest = base64_encode( $packedHash );
 
 
-        $passwordDigest2 = base64_encode(sha1($nonce . $created . $password, true));
 
         $options = array(
             'soap_version'=>SOAP_1_1,
@@ -212,26 +229,32 @@ class ApiController extends BaseController
         );
         $soap = new \SoapClient('https://b2b-test2.alfastrah.ru/cxf/partner/MerchantServices?wsdl',$options);
 
-        $headerVar = new \SoapVar("<IdentityHeader>
-<SOAP-ENV:Header>
-<wsse:Security xmlns:wsse='http://docs.oasis-open.org/wss/2004/01/oasis-200401-
-wss-wssecurity-secext-1.0.xsd' xmlns:wsu='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd'>
- <wsse:UsernameToken wsu:Id='UsernameToken-DD4E97480F1F85448316117490736656'>
- <wsse:Username>E_PARTNER</wsse:Username>
- <wsse:Password Type='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile1.0#PasswordDigest'>$passwordDigest</wsse:Password>
- <wsse:Nonce EncodingType='http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-messagesecurity-1.0#Base64Binary'>$nonce</wsse:Nonce>
- <wsu:Created>$created</wsu:Created>
- </wsse:UsernameToken>
- </wsse:Security>
- </SOAP-ENV:Header>
- </IdentityHeader>",
-            XSD_ANYXML);
-        $header = new \SoapHeader('https://b2b-test2.alfastrah.ru/cxf/partner/MerchantServices?wsdl','MerchantServiceImplService',$headerVar, true);
-        $soap->__setSoapHeaders($header);
+        $xml =
+            <<<XML
+        <SOAP-ENV:Header>
+            <wsse:Security SOAP-ENV:mustUnderstand="1" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd"
+            xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                <wsse:UsernameToken wsu:Id="$idToken" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
+                    <wsse:Username>$login</wsse:Username>
+                    <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">$passDigest</wsse:Password>
+                    <wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">$nonceXML</wsse:Nonce>
+                    <wsu:Created>$timestamp</wsu:Created>
+                </wsse:UsernameToken>
+            </wsse:Security>
+        </SOAP-ENV:Header>
+        XML;
+        $xml = str_replace("\n", '', $xml);
 
+        $headerVar = new \SoapVar($xml,XSD_ANYXML);
+
+
+        $header = new \SoapHeader('http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd','Security',$headerVar, true);
+//        $soap->__setSoapHeaders($header);
+        $soap->__getLastRequest();
 //        $reg = $soap->registerOrder();
         try{
-            $result = $soap->__SoapCall('registerOrder', []);
+            $result = $soap->__SoapCall('registerOrder', [], null, $header);
+            $resp = $soap->__getLastRequestHeaders();
         }catch (\Exception $e){
             throw new \Exception($soap->__getLastRequestHeaders());
         }
