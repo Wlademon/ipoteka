@@ -21,3 +21,5 @@ docker
 
 .htaccess
 /docs
+
+*.log

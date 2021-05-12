@@ -7,17 +7,17 @@ namespace App\Drivers\DriverResults;
 class PayLink implements PayLinkInterface
 {
 
-    protected ?int $orderId;
-    protected ?int $url;
+    protected ?string $orderId;
+    protected ?string $url;
     protected ?float $invoiceNum;
 
     /**
      * Calculated constructor.
-     * @param int|null $orderId
+     * @param string|null $orderId
      * @param string|null $url
      * @param float|null $invoiceNum
      */
-    public function __construct(?int $orderId, ?string $url = null, ?float $invoiceNum = null)
+    public function __construct(string $orderId, string $url = null, float $invoiceNum = null)
     {
         $this->orderId    = $orderId;
         $this->url        = $url;

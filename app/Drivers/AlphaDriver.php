@@ -16,6 +16,7 @@ use App\Exceptions\Drivers\AlphaException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
+use Carbon\Traits\Creator;
 use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
@@ -100,18 +101,19 @@ class AlphaDriver implements DriverInterface
     }
 
 
+    /**
+     * @throws \Throwable
+     */
     protected function createSingleAccount(): array
     {
         $result = $this->client->post(
             $this->host . self::POST_PAYMENT_RECEIPT, [
                 'json' => [
-                    'contractList' => join(',', $this->contractList)
+                    'contractList' => implode(',', $this->contractList)
                 ]
             ]
         );
-        if ($result->getStatusCode() !== 200) {
-            throw new AlphaException('Error create payment');
-        }
+        throw_if($result->getStatusCode() !== 200, new AlphaException('Error create payment'));
         $decodeResult = json_decode($result->getBody()->getContents(), true);
         $text = ' Оплата страхового полиса ';
         return [
@@ -193,17 +195,20 @@ class AlphaDriver implements DriverInterface
     public function registerUserProfile($contract): string
     {
         $registerProfile = new RegisterUserProfile();
-        $registerProfile->setMerchantOrderNumber($contract->id);
         $registerProfile->setEmail($contract->subject()->value['email']);
-        $registerProfile->setFullName($contract->subject()->value['firstName'],$contract->subject()->value['lastName'],$contract->subject()->value['middleName']);
+        $registerProfile->setFullName(
+            $contract->subject()->value['firstName'],
+            $contract->subject()->value['lastName'],
+            $contract->subject()->value['middleName']
+        );
         $registerProfile->setPassword(null);
-        $registerProfile->setPhone($contract->subject()->value['phone']);
-        $registerProfile->setBirthday($contract->subject()->value['birthDate']);
+        $registerProfile->setPhone($contract->subject()->value['phone']); //Телефон. В любом формате, главное чтобы были все 11 цифр
+        $registerProfile->setBirthday((new Carbon($contract->subject()->value['birthDate']))->format('d.m.Y')); //birthday=08.11.1985
         $registerProfile->setContractNumber($contract->number);
-        $registerProfile->setOfferAccepted('y'); // заглушка
-        $registerProfile->setPartnerName('E_PARTNER'); //заглушка
+        $registerProfile->setOfferAccepted('y'); // заглушка без метода
+        $registerProfile->setPartnerName('E_PARTNER'); //заглушка без метода
 
-        return $registerProfile->registerProfile($this->client, $this->host);
+        return $registerProfile->registerProfile($this->client, env('MS_REGISTER_USER_PROFILE'));
     }
 
     /**
@@ -226,7 +231,7 @@ class AlphaDriver implements DriverInterface
         return new PayLink(
             $response->orderId->return,
             $response->formUrl->return,
-            null
+            $contract->insured_sum
         );
     }
 

@@ -9,7 +9,7 @@ use Illuminate\Support\Arr;
 
 class RegisterUserProfile
 {
-    const REGISTER_PROFILE_URL = 'https://www.alfastrah.ru/api/userPartner/';
+    const REGISTER_PROFILE_URL = '/api/userPartner/';
 
     protected array $data = [];
 
@@ -27,18 +27,10 @@ class RegisterUserProfile
 
         return Arr::get($decodeResult, 'user_id', 0);
     }
-    public function setMerchantOrderNumber($merchantOrderNumber)
-    {
-        $this->data[] = [
-            'merchantOrderNumber' => $merchantOrderNumber
-        ];
-    }
 
     public function setEmail(string $email)
     {
-        $this->data[] = [
-            'email' => $email
-        ];
+        $this->data['email'] = $email;
     }
 
     public function setFullName(string $name, string $lastName, ?string $middleName)
@@ -50,43 +42,31 @@ class RegisterUserProfile
 
     public function setPassword(?string $password)
     {
-        $this->data[] = [
-            'password' => $password
-        ];
+        $this->data['password'] = $password;
     }
 
     public function setPhone(string $phone)
     {
-        $this->data[] = [
-            'phone' => $phone
-        ];
+        $this->data['phone'] = $phone;
     }
 
     public function setBirthday(string $birthday)
     {
-        $this->data[] = [
-            'birthday' => $birthday
-        ];
+        $this->data['birthday'] = $birthday;
     }
 
     public function setContractNumber(?string $contractNumber)
     {
-        $this->data[] = [
-            'contract_number' => $contractNumber
-        ];
+        $this->data['contract_number'] = $contractNumber;
     }
 
     public function setOfferAccepted(?string $offerAccepted)
     {
-        $this->data[] = [
-            'offer_accepted' => $offerAccepted
-        ];
+        $this->data['offer_accepted'] = $offerAccepted;
     }
 
     public function setPartnerName(string $partnerName)
     {
-        $this->data[] = [
-            'partner_name' => $partnerName
-        ];
+        $this->data['partner_name'] = $partnerName;
     }
 }
