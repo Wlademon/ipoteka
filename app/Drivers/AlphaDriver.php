@@ -194,14 +194,14 @@ class AlphaDriver implements DriverInterface
     {
         $registerProfile = new RegisterUserProfile();
         $registerProfile->setMerchantOrderNumber($contract->id);
-        $registerProfile->setEmail();
-        $registerProfile->setFullName();
+        $registerProfile->setEmail($contract->subject()->value['email']);
+        $registerProfile->setFullName($contract->subject()->value['firstName'],$contract->subject()->value['lastName'],$contract->subject()->value['middleName']);
         $registerProfile->setPassword(null);
-        $registerProfile->setPhone();
-        $registerProfile->setBirthday();
-        $registerProfile->setContractNumber();
-        $registerProfile->setOfferAccepted();
-        $registerProfile->setPartnerName();
+        $registerProfile->setPhone($contract->subject()->value['phone']);
+        $registerProfile->setBirthday($contract->subject()->value['birthDate']);
+        $registerProfile->setContractNumber($contract->number);
+        $registerProfile->setOfferAccepted('y'); // заглушка
+        $registerProfile->setPartnerName('E_PARTNER'); //заглушка
 
         return $registerProfile->registerProfile($this->client, $this->host);
     }
