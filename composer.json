@@ -8,7 +8,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^7.4",
+        "php": "^8.0",
         "ext-json": "*",
         "ajaxray/php-watermark": "^0.1.1",
         "artisaninweb/laravel-soap": "0.3.0.9",
@@ -26,8 +26,9 @@
         "strahovka/payment": "1.*",
         "swagger-api/swagger-ui": "3.31.1",
 	    "ext-mbstring": "*",
-        "ext-http": "*"
-	},
+        "ext-http": "*",
+        "ext-zip": "*"
+    },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.2",
         "barryvdh/laravel-ide-helper": "^2.6",

@@ -202,8 +202,12 @@ class DriverService
      */
     public function printPdf(Contracts $contract, bool $sample, bool $reset = false, ?string $filePath = null): string
     {
+        $this->getStatus($contract);
         if (!$sample && $contract->status !== Contracts::STATUS_CONFIRMED) {
-            self::abortLog('Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"', RuntimeException::class);
+            self::abortLog(
+                'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
+                RuntimeException::class
+            );
         }
         try {
             return $this->getDriverByCode($contract->program->company->code)->printPolicy($contract, $sample, $reset, $filePath);

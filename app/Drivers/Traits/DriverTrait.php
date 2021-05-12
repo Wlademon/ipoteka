@@ -71,6 +71,19 @@ trait DriverTrait
         return $filenameWithPath;
     }
 
+    public function gefaultFileName(Contracts $contract)
+    {
+        return config('ns.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
+    }
+
+    protected function isFilePoliceExitst(Contracts $contract, &$filenameWithPath = ''): bool
+    {
+        $filename = config('ns.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
+        $filenameWithPath = public_path() . '/' . $filename;
+
+        return file_exists($filenameWithPath);
+    }
+
     /**
      * @param Contracts $contract
      * @param bool $sample
