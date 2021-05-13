@@ -6,13 +6,17 @@ use App\Drivers\DriverResults\Calculated;
 use App\Drivers\DriverResults\CalculatedInterface;
 use App\Drivers\DriverResults\CreatedPolicy;
 use App\Drivers\DriverResults\CreatedPolicyInterface;
+use App\Drivers\DriverResults\PayLink;
 use App\Drivers\DriverResults\PayLinkInterface;
+use App\Drivers\Services\MerchantServices;
+use App\Drivers\Services\RegisterUserProfile;
 use App\Drivers\Source\Alpha\AlphaCalculator;
 use App\Drivers\Traits\DriverTrait;
 use App\Exceptions\Drivers\AlphaException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
+use Carbon\Traits\Creator;
 use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
@@ -28,8 +32,13 @@ class AlphaDriver implements DriverInterface
     const CALC_URL = '/msrv/mortgage/partner/calc';
     const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
     const GET_POLICY_URL = '/msrv/mortgage/partner/contractStatus';
+    const POST_PAYMENT_RECEIPT = '/msrvg/payment/receipt';
+    const CROSS_URL = '/msrv/cross/united/partner/cross';
+
     protected string $host;
     protected Client $client;
+    protected int $managerId = 0;
+    protected array $contractList = [];
 
     public function __construct(Client $client, Repository $repository, string $prefix = '')
     {
@@ -91,12 +100,139 @@ class AlphaDriver implements DriverInterface
         return $calculator;
     }
 
+
+    /**
+     * @throws \Throwable
+     */
+    protected function createSingleAccount(): array
+    {
+        $result = $this->client->post(
+            $this->host . self::POST_PAYMENT_RECEIPT, [
+                'json' => [
+                    'contractList' => implode(',', $this->contractList)
+                ]
+            ]
+        );
+        throw_if($result->getStatusCode() !== 200, new AlphaException('Error create payment'));
+        $decodeResult = json_decode($result->getBody()->getContents(), true);
+        $text = ' Оплата страхового полиса ';
+        return [
+            $text . Arr::get($decodeResult, 'id', 0),
+            $text . Arr::get($decodeResult, 'number', 0),
+        ];
+    }
+
+//    protected function getCross($contract)
+//    {
+//        if (empty($contract->id)) {
+//            throw new AlphaException('contractId is empty.');
+//        }
+//
+//        $getResult = $this->client->get(
+//            $this->host . self::CROSS_URL, [
+//                'contractId' => $contract->id,
+//            ]
+//        );
+//        if ($getResult->getStatusCode() !== 200) {
+//            throw new AlphaException('Error get data from getCross');
+//        }
+//        $decodeGetResult = json_decode($getResult->getBody()->getContents(), true);
+//
+//        $collectResult = collect($decodeGetResult);
+//        if (!$collectResult->has('crossProductList')) {
+//            return $decodeGetResult;
+//        }
+//
+//        $calculationIdList = [];
+//        foreach ($collectResult->only('crossProductList') as $param) {
+//            $calculationIdList = $param['id'];
+//        }
+//
+//        return [
+//            $decodeGetResult,
+//            $calculationIdList,
+//            $contract->id . $this->managerId
+//        ];
+//    }
+//
+//    protected function postSaveCross($contract): string
+//    {
+//        $postResult = $this->client->post(
+//            $this->host . self::CROSS_URL, [
+//                'json' => $this->getCross($contract)
+//            ]
+//        );
+//        if ($postResult->getStatusCode() !== 200) {
+//            throw new AlphaException('Error save crosses in contract.');
+//        }
+//
+//        $decodeGetResult = json_decode($postResult->getBody()->getContents(), true);
+//
+//        return Arr::get($decodeGetResult, 'saveRequestId', 0);
+//    }
+
+//    protected function getCrossStatus(Contracts $contract)
+//    {
+//        $getResult = $this->client->get(
+//            $this->host . self::CROSS_URL, [
+//                'contractId' => $this->postSaveCross($contract),
+//            ]
+//        );
+//        if ($getResult->getStatusCode() !== 200) {
+//            throw new AlphaException('Error get data from CrossStatus');
+//        }
+//        $decodeGetResult = json_decode($getResult->getBody()->getContents(), true);
+//    }
+
+    protected function getIsOperDocument(): string // заглушка
+    {
+        return 'y';
+    }
+
+    /**
+     * @throws AlphaException
+     */
+    public function registerUserProfile($contract): string
+    {
+        $registerProfile = new RegisterUserProfile();
+        $registerProfile->setEmail($contract->subject()->value['email']);
+        $registerProfile->setFullName(
+            $contract->subject()->value['firstName'],
+            $contract->subject()->value['lastName'],
+            $contract->subject()->value['middleName']
+        );
+        $registerProfile->setPassword(null);
+        $registerProfile->setPhone($contract->subject()->value['phone']); //Телефон. В любом формате, главное чтобы были все 11 цифр
+        $registerProfile->setBirthday((new Carbon($contract->subject()->value['birthDate']))->format('d.m.Y')); //birthday=08.11.1985
+        $registerProfile->setContractNumber($contract->number);
+        $registerProfile->setOfferAccepted('y'); // заглушка без метода
+        $registerProfile->setPartnerName('E_PARTNER'); //заглушка без метода
+
+        return $registerProfile->registerProfile($this->client, env('MS_REGISTER_USER_PROFILE'));
+    }
+
     /**
      * @inheritDoc
+     * @throws \Exception
      */
     public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
     {
+        $registerOrder = new MerchantServices();
+        $registerOrder->setMerchantOrderNumber($contract->id);
+        $registerOrder->setDescription($this->createSingleAccount());
+        $registerOrder->setExpirationDate(Carbon::now()->addMinutes(20)->format('Y-m-d\TH:i:sP'));
+        $registerOrder->setIsOperDocument($this->getIsOperDocument());
+        $registerOrder->setClientId($this->registerUserProfile($contract));
+        $registerOrder->setReturnUrl($payLinks->getSuccessUrl());
+        $registerOrder->setFailUrl($payLinks->getFailUrl());
 
+        $response = $registerOrder->registerOrder();
+
+        return new PayLink(
+            $response->orderId->return,
+            $response->formUrl->return,
+            $contract->insured_sum
+        );
     }
 
     /**
@@ -137,15 +273,14 @@ class AlphaDriver implements DriverInterface
             throw new AlphaException('Response has not upid');
         }
 
-        $getResult = $this->client->get(
-            $this->host . self::GET_POLICY_URL, [
-                'upid' => Arr::get($decodePostResult, 'upid'),
-            ]
-        );
-        if ($getResult->getStatusCode() !== 200) {
-            throw new AlphaException('Error get data from createPolicy');
+        $decodeGetResult = $this->getStatusContract(Arr::get($decodePostResult, 'upid'), 'Error get data from createPolicy');
+
+        if (Arr::has($decodeGetResult['propertyContract'], 'contractId')) {
+            $this->contractList[] = Arr::get($decodeGetResult['propertyContract'], 'contractId', 0);
         }
-        $decodeGetResult = json_decode($getResult->getBody()->getContents(), true);
+        if (Arr::has($decodeGetResult['lifeContract'], 'contractId')) {
+            $this->contractList[] = Arr::get($decodeGetResult['lifeContract'], 'contractId', 0);
+        }
 
         return new CreatedPolicy(
             $contract->id,
@@ -158,9 +293,18 @@ class AlphaDriver implements DriverInterface
         );
     }
 
-    public function sendRequest($host)
+    protected function getStatusContract($upid, $message)
     {
+        $getResult = $this->client->get(
+            $this->host . self::GET_POLICY_URL, [
+                'upid' => $upid,
+            ]
+        );
+        if ($getResult->getStatusCode() !== 200) {
+            throw new AlphaException($message);
+        }
 
+        return json_decode($getResult->getBody()->getContents(), true);
     }
 
     /**
@@ -168,7 +312,8 @@ class AlphaDriver implements DriverInterface
      */
     public function printPolicy(
         Contracts $contract, bool $sample, bool $reset, ?string $filePath = null
-    ): string {
+    ): string
+    {
 
     }
 
