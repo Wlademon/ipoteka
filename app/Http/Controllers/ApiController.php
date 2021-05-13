@@ -94,7 +94,7 @@ class ApiController extends BaseController
      * @return \Illuminate\Contracts\Foundation\Application|ResponseFactory|Response
      * @throws Exception
      */
-    public function postCalculate(CalculateRequest $request): Response
+    public function postPolicyCalculate(CalculateRequest $request): Response
     {
         return $this->successResponse($this->driverService->calculate($request->validated()));
     }

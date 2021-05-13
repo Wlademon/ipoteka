@@ -25,10 +25,10 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
 
 /**
- * Class ReninsDriver
+ * Class RensinsDriver
  * @package App\Drivers
  */
-class ReninsDriver implements DriverInterface
+class RensinsDriver implements DriverInterface
 {
     use DriverTrait {
         DriverTrait::getStatus as getTStatus;
@@ -79,7 +79,8 @@ class ReninsDriver implements DriverInterface
         $collector->setBankBik($this->getBankBIKByParams($data));
         $collector->setCreditSum($data['remainingDebt']);
         $collector->setCreditCity(self::CREDIT_CITY);
-        $collector->workStatus($data['subject']);
+        $collector->workStatus([]);
+        $collector->setStartEnd($data['activeFrom'], $data['activeTo']);
         if ($this->isLive($data)) {
             $objectLife = $data['objects']['life'];
             $collector->setSex($objectLife['gender']);
@@ -90,11 +91,7 @@ class ReninsDriver implements DriverInterface
                     [
                         'name' => 'Смерть',
                         'insured' => 'true'
-                    ],
-                    [
-                        'name' => 'Инвалидность',
-                        'insured' => 'true'
-                    ],
+                    ]
                 ],
                 '_zastr1'
             );

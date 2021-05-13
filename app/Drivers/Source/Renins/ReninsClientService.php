@@ -31,10 +31,10 @@ class ReninsClientService
         $host = $repository->get($prefix . 'host');
         $login = $repository->get($prefix . 'login');
         $pass = $repository->get($prefix . 'pass');
-        $token = TokenService::getToken($host, $login, $pass);
         if (!$host) {
             throw new ReninsException('Not set Renisans host.');
         }
+        $token = TokenService::getToken($host, $login, $pass);
         if (!$token) {
             throw new ReninsException('Not set Renisans token.');
         }

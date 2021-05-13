@@ -30,9 +30,6 @@ class DriverService
     /**
      * @todo Переделать
      */
-    const DRIVERS = [
-
-    ];
 
     /**
      * @var DriverInterface|null
@@ -45,18 +42,21 @@ class DriverService
      */
     protected function setDriver(string $driver = null): void
     {
-        $driverIdentifier = trim(strtolower($driver));
+        $driverCode = trim(strtolower($driver));
+        $driverIdentifier = ucfirst($driverCode);
 
-        $driver = self::DRIVERS[$driverIdentifier] ?? null;
-        if (!$driver) {
+        $driver = "App\\Drivers\\{$driverIdentifier}Driver";
+        $driverPath = app_path("Drivers/{$driverIdentifier}Driver.php");
+        if (!file_exists($driverPath)) {
             self::abortLog(
                 "Driver {$driverIdentifier} not found",
                 DriverServiceException::class,
                 Response::HTTP_NOT_FOUND
             );
         }
+        include_once $driverPath;
 
-        $this->driver = new $driver;
+        $this->driver = new $driver(config(), "mortgage.$driverCode.");
     }
 
     /**

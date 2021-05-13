@@ -37,7 +37,7 @@ class ReninsCalcCollector implements Arrayable
                         'name' => 'Дата',
                         'code' => 'dogovor.ipotechnDogovor.data',
                         'type' => 'Дата',
-                        'stringValue' => $this->toTime(time())
+                        'dateValue' => $this->toTime(time())
                     ],
                     [
                         'name' => 'Занимается экстремальными видами спорта из списка',
@@ -63,6 +63,12 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
+    public function setStartEnd($dateStart, $dateEnd): void
+    {
+        $this->data['dateBeg'] = $this->toTime($dateStart);
+        $this->data['dateEnd'] = $this->toTime($dateEnd);
+    }
+
     // только для life
     public function workStatus(array $subject)
     {
@@ -70,7 +76,7 @@ class ReninsCalcCollector implements Arrayable
             'name' => 'Статус занятости Страхователя',
             'code' => 'dogovor.strahStatusZanatosti',
             'type' => 'Строка',
-            'intValue' => WorkMatcher::match($subject['professions'] ?? [])
+            'stringValue' => WorkMatcher::match($subject['professions'] ?? [])
         ];
     }
 
@@ -168,7 +174,7 @@ class ReninsCalcCollector implements Arrayable
             return Carbon::createFromTimestamp($date)->format(self::TIME_FORMAT);
         }
         if (is_string($date)) {
-            return Carbon::createFromTimeString($date)->format(self::TIME_FORMAT);
+            return Carbon::parse($date)->format(self::TIME_FORMAT);
         }
         if ($date instanceof \DateTime) {
             return $date->format(self::TIME_FORMAT);
