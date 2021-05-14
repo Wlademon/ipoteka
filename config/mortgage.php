@@ -11,4 +11,9 @@ return [
         'login' => env('SC_RENISANS_LOGIN'),
         'pass' => env('SC_RENISANS_PASS'),
     ],
+    'alfaMsk' => [
+        'host' => env('SC_ALFA_HOST'),
+        'agentContractId' => env('SC_ALFA_AGENT_CONTRACT_ID'),
+        'managerId' => env('SC_ALFA_AGENT_MANAGER_ID'),
+    ]
 ];

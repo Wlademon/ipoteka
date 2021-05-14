@@ -17,20 +17,20 @@ class AlphaCalculator
 
     protected array $data = [];
 
-    public function __construct(\Illuminate\Config\Repository $repository, string $prefix = '')
+    public function __construct()
     {
         throw_if(
-            !$repository->get($prefix . 'agentContractId', false),
+            empty(env('SC_ALFA_AGENT_CONTRACT_ID')),
             new AlphaException('Not set agentContractId property')
         );
         throw_if(
-            !$repository->get($prefix . 'managerId', false),
-            new AlphaException('Not set agentContractId property')
+            empty(env('SC_ALFA_AGENT_MANAGER_ID')),
+            new AlphaException('Not set managerId property')
         );
 
         $this->data['agent'] = [
-            'agentContractId' => $repository->get($prefix . 'agentContractId'),
-            'managerId' => $repository->get($prefix . 'managerId')
+            'agentContractId' => intval(env('SC_ALFA_AGENT_CONTRACT_ID')),
+            'managerId' => intval(env('SC_ALFA_AGENT_MANAGER_ID'))
         ];
     }
 
@@ -42,6 +42,10 @@ class AlphaCalculator
         return $this->data;
     }
 
+    /**
+     * @param string $name
+     * @param float $creditSum
+     */
     public function setBank(string $name, float $creditSum)
     {
         $this->data['bank'] = [
@@ -50,6 +54,9 @@ class AlphaCalculator
         ];
     }
 
+    /**
+     * @param string $beginDate
+     */
     public function setCalcDate(string $beginDate)
     {
         $this->data['calculation'] = [
@@ -58,6 +65,9 @@ class AlphaCalculator
         ];
     }
 
+    /**
+     * @param string $saleType
+     */
     public function setInsurance(string $saleType = self::SALE_TYPE_SECOND)
     {
         $this->data['insurance'] = [
@@ -66,6 +76,10 @@ class AlphaCalculator
         ];
     }
 
+    /**
+     * @param bool $gender
+     * @param string $dateBirth
+     */
     public function setInsurant(bool $gender, string $dateBirth)
     {
         $this->data['insurant'] = [
@@ -74,6 +88,10 @@ class AlphaCalculator
         ];
     }
 
+    /**
+     * @param array $profession
+     * @param array $sport
+     */
     public function setLifeRisk(array $profession = [], array $sport = [])
     {
         $this->data['lifeRisk'] = [
@@ -83,7 +101,13 @@ class AlphaCalculator
         ];
     }
 
-    public function setPropertyRisk(string $address, bool $goruch, ?int $year)
+    /**
+     * @param string|null $address
+     * @param bool $goruch
+     * @param int|null $year
+     * @throws \Throwable
+     */
+    public function setPropertyRisk(?string $address, bool $goruch, ?int $year)
     {
         throw_if($year && ($year < 1950 || $year > 2100), new AlphaException('Год постройки больше максимального или меньше минимального порога'));
         $this->data['propertyRisk'] = [
@@ -93,6 +117,10 @@ class AlphaCalculator
         ];
     }
 
+    /**
+     * @param string $city
+     * @param string $street
+     */
     public function setInsurer(string $city, string $street)
     {
         $this->data['insurer']['address'] = [
@@ -101,6 +129,9 @@ class AlphaCalculator
         ];
     }
 
+    /**
+     * @param string $email
+     */
     public function setEmail(string $email)
     {
         $this->data['email'] = $email;
@@ -118,7 +149,11 @@ class AlphaCalculator
         $this->data['middleName'] = $middleName ?? '';
     }
 
-
+    /**
+     * @param string $dateOfIssue
+     * @param int $number
+     * @param int $seria
+     */
     public function setPersonDocument(string $dateOfIssue,int $number,int $seria)
     {
         $this->data['personDocument'] = [
@@ -128,26 +163,41 @@ class AlphaCalculator
         ];
     }
 
+    /**
+     * @param string $phone
+     */
     public function setPhone(string $phone)
     {
         $this->data['phone'] = $phone;
     }
 
+    /**
+     * @param string $address
+     */
     public function setAddress(string $address)
     {
         $this->data['address'] = $address;
     }
 
+    /**
+     * @param float $addressSquare
+     */
     public function setAddressSquare(float $addressSquare)
     {
         $this->data['addressSquare'] = $addressSquare;
     }
 
+    /**
+     * @param string $dateCreditDoc
+     */
     public function setDateCreditDoc(string $dateCreditDoc)
     {
         $this->data['dateCreditDoc'] = $dateCreditDoc;
     }
 
+    /**
+     * @param string $numberCreditDoc
+     */
     public function setNumberCreditDoc(string $numberCreditDoc)
     {
         $this->data['numberCreditDoc'] = $numberCreditDoc;

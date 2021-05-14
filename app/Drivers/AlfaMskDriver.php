@@ -10,6 +10,7 @@ use App\Drivers\DriverResults\PayLink;
 use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\Services\MerchantServices;
 use App\Drivers\Services\RegisterUserProfile;
+use App\Drivers\Source\Alpha\AlfaAuth;
 use App\Drivers\Source\Alpha\AlphaCalculator;
 use App\Drivers\Traits\DriverTrait;
 use App\Exceptions\Drivers\AlphaException;
@@ -25,43 +26,55 @@ use Illuminate\Support\Arr;
  * Class AbsolutDriver
  * @package App\Drivers
  */
-class AlphaDriver implements DriverInterface
+class AlfaMskDriver implements DriverInterface
 {
     use DriverTrait;
 
-    const CALC_URL = '/msrv/mortgage/partner/calc';
     const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
     const GET_POLICY_URL = '/msrv/mortgage/partner/contractStatus';
     const POST_PAYMENT_RECEIPT = '/msrvg/payment/receipt';
-    const CROSS_URL = '/msrv/cross/united/partner/cross';
 
     protected string $host;
     protected Client $client;
     protected int $managerId = 0;
     protected array $contractList = [];
 
-    public function __construct(Client $client, Repository $repository, string $prefix = '')
+    public function __construct(Repository $repository, string $prefix = '')
     {
-        $this->client = $client;
+        $this->client = new Client();
         throw_if(
-            !$repository->get($prefix . '.host', false),
+            !$repository->get($prefix . 'host', false),
             new AlphaException('Not set host property')
         );
-        $this->host = $repository->get($prefix . '.host');
+        $this->host = $repository->get($prefix . 'host');
     }
 
     /**
      * @inheritDoc
+     * @throws AlphaException
      */
     public function calculate(array $data): CalculatedInterface
     {
+        $auth = new AlfaAuth();
+        $authToken = $auth->getToken($this->client)['access_token'];
 
         $calculator = $this->collectData($data);
-        $result = $this->client->post(
-            $this->host . self::CALC_URL, [
-                'json' => $calculator->getData()
-            ]
-        );
+
+        try {
+            $result = $this->client->post(
+                $this->host . self::POST_POLICY_URL, [
+                    'headers' => [
+                        'Authorization' => "Bearer {$authToken}"
+                    ],
+                    'json' => $calculator->getData()
+                ]
+            );
+        }
+        catch (\Exception $e) {
+            dd($e->getMessage());
+        }
+        var_dump($result->getHeaders());die;
+
         if ($result->getStatusCode() !== 200) {
             throw new AlphaException('Error calc');
         }
@@ -77,21 +90,22 @@ class AlphaDriver implements DriverInterface
     protected function collectData(array $data): AlphaCalculator
     {
         $dataCollect = collect($data);
-        $calculator = new AlphaCalculator(config(), '');
+        $calculator = new AlphaCalculator();
         $calculator->setBank($dataCollect->get('mortgageeBank'), $dataCollect->get('remainingDebt'));
         $calculator->setCalcDate($dataCollect->get('activeFrom'));
 
-        $objects = $dataCollect->only(['objects'])->flatten();
+        $objects = collect($dataCollect->get('objects'));
+
         if ($objects->has('life')) {
-            $life = $objects->only(['life'])->flatten();
+            $life = collect($objects->get('life'));
             $calculator->setInsurant($life->get('gender'), $life->get('birthDate'));
             $calculator->setLifeRisk($life->get('professions', []), $life->get('sports', []));
         }
         if ($objects->has('property')) {
-            $property = $objects->only(['property'])->flatten();
+            $property = collect($objects->get('property'));
             $calculator->setInsurance();
             $calculator->setPropertyRisk(
-                null,
+                '',
                 $property->get('isWooden', false),
                 $property->get('buildYear')
             );
@@ -268,6 +282,7 @@ class AlphaDriver implements DriverInterface
             throw new AlphaException('Error create policy');
         }
         $decodePostResult = json_decode($postResult->getBody()->getContents(), true);
+
 
         if (!$decodePostResult->has('upid')) {
             throw new AlphaException('Response has not upid');

@@ -43,6 +43,7 @@ class DriverService
     protected function setDriver(string $driver = null): void
     {
         $driverCode = trim(strtolower($driver));
+        $driverCode = \Str::camel($driverCode);
         $driverIdentifier = ucfirst($driverCode);
 
         $driver = "App\\Drivers\\{$driverIdentifier}Driver";
