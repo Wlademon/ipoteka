@@ -2,11 +2,16 @@
 
 namespace App\Drivers\Traits;
 
+use App\Drivers\DriverResults\PayLink;
 use App\Mail\Email;
 use App\Models\Contracts;
+use App\Services\PayService\PayLinks;
+use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use stdClass;
+use Strahovka\Payment\PayService;
 
 trait DriverTrait
 {
@@ -82,6 +87,35 @@ trait DriverTrait
         $filenameWithPath = public_path() . '/' . $filename;
 
         return file_exists($filenameWithPath);
+    }
+
+    public function getPayLink(Contracts $contract, PayLinks $links): PayLink
+    {
+        $invoiceNum = sprintf("%s%03d%06d/%s", 'NS', $contract->company_id, $contract->id, Carbon::now()->format('His'));
+
+        if (in_array(env('APP_ENV'), ['local', 'testing'])) {
+            $invoiceNum = time() % 100 . $invoiceNum;
+        }
+
+        $data = [
+            'successUrl' => env('STR_HOST', 'https://strahovka.ru') . $links->getSuccessUrl(),
+            'failUrl' => env('STR_HOST', 'https://strahovka.ru') . $links->getFailUrl(),
+            'phone' => str_replace([' ', '-'], '', $contract['subject']['phone']),
+            'fullName' => $contract['subject_fullname'],
+            'passport' => $contract['subject_passport'],
+            'name' => "Полис по Телемед №{$contract->id}",
+            'description' => "Оплата за полис {$contract->company->name} №{$contract->id}",
+            'amount' => $contract['premium'],
+            'merchantOrderNumber' => $invoiceNum,
+        ];
+        Log::info(__METHOD__ . '. Data for acquiring', [$data]);
+        $response = app()->make(PayService::class)->getPayLink($data);
+
+        if (isset($response->errorCode) && $response->errorCode !== 0) {
+            throw new \Exception($response->errorMessage . ' (code: ' . $response->errorCode . ')', 500);
+        }
+
+        return new PayLink($response->orderId, $response->formUrl, $invoiceNum);
     }
 
     /**

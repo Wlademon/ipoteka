@@ -83,6 +83,15 @@ class Objects extends BaseModel
         return json_decode($this->attributes['value'], true);
     }
 
+    public function toArray()
+    {
+        $data = collect($this->attributes);
+        $data = $data->merge($this->getAttribute('value'));
+        $data->forget('value');
+
+        return $data->toArray();
+    }
+
     public function loadFromDriverResult(CreatedPolicyInterface $createdPolicy)
     {
         if ($this->product === self::TYPE_PROPERTY) {

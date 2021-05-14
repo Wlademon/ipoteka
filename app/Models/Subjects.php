@@ -25,6 +25,10 @@ namespace App\Models;
  */
 class Subjects extends BaseModel
 {
+    protected $casts = [
+        'value' => 'json',
+    ];
+
     protected $fillable = [
         'value',
     ];
@@ -42,5 +46,16 @@ class Subjects extends BaseModel
     public function getValueAttribute()
     {
         return json_decode($this->attributes['value'], true);
+    }
+
+
+
+    public function toArray()
+    {
+        $data = collect($this->attributes);
+        $data = $data->merge($this->getAttribute('value'));
+        $data->forget('value');
+
+        return $data->toArray();
     }
 }

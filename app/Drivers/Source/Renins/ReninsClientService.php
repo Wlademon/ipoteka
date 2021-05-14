@@ -16,7 +16,7 @@ class ReninsClientService
     const URL_PRINT = '/IpotekaAPI/1.0.0/print';
     const URL_SAVE = '/IpotekaAPI/1.0.0/save';
     const URL_PAY = '/IpotekaAPI/1.0.0/getPaymentLink';
-    const URL_ISSUE = '/IpotekaAPI/1.0.0/issueAsync';
+    const URL_ISSUE = '/IpotekaAPI/1.0.0/issue';
     const URL_STATUS = '/IpotekaAPI/1.0.0//getIssueProcessStatus';
     const URL_IMPORT = '/IpotekaAPI/1.0.0/import';
 
@@ -42,7 +42,7 @@ class ReninsClientService
             $host,
             [
                 'headers' => [
-                    'Authorization' => "Bearer {$token}"
+                    'Authorization' => "Bearer $token"
                 ],
             ],
         );
@@ -82,7 +82,7 @@ class ReninsClientService
         return $result;
     }
 
-    public function issueAsync(Arrayable $data)
+    public function issue(Arrayable $data)
     {
         $result = $this->send($data, self::URL_ISSUE);
         if ($errors = Arr::get($result, 'errors.errors')) {

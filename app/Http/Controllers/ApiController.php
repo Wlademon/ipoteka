@@ -131,7 +131,7 @@ class ApiController extends BaseController
     public function getPolicy(Request $request, $contractId): Response
     {
         self::log("Find Contract with ID: {$contractId}");
-        $contract = Contracts::findOrFail($contractId);
+        $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
 
         return $this->successResponse($contract);
     }

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Validation\Rule;
+
 /**
  * @OA\Schema(
  *     required={"programCode", "activeFrom", "remainingDebt", "mortgageAgreementNumber", "isOwnership", "object", "subject"},
@@ -125,7 +127,7 @@ class CreatePolicyRequest extends Request
     {
         return [
             "programCode" => ['required','string'],
-            'activeFrom' => ['required|date'],
+            'activeFrom' => ['required', 'date'],
             'activeTo' => ['date'],
             'ownerCode' => ['string'],
             "remainingDebt" => ['required','int'],
@@ -138,28 +140,63 @@ class CreatePolicyRequest extends Request
             // objects->property rules
             'objects.property' => ['required_without:objects.life'],
             'objects.property.type' => ['string'],
-            'objects.property.buildYear' => ['required_if:objects.property', 'int','min:1900','max:2222'],
+            'objects.property.buildYear' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'int',
+                'min:1900',
+                'max:2222',
+            ],
             'objects.property.isWooden' => ['boolean'],
-            'objects.property.area' => ['required_if:objects.property', 'numeric','min:0'],
-            'objects.property.apartment' => ['required_if:objects.property', 'string'],
-            'objects.property.cityKladr' => ['required_if:objects.property', 'string'],
-
+            'objects.property.area' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'numeric',
+                'min:0'
+            ],
+            'objects.property.apartment' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'string',
+            ],
+            'objects.property.cityKladr' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'string'
+            ],
 
             // objects->life rules
             'objects.life' => ['required_without:objects.property'],
-            'objects.life.firstName' => ['required_if:objects.life', 'string'],
-            'objects.life.lastName' => ['required_if:objects.life', 'string'],
+            'objects.life.firstName' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string'
+            ],
+            'objects.life.lastName' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string'
+            ],
             'objects.life.middleName' => 'string|nullable',
-            'objects.life.birthDate' => ['required_if:objects.life', 'date'],
-            'objects.life.gender' => ['required_if:objects.life', 'int','min:0','max:1'],
+            'objects.life.birthDate' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'date'
+            ],
+            'objects.life.gender' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'int',
+                'min:0',
+                'max:1'
+            ],
             'objects.life.weight' => ['numeric','max:255'],
             'objects.life.height' => ['numeric','max:255'],
-            'objects.life.phone' => ['required_if:objects.life', 'string', 'regex:/^\+7(?:[0-9\-]){11,11}[0-9]$/m'],
+            'objects.life.phone' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string',
+                'regex:/^\+7(?:[0-9\-]){11,11}[0-9]$/m'
+            ],
             'objects.life.docSeries' => ['integer','min:1000','max:9999'],
             'objects.life.docNumber' => ['integer','min:100000','max:999999'],
             'objects.life.docIssueDate' => ['string','date','before:today'],
             'objects.life.docIssuePlace' => ['string'],
-            'objects.life.kladr' => ['required_if:objects.life', 'string'],
+            'objects.life.kladr' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string'
+            ],
             'objects.life.apartment' => ['string','nullable'],
             'objects.life.sports' => ['array'],
             'objects.life.sports.*' => ['string'],

@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Exception;
 use http\Exception\RuntimeException;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -43,7 +44,9 @@ class DriverService
     protected function setDriver(string $driver = null): void
     {
         $driverCode = trim(strtolower($driver));
+        $driverCode = \Str::camel($driverCode);
         $driverIdentifier = ucfirst($driverCode);
+
 
         $driver = "App\\Drivers\\{$driverIdentifier}Driver";
         $driverPath = app_path("Drivers/{$driverIdentifier}Driver.php");
@@ -88,21 +91,27 @@ class DriverService
      * @param PayLinks $links
      * @return PayLinkInterface
      */
-    public function getPayLink(Contracts $contract, PayLinks $links): PayLinkInterface
+    public function getPayLink(Contracts $contract, PayLinks $links): array
     {
-        return $this->getDriverByCode($contract->program->company->code)->getPayLink($contract, $links);
+        return $this->getDriverByCode($contract->program->company->code)->getPayLink($contract, $links)->toArray();
     }
 
     /**
      * @param $data
-     * @return Arrayable
+     * @return array
      * @throws Exception
      */
-    public function calculate($data): Arrayable
+    public function calculate($data): array
     {
-        $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
-        $this->minStartValidator($program, $data);
-        return $this->getDriverByCode($program->company->code)->calculate($data);
+        try {
+            $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+            $this->minStartValidator($program, $data);
+
+            return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
+        } catch (\Throwable $throwable) {
+            dd($throwable->getTraceAsString());
+            self::abortLog($throwable->getMessage(), DriverServiceException::class);
+        }
     }
 
     /**
@@ -149,10 +158,16 @@ class DriverService
             \DB::beginTransaction();
             $model = new Contracts();
             $model->fill($data);
+            $model->setAttribute('options', \Arr::only($data, ['remainingDebt', 'mortgageeBank', 'isOwnership']));
             $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
             $policeData = collect($data);
-            $objects = $policeData->only(['objects'])->flatten(1);
+            $objects = collect($policeData->only(['objects'])->get('objects'));
+            $model->premium = $result->getPremiumSum();
+            $model->saveOrFail();
+            $subject = (new Subjects())->fill(['value' => $policeData->get('subject')]);
+            $subject->contract()->associate($model);
+            $subject->saveOrFail();
             $objectLife = $this->getObjectModel($objects, 'life');
             if ($objectLife) {
                 $objectLife->contract()->associate($model);
@@ -165,16 +180,13 @@ class DriverService
                 $objectProp->loadFromDriverResult($result);
                 $objectProp->saveOrFail();
             }
-            $subject = (new Subjects())->fill(['value' => $policeData->get('subject')]);
-            $subject->contract()->associate($model);
-            $subject->saveOrFail();
 
-            $model->saveOrFail();
             \DB::commit();
         } catch (\Throwable $throwable) {
             \DB::rollBack();
             self::abortLog($throwable->getMessage(), DriverServiceException::class);
         }
+        $result->setContractId($model->id);
 
         return $result->toArray();
     }

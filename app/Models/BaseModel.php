@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Helpers\Helper;
+use Illuminate\Database\Eloquent\MassAssignmentException;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -30,9 +31,31 @@ class BaseModel extends Model
 
     const NAME = 'основная';
 
-    public static $snakeAttributes = false;
+    public static $snakeAttributes = true;
 
     protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
+
+    public function fill(array $attributes)
+    {
+        $totallyGuarded = $this->totallyGuarded();
+
+        foreach ($attributes as $key => $value) {
+            $key = $this->removeTableFromKey($key);
+
+            if ($this->isFillable($key)) {
+                $this->setAttribute($key, $value);
+            } elseif ($this->isFillable(Str::snake($key))) {
+                $this->setAttribute(Str::snake($key), $value);
+            } elseif ($totallyGuarded) {
+                throw new MassAssignmentException(sprintf(
+                    'Add [%s] to fillable property to allow mass assignment on [%s].',
+                    $key, get_class($this)
+                ));
+            }
+        }
+
+        return $this;
+    }
 
     public function save(array $options = [])
     {
@@ -63,7 +86,7 @@ class BaseModel extends Model
 
     public function setAttribute($key, $value)
     {
-        return parent::setAttribute(Str::snake($key), $value);
+        return parent::setAttribute($key, $value);
     }
 
     public function getCreatedAtAttribute()
