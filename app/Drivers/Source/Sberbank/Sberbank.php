@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Drivers\Instances;
+namespace App\Drivers\Source\Sberbank;
 
 
 use App\Drivers\DriverInterface;

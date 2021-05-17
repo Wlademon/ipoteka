@@ -3,11 +3,9 @@
 namespace App\Services;
 
 use App\Drivers\Traits\LoggerTrait;
+use App\Http\Requests\Request;
 use Exception;
-use Illuminate\Support\Facades\Log;
-use App\Helpers\Helper;
 use App\Models\Contracts;
-use Illuminate\Http\Request;
 
 class PolicyService extends Service
 {
@@ -22,7 +20,7 @@ class PolicyService extends Service
      */
     public function savePolicy(Request $request, DriverService $driver)
     {
-        return $driver->savePolicy($request);
+        return $driver->savePolicy($request->validated());
     }
 
     /**

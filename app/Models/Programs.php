@@ -202,7 +202,7 @@ class Programs extends BaseModel
      */
     public function getConditionsAttribute()
     {
-        return json_decode($this->attributes['conditions']);
+        return json_decode($this->attributes['conditions'], true);
     }
 
     /**

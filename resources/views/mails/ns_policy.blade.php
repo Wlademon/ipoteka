@@ -7,15 +7,9 @@
                 Спасибо за выбор Страховка.ру!
             </p>
             <p style="margin: 16px 0 0 0; font-size: 20px;">
-                Уважаемый(ая) {{ $data->receiver }}, Вы приобрели страховой полис Телемедицина.<br/>
+                Уважаемый(ая) {{ $data->receiver }}, Вы приобрели страховой полис ОСАГО.<br/>
                 Печатную форму Вы найдете во вложении.<br/><br/>
             </p>
-            @if($data->insurRules)
-                <p style="margin: 16px 0 0 0; font-size: 20px;">
-                    Правила страхования по Телемедицине Вы можете скачать по <a href="{{ $data->insurRules }}" target="_blank">ссылке</a>.<br/><br/>
-                </p>
-            @endif
-
 
             <p style="margin-top: 20px; font-size: 16px; line-height: 1.75; color: #7f7f7f;">
                 С уважением,<br/>

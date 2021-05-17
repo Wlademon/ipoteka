@@ -18,7 +18,7 @@ trait LoggerTrait
      */
     protected static function abortLog($message, string $exceptionClass = null, int $code = Response::HTTP_BAD_REQUEST): void
     {
-        static::log($message);
+        static::error($message);
         if (!$exceptionClass) {
             throw new RuntimeException($message, $code);
         }
@@ -29,7 +29,7 @@ trait LoggerTrait
     /**
      * @param $message
      */
-    protected static function log($message): void
+    protected static function log($message, array $context = []): void
     {
         $class = static::class;
         $debug = self::eachToCaller();
@@ -38,7 +38,19 @@ trait LoggerTrait
             $class = $debug['class'];
             $method = $debug['function'];
         }
-        Log::info($class . '::' . $method . ' => ' . $message);
+        Log::info($class . '::' . $method . ' => ' . $message, $context);
+    }
+
+    protected static function error($message, array $context = []): void
+    {
+        $class = static::class;
+        $debug = self::eachToCaller();
+        $method = '';
+        if ($debug) {
+            $class = $debug['class'];
+            $method = $debug['function'];
+        }
+        Log::error($class . '::' . $method . ' => ' . $message, $context);
     }
 
     protected static function warning($message, array $context = []): void

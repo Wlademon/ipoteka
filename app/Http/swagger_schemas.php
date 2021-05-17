@@ -87,6 +87,19 @@ use OpenApi\Annotations as OA;
 /**
  *  @OA\Schema(
  *     required={"success", "data"},
+ *     schema="CalculatedPolice",
+ *     @OA\Property(property="success", type="boolaen", example="true", description="Успешное завершение запроса"),
+ *     @OA\Property(property="data", description="Возвращаемые данные", type="object", required={"premiumSum", "contractId"},
+ *        @OA\Property(property="contractId", type="integer", example="", description="id договора"),
+ *        @OA\Property(property="premiumSum", type="float", example=3000.50, description="Общая премия по договору"),
+ *        @OA\Property(property="lifePremium", type="float", example=2000.10, description="Премия по риску страхования жизни (если есть)"),
+ *        @OA\Property(property="propertyPremium", type="float", example=1000.40, description="Премия по риску страхования недвижимого имущества (если есть)"),
+ *     )
+ * )
+ */
+/**
+ *  @OA\Schema(
+ *     required={"success", "data"},
  *     schema="StatusPolice",
  *     @OA\Property(property="success", type="boolaen", example="true", description="Успешное завершение запроса"),
  *     @OA\Property(property="data", description="Возвращаемые данные", type="object", required={},

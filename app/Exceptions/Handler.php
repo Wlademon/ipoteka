@@ -137,6 +137,7 @@ class Handler extends ExceptionHandler
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
                     'errorCode' => $code,
+                    'trace' => $e->getTraceAsString()
                 ];
             };
         }
@@ -147,15 +148,17 @@ class Handler extends ExceptionHandler
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
                     'errorCode' => $code,
+                    'trace' => $e->getTraceAsString()
                 ];
             };
         }
 
-        return $this->handlers[get_class($exception)] ?? function (Throwable $e) {
+        return /*$this->handlers[get_class($exception)] ??*/ function (Throwable $e) {
                 return [
                     'statusCode' => 200 > $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode(),
                     'error' => $e->getMessage(),
                     'errorCode' => $e->getCode(),
+                    'trace' => $e->getTraceAsString()
                 ];
             };
     }

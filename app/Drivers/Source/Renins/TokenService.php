@@ -1,32 +1,38 @@
 <?php
 
-namespace App\Drivers\Source\Reso;
+namespace App\Drivers\Source\Renins;
 
 use App\Services\HttpClientService;
 use Illuminate\Support\Facades\Cache;
 
 class TokenService
 {
-    const URL_AUTHORIZE = '/am/auth/v2/authorize';
-    const MODE_AUTHORIZE = 1;
+    const URL_AUTHORIZE = '/token';
 
     protected HttpClientService $client;
     protected $login;
     protected $pass;
 
-    protected function __construct(HttpClientService $client, string $login, string $pass)
+    protected function __construct($host, string $login, string $pass)
     {
-        $this->client = $client;
         $this->login = $login;
         $this->pass = $pass;
+        $this->client = HttpClientService::create(
+            $host,
+            [
+               'headers' => [
+                   'Authorization' => "Basic " . base64_encode("$login:$pass")
+               ]
+           ]
+        );
     }
 
     public static function getToken(
-        HttpClientService $client,
+        string $host,
         string $login,
         string $pass
     ): string {
-        $tokenGetter = new static($client, $login, $pass);
+        $tokenGetter = new static($host, $login, $pass);
         $token = $tokenGetter->getCacheToken();
         if ($token) {
             return $token;
@@ -52,19 +58,20 @@ class TokenService
 
     protected function authorize(): string
     {
-        $result = $this->client->sendJson(
+        $result = $this->client->sendPost(
             self::URL_AUTHORIZE,
             [
-                'username' => $this->login,
-                'password' => $this->pass,
-                'mode' => self::MODE_AUTHORIZE
+                'form_params' => [
+                    'grant_type' => 'client_credentials',
+                ]
             ]
         );
-        if ($this->client->getLastError()) {
-            throw new \Exception($this->client->getLastError()['MESSAGE']);
+
+        if ($result->getStatusCode() > 300) {
+            throw new \Exception($this->client->getLastError()['error_description']);
         }
 
-        return $result['ACCESS_TOKEN'];
+        return json_decode($result->getBody()->getContents(), true)['access_token'];
     }
 
     protected function cacheToken($token): void

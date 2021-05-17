@@ -18,7 +18,7 @@ use Strahovka\Payment\PayService;
  * Class RenisansDriver
  * @package App\Drivers
  */
-class ReninsDriver extends BaseDriver
+class ReninsDriver_old extends BaseDriver
 {
     use PrintPdfTrait;
 

@@ -35,9 +35,9 @@ interface DriverInterface
      * Стартовая функция создания полиса
      *
      * @param array $data Данные для создания договора по полису
-     * @return array
+     * @return CreatedPolicyInterface
      */
-    public function createPolicy(array $data): CreatedPolicyInterface;
+    public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface;
 
     /**
      * Функция печати полиса
@@ -64,4 +64,10 @@ interface DriverInterface
      * @return string Сообщение
      */
     public function sendPolice(Contracts $contract): string;
+
+    /**
+     * @param Contracts $contract
+     * @return array
+     */
+    public function getStatus(Contracts $contract): array;
 }

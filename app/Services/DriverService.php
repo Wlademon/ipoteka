@@ -3,36 +3,37 @@
 namespace App\Services;
 
 use App\Drivers\DriverInterface;
-use App\Drivers\InnerDriver;
-use App\Drivers\Instances\Sberbank;
-use App\Drivers\ReninsDriver;
-use App\Drivers\ResoDriver;
+use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\Traits\LoggerTrait;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
-use App\Mail\Email;
 use App\Models\Contracts;
+use App\Models\Objects;
 use App\Models\Programs;
+use App\Models\Subjects;
+use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Http\Request;
+use http\Exception\RuntimeException;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use stdClass;
-use Strahovka\Payment\PayService;
-
+/**
+ * Class DriverService
+ * @package App\Services
+ */
 class DriverService
 {
     use LoggerTrait;
 
-    const DRIVERS = [
-        'reso_garantija' => ResoDriver::class,
-        'rensins' => ReninsDriver::class,
-        'SBERINS' => Sberbank::class,
-        'alfa_msk' => Sberbank::class,
-    ];
+    /**
+     * @todo Переделать
+     */
 
+    /**
+     * @var DriverInterface|null
+     */
     private ?DriverInterface $driver = null;
 
     /**
@@ -41,20 +42,29 @@ class DriverService
      */
     protected function setDriver(string $driver = null): void
     {
-        $driverIdentifier = trim(strtolower($driver));
+        $driverCode = trim(strtolower($driver));
+        $driverIdentifier = ucfirst($driverCode);
 
-        $driver = self::DRIVERS[$driverIdentifier] ?? null;
-        if (!$driver) {
+        $driver = "App\\Drivers\\{$driverIdentifier}Driver";
+        $driverPath = app_path("Drivers/{$driverIdentifier}Driver.php");
+        if (!file_exists($driverPath)) {
             self::abortLog(
                 "Driver {$driverIdentifier} not found",
                 DriverServiceException::class,
                 Response::HTTP_NOT_FOUND
             );
         }
+        include_once $driverPath;
 
-        $this->driver = new $driver;
+        $this->driver = new $driver(config(), "mortgage.$driverCode.");
     }
 
+    /**
+     * @param string $code
+     * @param bool $reset
+     * @return DriverInterface
+     * @throws Exception
+     */
     protected function getDriverByCode(string $code, bool $reset = false): DriverInterface
     {
         $actualCode = trim(strtolower($code));
@@ -73,36 +83,36 @@ class DriverService
         return $this->driver;
     }
 
-
-    public function getPayLink(PayService $service, Contracts $contract, Request $request)
+    /**
+     * @param Contracts $contract
+     * @param PayLinks $links
+     * @return PayLinkInterface
+     */
+    public function getPayLink(Contracts $contract, PayLinks $links): PayLinkInterface
     {
-        return $this->getDriverByCode($contract->program->company->code)->getPayLink($service, $contract, $request);
+        return $this->getDriverByCode($contract->program->company->code)->getPayLink($contract, $links);
     }
 
     /**
      * @param $data
-     * @return mixed
+     * @return Arrayable
      * @throws Exception
      */
-    public function calculate($data)
+    public function calculate($data): Arrayable
     {
-        if ($data['activeFrom'] > $data['activeTo']) {
-            self::abortLog(
-                'Дата окончания полиса раньше даты начала',
-                DriverServiceException::class,
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
-        }
-        $program = Programs::whereProgramCode($data['programCode'])->with('company')->first();
-        if (!$program) {
-            self::abortLog(
-                "Program not found with code {$data['programCode']}",
-                DriverServiceException::class,
-                Response::HTTP_NOT_FOUND
-            );
-        }
-        $maxStartDateSelection = $program->conditions->maxStartDateSelection ?? '3m';
+        $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+        $this->minStartValidator($program, $data);
+        return $this->getDriverByCode($program->company->code)->calculate($data);
+    }
 
+    /**
+     * @param Programs $program
+     * @param array $data
+     * @throws Exception
+     */
+    protected function minStartValidator(Programs $program, array $data): void
+    {
+        $maxStartDateSelection = $program->conditions->maxStartDateSelection ?? '3m';
         preg_match("/([0-9]+)([dmy]+)/", $maxStartDateSelection, $maxSds);
         $startDate = Carbon::now()->startOfDay();
         switch ($maxSds[2]) {
@@ -126,89 +136,120 @@ class DriverService
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
         }
-
-        return $this->getDriverByCode($program->company->code)->calculate($data);
     }
 
-    public function savePolicy(Request $data): array
+    /**
+     * @param array $data
+     * @return array
+     * @throws DriverServiceException
+     */
+    public function savePolicy(array $data): array
     {
-        $program = Programs::whereProgramCode($data['programCode'])->with('company')->first();
-        if (!$program) {
-            self::abortLog("Program not found with code {$data['programCode']}", DriverServiceException::class, Response::HTTP_NOT_FOUND);
+        try {
+            \DB::beginTransaction();
+            $model = new Contracts();
+            $model->fill($data);
+            $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+            $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
+            $policeData = collect($data);
+            $objects = $policeData->only(['objects'])->flatten(1);
+            $objectLife = $this->getObjectModel($objects, 'life');
+            if ($objectLife) {
+                $objectLife->contract()->associate($model);
+                $objectLife->loadFromDriverResult($result);
+                $objectLife->saveOrFail();
+            }
+            $objectProp = $this->getObjectModel($objects, 'property');
+            if ($objectProp) {
+                $objectProp->contract()->associate($model);
+                $objectProp->loadFromDriverResult($result);
+                $objectProp->saveOrFail();
+            }
+            $subject = (new Subjects())->fill(['value' => $policeData->get('subject')]);
+            $subject->contract()->associate($model);
+            $subject->saveOrFail();
+
+            $model->saveOrFail();
+            \DB::commit();
+        } catch (\Throwable $throwable) {
+            \DB::rollBack();
+            self::abortLog($throwable->getMessage(), DriverServiceException::class);
         }
 
-        return $this->getDriverByCode($program->company->code)->createPolicy(array($data));
+        return $result->toArray();
     }
 
+    protected function getObjectModel(Collection $collection, string $type): ?Objects
+    {
+        $object = $collection->get($type);
+        if (!$object) {
+            return $object;
+        }
+        $model = new Objects();
+        $model->product = $type;
+        $model->value = $object;
+
+        return $model;
+    }
+
+    /**
+     * @param Contracts $contract
+     * @param bool $sample
+     * @param bool $reset
+     * @param string|null $filePath
+     * @return string
+     * @throws DriverServiceException|RuntimeException
+     */
     public function printPdf(Contracts $contract, bool $sample, bool $reset = false, ?string $filePath = null): string
     {
-        return $this->getDriverByCode($contract->program->company->code)
-                    ->printPolicy($contract, $sample, $reset, $filePath);
+        $this->getStatus($contract);
+        if (!$sample && $contract->status !== Contracts::STATUS_CONFIRMED) {
+            self::abortLog(
+                'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
+                RuntimeException::class
+            );
+        }
+        try {
+            return $this->getDriverByCode($contract->program->company->code)->printPolicy($contract, $sample, $reset, $filePath);
+        } catch (\Throwable $throwable) {
+            self::abortLog($throwable->getMessage(), DriverServiceException::class);
+        }
     }
 
     /**
      * @param Contracts $contract
      * @return array
-     * @throws Exception
+     * @throws DriverServiceException
      */
     public function sendMail(Contracts $contract): array
     {
         if ($contract->status == Contracts::STATUS_CONFIRMED) {
-            if ($this->sendPolicy($contract, true)) {
+            $driver = $this->getDriverByCode($contract->program->company->code);
+            if ((new MailPoliceService())->send($contract, $driver, true)) {
                 return ['message' => 'Email was sent to ' . $contract->subject_value['email']];
             }
 
-            self::abortLog('Email was not sent to ' . $contract->subject_value['email'], DriverServiceException::class, Response::HTTP_BAD_REQUEST);
+            self::abortLog('Email was not sent to ' . $contract->subject_value['email'], DriverServiceException::class);
         }
 
-        self::abortLog('Status of Contract is not Confirmed', DriverServiceException::class, Response::HTTP_BAD_REQUEST);
+        self::abortLog('Status of Contract is not Confirmed', DriverServiceException::class);
     }
 
     /**
      * @param Contracts $contract
-     * @param bool $generatePdf force generate PDF file
-     * @return bool
+     * @throws DriverServiceException
      */
-    protected function sendPolicy(Contracts $contract, $generatePdf = false): bool
-    {
-        $data = new stdClass();
-        $data->receiver = $contract->subject_fullname;
-        $data->insurRules = $contract->program->conditions->insurRules ?? null;
-        $nsEmail = new Email($data);
-        $filename = config('ns.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
-        $filenameWithPath = public_path() . '/' . $filename;
-        if ($generatePdf || !file_exists($filenameWithPath)) {
-            $this->printPdf($contract, false, $generatePdf, $filenameWithPath);
-        }
-
-        $nsEmail->attach(
-            $filenameWithPath,
-            [
-                'as' => 'Полис.pdf',
-                'mime' => 'application/pdf',
-            ]
-        );
-
-        try {
-            Mail::to($contract->subjectValue['email'])->send($nsEmail);
-            self::log("Mail sent to userEmail={$contract->subject_value['email']} contractId={$contract->id}");
-        } catch (Exception $e) {
-            self::warning(
-                "Cant send email to userEmail={$contract->subject_value['email']} contractId={$contract->id}",
-                [$e->getMessage()]
-            );
-            return false;
-        }
-
-        return true;
-    }
-
     public function statusConfirmed(Contracts $contract): void
     {
-        $this->getDriverByCode($contract->program->company->code)->statusConfirmed($contract);
+        try {
+            $this->getDriverByCode($contract->program->company->code)->payAccept($contract);
+        } catch (\Throwable $throwable) {
+            self::abortLog($throwable->getMessage(), DriverServiceException::class);
+        }
     }
 
     /**
+     * @todo Поправить
      * @param Contracts $contract
      * @return array
      * @internal param Contracts $contract
@@ -248,17 +289,17 @@ class DriverService
         ];
     }
 
-    public function triggerGetLink(Contracts $contract): void
-    {
-        $this->getDriverByCode($contract->program->company->code)->triggerGetLink($contract);
-    }
-
     /**
      * @param Contracts $contract
-     * @return array|null
+     * @return array
+     * @throws DriverServiceException
      */
     public function getStatus(Contracts $contract): array
     {
-        return $this->getDriverByCode($contract->program->company->code)->getStatus($contract);
+        try {
+            return $this->getDriverByCode($contract->program->company->code)->getStatus($contract);
+        } catch (\Throwable $throwable) {
+            self::abortLog($throwable->getMessage(), DriverServiceException::class);
+        }
     }
 }

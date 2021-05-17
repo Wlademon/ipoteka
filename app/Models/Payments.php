@@ -3,6 +3,7 @@
 namespace App\Models;
 
 
+use App\Drivers\DriverResults\PayLinkInterface;
 use Kyslik\LaravelFilterable\Filterable;
 
 /**
@@ -71,5 +72,18 @@ class Payments extends BaseModel
     public function getInvoiceNumAttribute()
     {
         return $this->attributes['invoice_num'];
+    }
+
+    public static function createPayment(PayLinkInterface $payLink, Contracts $contract): void
+    {
+        $payment = self::whereContractId($contract->id)->firstOrCreate(
+            ['contract_id' => $contract->id],
+            [
+                'invoice_num' => $payLink->getInvoiceNum(),
+                'order_id' => $payLink->getOrderId()
+            ]
+        );
+        $payment->contract()->associate($contract);
+        $payment->saveOrFail();
     }
 }

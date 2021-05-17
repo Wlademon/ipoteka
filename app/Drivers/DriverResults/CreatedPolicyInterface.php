@@ -48,4 +48,16 @@ interface CreatedPolicyInterface extends Arrayable
      * @return string|null
      */
     public function getPropertyPolicyNumber(): ?string;
+
+    /**
+     * Идентификатор во внешней системе
+     * @return string
+     */
+    public function getPropertyPolicyId(): string;
+
+    /**
+     * Идентификатор во внешней системе
+     * @return string
+     */
+    public function getLifePolicyId(): string;
 }
