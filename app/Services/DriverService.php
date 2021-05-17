@@ -91,9 +91,9 @@ class DriverService
      * @param PayLinks $links
      * @return PayLinkInterface
      */
-    public function getPayLink(Contracts $contract, PayLinks $links): array
+    public function getPayLink(Contracts $contract, PayLinks $links): PayLinkInterface
     {
-        return $this->getDriverByCode($contract->program->company->code)->getPayLink($contract, $links)->toArray();
+        return $this->getDriverByCode($contract->program->company->code)->getPayLink($contract, $links);
     }
 
     /**
@@ -109,7 +109,6 @@ class DriverService
 
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
         } catch (\Throwable $throwable) {
-            dd($throwable->getTraceAsString());
             self::abortLog($throwable->getMessage(), DriverServiceException::class);
         }
     }
@@ -158,7 +157,6 @@ class DriverService
             \DB::beginTransaction();
             $model = new Contracts();
             $model->fill($data);
-            $model->setAttribute('options', \Arr::only($data, ['remainingDebt', 'mortgageeBank', 'isOwnership']));
             $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
             $policeData = collect($data);
@@ -209,16 +207,16 @@ class DriverService
      * @param bool $sample
      * @param bool $reset
      * @param string|null $filePath
-     * @return string
-     * @throws DriverServiceException|RuntimeException
+     * @return string|array
+     * @throws DriverServiceException
      */
-    public function printPdf(Contracts $contract, bool $sample, bool $reset = false, ?string $filePath = null): string
+    public function printPdf(Contracts $contract, bool $sample, bool $reset = false, ?string $filePath = null)
     {
         $this->getStatus($contract);
         if (!$sample && $contract->status !== Contracts::STATUS_CONFIRMED) {
             self::abortLog(
                 'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
-                RuntimeException::class
+                DriverServiceException::class
             );
         }
         try {
@@ -237,7 +235,7 @@ class DriverService
     {
         if ($contract->status == Contracts::STATUS_CONFIRMED) {
             $driver = $this->getDriverByCode($contract->program->company->code);
-            if ((new MailPoliceService())->send($contract, $driver, true)) {
+            if ($driver->sendPolice($contract)) {
                 return ['message' => 'Email was sent to ' . $contract->subject_value['email']];
             }
 

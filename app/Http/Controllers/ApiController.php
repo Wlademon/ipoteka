@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Drivers\Traits\LoggerTrait;
 use App\Http\Requests\CalculateRequest;
 use App\Http\Requests\CreatePolicyRequest;
+use App\Http\Resources\ContractResource;
 use App\Models\Contracts;
 use App\Models\Payments;
 use App\Services\DriverService;
@@ -133,7 +134,7 @@ class ApiController extends BaseController
         self::log("Find Contract with ID: {$contractId}");
         $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
 
-        return $this->successResponse($contract);
+        return $this->successResponse(new ContractResource($contract));
     }
 
     /**

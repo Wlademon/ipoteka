@@ -154,13 +154,18 @@ class RensinsDriver implements DriverInterface
     public function getStatus(Contracts $contract): array
     {
         if ($contract->status !== Contracts::STATUS_CONFIRMED) {
-            $result = $this->httpClient->getStatus(
-                collect(
-                    [
-                        'policyID' => $contract->objects()->firstOrFail()->external_id
-                    ]
-                )
-            );
+            try {
+                $result = $this->httpClient->getStatus(
+                    collect(
+                        [
+                            'policyID' => $contract->objects()->firstOrFail()->external_id
+                        ]
+                    )
+                );
+            } catch (\Throwable $throwable) {
+                self::error($throwable->getMessage());
+                $result = null;
+            }
 
             if ($result === self::ISSUE_SUCCESSFUL) {
                 $contract->status = Contracts::STATUS_CONFIRMED;
@@ -268,6 +273,21 @@ class RensinsDriver implements DriverInterface
         return $collector;
     }
 
+    protected function getFilePolice(Contracts $contract)
+    {
+        $objects = $contract->objects;
+        $files = [];
+        foreach ($objects as $object) {
+            $filePathObject = self::createFilePath($contract, $object->id);
+            if (!$this->isFilePoliceExitst($contract, $filePathObject)) {
+                $this->printPolicy($contract, false, true);
+            }
+            $files[] = public_path($filePathObject);
+        }
+
+        return $files;
+    }
+
     /**
      * @inheritDoc
      */
@@ -275,34 +295,54 @@ class RensinsDriver implements DriverInterface
         Contracts $contract,
         bool $sample,
         bool $reset,
-        ?string
-        $filePath = null
-    ): string {
+        ?string $filePath = null
+    ) {
         if ($contract->status !== Contracts::STATUS_CONFIRMED) {
             throw new ReninsException('Status is not confirmed!');
         }
-        if ($this->isFilePoliceExitst($contract, $filePath)) {
-            return self::generateBase64($filePath);
-        }
-        $url = $this->httpClient->print(
-            collect(
-                [
-                    'policyID' => $contract->objects()->firstOrFail()->external_id
-                ]
-            )
-        );
-        throw_if(!$url, ReninsException::class, ['message' => 'Url not get!']);
-        $path = $this->httpClient->getFile($url);
-        $dirFiles = self::unpackZip($path);
-        $files = \Storage::allFiles($dirFiles);
-        $file = collect($files)->first(function($file) {
-            return stripos(last(explode(DIRECTORY_SEPARATOR, $file)), 'polis') !== false;
-        });
-        throw_if(!$file, ReninsException::class, ['Police file not set.']);
-        $actualFilePath = $this->gefaultFileName($contract);
-        \Storage::copy($file, 'public/' . $actualFilePath);
+        $filesOut = [];
+        $objects = $contract->objects;
+        foreach ($objects as $object) {
+            $filePathObject = self::createFilePath($contract, $object->id);
+            if ($this->isFilePoliceExitst($contract, $filePathObject)) {
+                $filesOut[] = self::generateBase64($filePathObject);
+                continue;
+            }
+            $url = $this->httpClient->print(
+                collect(
+                    [
+                        'calcID' => $object->external_id,
+                        'type' => 'Печать'
+                    ]
+                )
+            );
+            throw_if(!$url, ReninsException::class, ['message' => 'Url not get!']);
+            $path = $this->httpClient->getFile($url);
 
-        return self::generateBase64(public_path($actualFilePath));
+            $dirFiles = self::unpackZip($path);
+            $files = \Storage::allFiles($dirFiles);
+            $file = collect($files)->first(function($file) {
+                return stripos(last(explode(DIRECTORY_SEPARATOR, $file)), 'polis') !== false;
+            });
+            throw_if(!$file, ReninsException::class, 'Police file not set.');
+            $actualFilePath = self::createFilePath($contract, $object->id);
+            \File::move(storage_path('app/' . $file), public_path($actualFilePath));
+
+            $filesOut[] = self::generateBase64(public_path($actualFilePath));
+        }
+
+        return $filesOut;
+    }
+
+    protected static function createFilePath(Contracts $contract, $objectId)
+    {
+        $filePathObject = self::gefaultFileName($contract);
+        $filePathObjectArray = explode('.', $filePathObject);
+        $ext = array_pop($filePathObjectArray);
+        array_push($filePathObjectArray, $objectId, $ext);
+        $filePathObject = implode('.', $filePathObjectArray);
+
+        return $filePathObject;
     }
 
     /**

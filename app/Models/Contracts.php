@@ -33,7 +33,7 @@ use Kyslik\LaravelFilterable\Filterable;
  * @property-read \App\Models\Programs|null $program
  * @property-read \App\Models\Companies|null $company
  * @property-read \App\Models\Owners|null $owner
- * @property-read \App\Models\Objects|null $objects
+ * @property-read \App\Models\Objects[]|array $objects
  * @property-read \App\Models\Subjects|null $subject
  * @property-read mixed $ownerCode
  * @property-read mixed $ownerUwLogin
@@ -92,9 +92,12 @@ class Contracts extends BaseModel
         'active_from',
         'active_to',
         'signed_at',
-        'remainingDebt',
         'premium',
-        'options'
+        'options',
+        'mortgageAgreementNumber',
+        'isOwnership',
+        'mortgageeBank',
+        'remainingDebt',
     ];
 
     protected $visible = [
@@ -115,13 +118,18 @@ class Contracts extends BaseModel
         'options',
         'calcCoeff',
         'programCode',
-        'mortgageAgreementNumber'
+        'mortgageAgreementNumber',
+        'isOwnership',
+        'mortgageeBank',
+        'remainingDebt',
     ];
 
     protected $appends = [
         'companyCode',
         'programCode',
-        'mortgageAgreementNumber'
+        'mortgageAgreementNumber',
+        'isOwnership',
+        'mortgageeBank',
     ];
 
     public function getCompanyCodeAttribute()
@@ -137,7 +145,6 @@ class Contracts extends BaseModel
 
     public function getMortgageAgreementNumberAttribute()
     {
-        dd($this->options);
         return $this->options['mortgageAgreementNumber'] ?? null;
     }
 
@@ -278,18 +285,28 @@ class Contracts extends BaseModel
         $this->setAttribute('options', $options);
     }
 
-    public function setMortgageABankAttribute($value)
+    public function setMortgageeBankAttribute($value)
     {
         $options = $this->getAttribute('options') ?: [];
         $options['mortgageeBank'] = (string)$value;
         $this->setAttribute('options', $options);
     }
 
+    public function getMortgageeBankAttribute()
+    {
+        return $this->getAttribute('options')['mortgageeBank'] ?? '';
+    }
+
     public function setIsOwnershipAttribute($value)
     {
         $options = $this->getAttribute('options') ?: [];
-        $options['isOwnership'] = (string)$value;
+        $options['isOwnership'] = (bool)$value;
         $this->setAttribute('options', $options);
+    }
+
+    public function getIsOwnershipAttribute(): bool
+    {
+        return (bool)($this->getAttribute('options')['isOwnership'] ?? false);
     }
 
     public function setProgramCodeAttribute($value)

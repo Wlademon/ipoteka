@@ -8,8 +8,11 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.0",
+        "php": "^7.4|^8.0",
+        "ext-curl": "*",
         "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-zip": "*",
         "ajaxray/php-watermark": "^0.1.1",
         "artisaninweb/laravel-soap": "0.3.0.9",
         "barryvdh/laravel-dompdf": "^0.8.5",
@@ -25,9 +28,7 @@
         "setasign/fpdi": "^2.3",
         "strahovka/payment": "1.*",
         "swagger-api/swagger-ui": "3.31.1",
-	    "ext-mbstring": "*",
-        "ext-http": "*",
-        "ext-zip": "*"
+        "zanysoft/laravel-zip": "^1.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.2",

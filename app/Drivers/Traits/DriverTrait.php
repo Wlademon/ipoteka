@@ -45,13 +45,21 @@ trait DriverTrait
         $data->receiver = $contract->subject_fullname;
         $data->insurRules = null;
         $nsEmail = new Email($data);
-        $nsEmail->attach(
-            $this->getFilePolice($contract),
-            [
-                'as' => 'Полис.pdf',
-                'mime' => 'application/pdf',
-            ]
-        );
+        $file = $this->getFilePolice($contract);
+        if (!is_array($file)) {
+            $file = [$file];
+        }
+
+        foreach ($file as $item) {
+            $nsEmail->attach(
+                $item,
+                [
+                    'as' => 'Полис.pdf',
+                    'mime' => 'application/pdf',
+                ]
+            );
+        }
+
         try {
             Mail::to($contract->subjectValue['email'])->send($nsEmail);
         } catch (Exception $e) {
@@ -76,17 +84,23 @@ trait DriverTrait
         return $filenameWithPath;
     }
 
-    public function gefaultFileName(Contracts $contract)
+    public static function gefaultFileName(Contracts $contract)
     {
         return config('ns.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
     }
 
     protected function isFilePoliceExitst(Contracts $contract, &$filenameWithPath = ''): bool
     {
-        $filename = config('ns.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
-        $filenameWithPath = public_path() . '/' . $filename;
+        if (!$filenameWithPath) {
+            $filename = self::gefaultFileName($contract);
+            $filenameWithPath = public_path() . '/' . $filename;
+        }
 
-        return file_exists($filenameWithPath);
+        if (!file_exists(public_path() . '/' . $filenameWithPath)) {
+            dd(public_path() . '/' . $filenameWithPath);
+        }
+
+        return file_exists(public_path() . '/' . $filenameWithPath);
     }
 
     public function getPayLink(Contracts $contract, PayLinks $links): PayLink
@@ -123,7 +137,7 @@ trait DriverTrait
      * @param bool $sample
      * @param bool $reset
      * @param string|null $filePath
-     * @return string
+     * @return string|array
      */
-    public abstract function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null): string;
+    public abstract function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null);
 }

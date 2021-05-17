@@ -4,9 +4,11 @@ namespace App\Drivers\Source\Renins;
 
 use App\Exceptions\Drivers\ReninsException;
 use App\Services\HttpClientService;
+use GuzzleHttp\Exception\ClientException;
 use http\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Http\File;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
 
@@ -17,7 +19,7 @@ class ReninsClientService
     const URL_SAVE = '/IpotekaAPI/1.0.0/save';
     const URL_PAY = '/IpotekaAPI/1.0.0/getPaymentLink';
     const URL_ISSUE = '/IpotekaAPI/1.0.0/issue';
-    const URL_STATUS = '/IpotekaAPI/1.0.0//getIssueProcessStatus';
+    const URL_STATUS = '/IpotekaAPI/1.0.0/getIssueProcessStatus';
     const URL_IMPORT = '/IpotekaAPI/1.0.0/import';
 
     const ISSUE_ERROR = 'ISSUE_ERROR';
@@ -41,6 +43,8 @@ class ReninsClientService
         $this->client = HttpClientService::create(
             $host,
             [
+                'curl'   => [CURLOPT_SSL_VERIFYPEER => false],
+                'verify' => false,
                 'headers' => [
                     'Authorization' => "Bearer $token"
                 ],
@@ -128,21 +132,32 @@ class ReninsClientService
     public function getFile(string $url): string
     {
         try {
-            $response = (new \GuzzleHttp\Client())->get($url);
+            $response = (new \GuzzleHttp\Client([
+                    'curl'   => [CURLOPT_SSL_VERIFYPEER => false],
+                    'verify' => false,
+                ]))->get($url);
+            $content = $response->getBody()->getContents();
             throw_if(
                 $response->getStatusCode() !== 200,
                 ReninsException::class,
-                [$response->getBody()->getContents()]
+                [$content]
             );
+            $path = self::TEMP_PATH . uniqid(date('Y_m_d_H_i_s'), false) . '.zip';
             Storage::put(
-                ($path = self::TEMP_PATH . uniqid(date('Y_m_d_H_i_s'), false) . '.zip'),
-                $response->getBody()->getContents()
+                $path,
+                $content
             );
+            throw_if(
+                !file_exists(storage_path('app/' . $path)),
+                ReninsException::class,
+                ['File not saved.']
+            );
+
         } catch (\Throwable $throwable) {
             throw new ReninsException($throwable->getMessage());
         }
 
-        return $path;
+        return 'app/' . $path;
     }
 }
 

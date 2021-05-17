@@ -11,7 +11,7 @@ class Calculated implements CalculatedInterface
     protected ?int $contractId;
     protected ?float $propertyPremium;
     protected ?float $lifePremium;
-    
+
     /**
      * Calculated constructor.
      * @param int|null $contractId
@@ -24,20 +24,20 @@ class Calculated implements CalculatedInterface
         $this->propertyPremium = $propertyPremium;
         $this->lifePremium = $lifePremium;
     }
-    
+
     /**
      * @inheritDoc
      */
     public function toArray()
     {
         return [
-            'contractId' => $this->contractId,
+            'contractId' => (string)$this->contractId,
             'premiumSum' => $this->getPremiumSum(),
             'lifePremium' => (float)$this->lifePremium,
             'propertyPremium' => (float)$this->propertyPremium,
         ];
     }
-    
+
     /**
      * @return int|null
      */
@@ -45,7 +45,7 @@ class Calculated implements CalculatedInterface
     {
         return $this->contractId;
     }
-    
+
     /**
      * @param $contractId int|null
      */
@@ -53,12 +53,12 @@ class Calculated implements CalculatedInterface
     {
         $this->contractId = $contractId;
     }
-    
+
     public function getPremiumSum(): float
     {
         return ((float)$this->getLifePremium()) + ((float)$this->getPropertyPremium());
     }
-    
+
     /**
      * @return float|null
      */
@@ -66,7 +66,7 @@ class Calculated implements CalculatedInterface
     {
         return $this->lifePremium;
     }
-    
+
     /**
      * @param $lifePremium float|null
      */
@@ -74,7 +74,7 @@ class Calculated implements CalculatedInterface
     {
         $this->lifePremium = $lifePremium;
     }
-    
+
     /**
      * @return float|null
      */
@@ -82,7 +82,7 @@ class Calculated implements CalculatedInterface
     {
         return $this->propertyPremium;
     }
-    
+
     /**
      * @param $propertyPremium float|null
      */
