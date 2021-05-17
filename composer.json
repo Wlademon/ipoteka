@@ -10,12 +10,12 @@
     "require": {
         "php": "^7.4|^8.0",
         "ext-curl": "*",
+        "ext-http": "*",
         "ext-json": "*",
-        "ext-mbstring": "*",
-        "ext-zip": "*",
         "ajaxray/php-watermark": "^0.1.1",
         "artisaninweb/laravel-soap": "0.3.0.9",
         "barryvdh/laravel-dompdf": "^0.8.5",
+        "codedredd/laravel-soap": "^1.5",
         "darkaonline/l5-swagger": "^5.8",
         "doctrine/dbal": "^2",
         "fideloper/proxy": "^4.0",
@@ -28,6 +28,8 @@
         "setasign/fpdi": "^2.3",
         "strahovka/payment": "1.*",
         "swagger-api/swagger-ui": "3.31.1",
+	    "ext-mbstring": "*",
+        "ext-zip": "*",
         "zanysoft/laravel-zip": "^1.0"
     },
     "require-dev": {

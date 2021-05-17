@@ -10,10 +10,14 @@ use App\Models\Contracts;
 use App\Models\Payments;
 use App\Services\DriverService;
 use App\Services\PayService\PayLinks;
+use Carbon\Carbon;
+use CodeDredd\Soap\Facades\Soap;
+use CodeDredd\Soap\SoapClient;
 use Exception;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Ramsey\Uuid\Generator\RandomBytesGenerator;
 use RuntimeException;
 use Strahovka\Payment\PayService;
 
@@ -131,6 +135,7 @@ class ApiController extends BaseController
      */
     public function getPolicy(Request $request, $contractId): Response
     {
+
         self::log("Find Contract with ID: {$contractId}");
         $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
 
