@@ -30,7 +30,8 @@
         "swagger-api/swagger-ui": "3.31.1",
 	    "ext-mbstring": "*",
         "ext-zip": "*",
-        "zanysoft/laravel-zip": "^1.0"
+        "zanysoft/laravel-zip": "^1.0",
+        "ext-soap": "*"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.2",
