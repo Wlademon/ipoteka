@@ -19,6 +19,8 @@ use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use Carbon\Traits\Creator;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
 
@@ -70,10 +72,9 @@ class AlfaMskDriver implements DriverInterface
                 ]
             );
         }
-        catch (\Exception $e) {
-            dd($e->getMessage());
+        catch (\Throwable $e) {
+            dd($e->getResponse()->getBody()->getContents());
         }
-        var_dump($result->getHeaders());die;
 
         if ($result->getStatusCode() !== 200) {
             throw new AlphaException('Error calc');
@@ -105,7 +106,7 @@ class AlfaMskDriver implements DriverInterface
             $property = collect($objects->get('property'));
             $calculator->setInsurance();
             $calculator->setPropertyRisk(
-                '',
+                'Москва',
                 $property->get('isWooden', false),
                 $property->get('buildYear')
             );
@@ -254,6 +255,7 @@ class AlfaMskDriver implements DriverInterface
      */
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
+        dd(123);
         $dataCollect = collect($data);
         $policy = $this->CollectData($data);
         $subject = $dataCollect->only('subject')->flatten();

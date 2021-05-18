@@ -69,7 +69,7 @@ class ProgramsSetter extends Command
         ], [
             'code' => 'STRAHOVKA',
             'name' => 'Страховка.Ру',
-            'uwLogin' => 'systemuser1',
+            'uw_login' => 'systemuser1',
         ]);
 
         foreach ($programs as $p) {
