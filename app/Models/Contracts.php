@@ -33,7 +33,7 @@ use Kyslik\LaravelFilterable\Filterable;
  * @property-read \App\Models\Programs|null $program
  * @property-read \App\Models\Companies|null $company
  * @property-read \App\Models\Owners|null $owner
- * @property-read \App\Models\Objects|null $objects
+ * @property-read \App\Models\Objects[]|array $objects
  * @property-read \App\Models\Subjects|null $subject
  * @property-read mixed $ownerCode
  * @property-read mixed $ownerUwLogin
@@ -64,7 +64,7 @@ class Contracts extends BaseModel
     const TYPE_NS = 5;
 
     protected $casts = [
-        'options' => 'json'
+        'options' => 'json',
     ];
 
     /**
@@ -73,9 +73,7 @@ class Contracts extends BaseModel
      * @var array
      */
     protected $attributes = [
-        'number' => '',
         'type' => self::TYPE_NS,
-        'owner_id' => null,
         'status' => self::STATUS_DRAFT,
         'active_from' => null,
         'active_to' => null,
@@ -86,25 +84,28 @@ class Contracts extends BaseModel
     protected $dates = ['active_from', 'active_to', 'signet_at', 'created_at', 'updated_at'];
 
     protected $fillable = [
-        'number',
-        'premium',
+        'programCode',
+        'company_id',
+        'program_id',
+        'type',
+        'status',
         'active_from',
         'active_to',
         'signed_at',
-        'program_id',
-        'owner_id',
-        'company_id',
-        'uw_contract_id',
+        'premium',
         'options',
+        'mortgageAgreementNumber',
+        'isOwnership',
+        'mortgageeBank',
+        'remainingDebt',
     ];
 
     protected $visible = [
         'id',
         'activeFrom',
         'activeTo',
-        'objectsValue',
-        'subjectValue',
-        'objectFullName',
+        'objects',
+        'subject',
         'companyCode',
         'signedAt',
         'programName',
@@ -116,27 +117,36 @@ class Contracts extends BaseModel
         'uwContractId',
         'options',
         'calcCoeff',
+        'programCode',
+        'mortgageAgreementNumber',
+        'isOwnership',
+        'mortgageeBank',
+        'remainingDebt',
     ];
 
     protected $appends = [
-        'activeFrom',
-        'objectsValue',
-        'objectFullName',
-        'activeTo',
         'companyCode',
-        'signedAt',
-        'premium',
-        'programName',
-        'paymentStatus',
-        'policyNumber',
-        'trafficSource',
-        'contractId',
-        'uwContractId',
-        'object',
-        'subject',
-        'options',
-        'calcCoeff',
+        'programCode',
+        'mortgageAgreementNumber',
+        'isOwnership',
+        'mortgageeBank',
     ];
+
+    public function getCompanyCodeAttribute()
+    {
+        return $this->company->code ?? null;
+    }
+
+    public function getProgramCodeAttribute()
+    {
+
+        return $this->program->program_code ?? null;
+    }
+
+    public function getMortgageAgreementNumberAttribute()
+    {
+        return $this->options['mortgageAgreementNumber'] ?? null;
+    }
 
     /**
      * Set belongsTo Program Model.
@@ -206,14 +216,6 @@ class Contracts extends BaseModel
         return $this->attributes['id'];
     }
 
-    public function getCompanyCodeAttribute()
-    {
-        if (!$this->company) {
-            return '';
-        }
-        return $this->company->code;
-    }
-
     public function getPremiumAttribute()
     {
         return $this->attributes['premium'];
@@ -266,23 +268,6 @@ class Contracts extends BaseModel
         }
     }
 
-    public function getTrafficSourceAttribute()
-    {
-        $options = json_decode($this->attributes['options'], true);
-        return isset($options['trafficSource']) ? $options['trafficSource'] : '';
-    }
-
-    public function getObjectsValueAttribute()
-    {
-        $result = [];
-        if($this->objects) {
-            foreach ($this->objects as $object) {
-                $result[] = $object->value;
-            }
-        }
-        return $result;
-    }
-
     public function getSubjectValueAttribute()
     {
         return $this->subject->value;
@@ -290,103 +275,60 @@ class Contracts extends BaseModel
 
     public function getOptionsAttribute()
     {
-        return json_decode($this->attributes['options'], true);
+        return json_decode($this->attributes['options'], true) ;
     }
 
-    /**
-     * Get joined fullname from subject JSON.
-     * @return string
-     */
-    public function getSubjectFullnameAttribute()
+    public function setMortgageAgreementNumberAttribute($value)
     {
-        if (!$this->subject()) {
-            return '';
-        }
-        $pieces = [
-            $this->subjectValue['lastName'],
-            $this->subjectValue['firstName'],
-            $this->subjectValue['middleName'] ?? ''
-        ];
-        return implode(' ', $pieces);
+        $options = $this->getAttribute('options') ?: [];
+        $options['mortgageAgreementNumber'] = (string)$value;
+        $this->setAttribute('options', $options);
     }
 
-    /**
-     * Get joined passport serie and number from subject JSON.
-     * @return string
-     */
-    public function getSubjectPassportAttribute()
+    public function setMortgageeBankAttribute($value)
     {
-        if (empty($this->subjectValue)) {
-            return '';
-        }
-        $pieces = [
-            $this->subjectValue['docSeries'],
-            $this->subjectValue['docNumber']
-        ];
-        return implode(' ', $pieces);
+        $options = $this->getAttribute('options') ?: [];
+        $options['mortgageeBank'] = (string)$value;
+        $this->setAttribute('options', $options);
     }
 
-    /**
-     * Get joined fullname from subject JSON.
-     * @return array
-     */
-    public function getObjectFullnameAttribute()
+    public function getMortgageeBankAttribute()
     {
-        $result = [];
-        if (empty($this->objectsValue)) {
-            return '';
+        return $this->getAttribute('options')['mortgageeBank'] ?? '';
+    }
+
+    public function setIsOwnershipAttribute($value)
+    {
+        $options = $this->getAttribute('options') ?: [];
+        $options['isOwnership'] = (bool)$value;
+        $this->setAttribute('options', $options);
+    }
+
+    public function getIsOwnershipAttribute(): bool
+    {
+        return (bool)($this->getAttribute('options')['isOwnership'] ?? false);
+    }
+
+    public function setProgramCodeAttribute($value)
+    {
+        if ($value) {
+            $program = Programs::query()
+                    ->where('program_code', '=', $value)
+                    ->firstOrFail();
+            $this->program_id = $program->id;
+            $this->company_id = $program->companyId;
         }
-        foreach ($this->objectsValue as $obj)
-        {
-            $pieces = [
-                $obj['lastName'],
-                $obj['firstName'],
-                $obj['middleName'] ?? ''
-            ];
-            $result[] = implode(' ', $pieces);
-        }
-        return $result;
+    }
+
+    public function setActiveFromAttribute($val)
+    {
+        $this->attributes['active_from'] = $val;
+        $this->setAttribute('signed_at', $val);
     }
 
     public function setOptionsAttribute($value)
     {
-        $this->attributes['options'] = $value;
+        $this->attributes['options'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
-    /**
-     * @return string
-     */
-    public function getOwnerCodeAttribute()
-    {
-        return $this->owner ? $this->owner->code : '';
-    }
-
-    /**
-     * @return string
-     */
-    public function getOwnerUwLoginAttribute()
-    {
-        return $this->owner ? $this->owner->uwLogin : '';
-    }
-
-    /**
-     * @return array
-     */
-    public function getCalcCoeffAttribute()
-    {
-        return json_decode($this->attributes['calc_coeff']);
-    }
-
-    public function setCalcCoeffAttribute($value)
-    {
-        $this->attributes['calc_coeff'] = $value;
-    }
-
-    public function getSubjectAddressAttribute()
-    {
-        if (!$this->subjectValue || !is_array($this->subjectValue)) {
-            return '';
-        }
-        return implode(', ', [Arr::get($this->subjectValue, 'city'), Arr::get($this->subjectValue, 'street'), Arr::get($this->subjectValue, 'house'), Arr::get($this->subjectValue, 'block'), Arr::get($this->subjectValue, 'apartment')]);
-    }
 }

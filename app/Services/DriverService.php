@@ -16,6 +16,7 @@ use Carbon\Carbon;
 use Exception;
 use http\Exception\RuntimeException;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
@@ -45,6 +46,7 @@ class DriverService
         $driverCode = trim(strtolower($driver));
         $driverCode = \Str::camel($driverCode);
         $driverIdentifier = ucfirst($driverCode);
+
 
         $driver = "App\\Drivers\\{$driverIdentifier}Driver";
         $driverPath = app_path("Drivers/{$driverIdentifier}Driver.php");
@@ -96,14 +98,19 @@ class DriverService
 
     /**
      * @param $data
-     * @return Arrayable
+     * @return array
      * @throws Exception
      */
-    public function calculate($data): Arrayable
+    public function calculate($data): array
     {
-        $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
-        $this->minStartValidator($program, $data);
-        return $this->getDriverByCode($program->company->code)->calculate($data);
+        try {
+            $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+            $this->minStartValidator($program, $data);
+
+            return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
+        } catch (\Throwable $throwable) {
+            self::abortLog($throwable->getMessage(), DriverServiceException::class);
+        }
     }
 
     /**
@@ -153,7 +160,12 @@ class DriverService
             $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
             $policeData = collect($data);
-            $objects = $policeData->only(['objects'])->flatten(1);
+            $objects = collect($policeData->only(['objects'])->get('objects'));
+            $model->premium = $result->getPremiumSum();
+            $model->saveOrFail();
+            $subject = (new Subjects())->fill(['value' => $policeData->get('subject')]);
+            $subject->contract()->associate($model);
+            $subject->saveOrFail();
             $objectLife = $this->getObjectModel($objects, 'life');
             if ($objectLife) {
                 $objectLife->contract()->associate($model);
@@ -166,16 +178,13 @@ class DriverService
                 $objectProp->loadFromDriverResult($result);
                 $objectProp->saveOrFail();
             }
-            $subject = (new Subjects())->fill(['value' => $policeData->get('subject')]);
-            $subject->contract()->associate($model);
-            $subject->saveOrFail();
 
-            $model->saveOrFail();
             \DB::commit();
         } catch (\Throwable $throwable) {
             \DB::rollBack();
             self::abortLog($throwable->getMessage(), DriverServiceException::class);
         }
+        $result->setContractId($model->id);
 
         return $result->toArray();
     }
@@ -198,16 +207,16 @@ class DriverService
      * @param bool $sample
      * @param bool $reset
      * @param string|null $filePath
-     * @return string
-     * @throws DriverServiceException|RuntimeException
+     * @return string|array
+     * @throws DriverServiceException
      */
-    public function printPdf(Contracts $contract, bool $sample, bool $reset = false, ?string $filePath = null): string
+    public function printPdf(Contracts $contract, bool $sample, bool $reset = false, ?string $filePath = null)
     {
         $this->getStatus($contract);
         if (!$sample && $contract->status !== Contracts::STATUS_CONFIRMED) {
             self::abortLog(
                 'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
-                RuntimeException::class
+                DriverServiceException::class
             );
         }
         try {
@@ -226,7 +235,7 @@ class DriverService
     {
         if ($contract->status == Contracts::STATUS_CONFIRMED) {
             $driver = $this->getDriverByCode($contract->program->company->code);
-            if ((new MailPoliceService())->send($contract, $driver, true)) {
+            if ($driver->sendPolice($contract)) {
                 return ['message' => 'Email was sent to ' . $contract->subject_value['email']];
             }
 

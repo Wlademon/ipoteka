@@ -2,19 +2,21 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Validation\Rule;
+
 /**
  * @OA\Schema(
  *     required={"programCode", "activeFrom", "remainingDebt", "mortgageAgreementNumber", "isOwnership", "object", "subject"},
  *     schema="CreatePolicyRequest",
- *     @OA\Property(property="programCode", type="string", example="STRAHOVKA", description="Код канала, откуда идут запросы для методов"),
+ *     @OA\Property(property="programCode", type="string", example="RENSINS_MORTGAGE_002_01", description="Код программы страхования"),
  *     @OA\Property(property="ownerCode", type="string", example="STRAHOVKA", description="Код канала, откуда идут запросы для методов"),
- *     @OA\Property(property="activeFrom", type="date", example="2021-12-15", description="Дата начала действия договора страхования"),
- *     @OA\Property(property="activeTo", type="date", example="2022-12-14", description="Дата окончания действия договора страхования"),
+ *     @OA\Property(property="activeFrom", type="date", example="2021-05-18", description="Дата начала действия договора страхования"),
+ *     @OA\Property(property="activeTo", type="date", example="2022-05-17", description="Дата окончания действия договора страхования"),
  *     @OA\Property(property="remainingDebt", type="integer", example=100000, description="Страховая сумма"),
- *     @OA\Property(property="mortgageAgreementNumber", type="integer", example=100000, description="Страховая сумма"),
- *     @OA\Property(property="isOwnership", type="string", example="VSK_TELEMED_001_01", description="Код программы"),
- *     @OA\Property(property="mortgageeBank", type="string", example="VSK_TELEMED_001_01", description="Код программы"),
- *     @OA\Property(property="objects", ref="#/components/schemas/Objects", description="Объект страхования"),
+ *     @OA\Property(property="mortgageAgreementNumber", type="string", example="100000", description="Номер ипотечного договора"),
+ *     @OA\Property(property="isOwnership", type="boolean", example=1, description="Указатель на наличие в собственности"),
+ *     @OA\Property(property="mortgageeBank", type="string", example="ПАО Сбербанк", description="Банк выгодоприобретатель"),
+ *     @OA\Property(property="objects", ref="#/components/schemas/Objects", description="Объекты страхования"),
  *     @OA\Property(property="subject", ref="#/components/schemas/Subject", description="Субъект страхования"),
  * )
  */
@@ -35,7 +37,7 @@ namespace App\Http\Requests;
  *     description="Страхование имущества",
  *     @OA\Property(property="type",  type="string", example="flat", description="Тип помещения"),
  *     @OA\Property(property="buildYear",  type="integer", example="2000", description="Год постройки"),
- *     @OA\Property(property="isWooden",  type="boolean", example="true", description="Наличие деревянных перекрытий"),
+ *     @OA\Property(property="isWooden",  type="boolean", example=1, description="Наличие деревянных перекрытий"),
  *     @OA\Property(property="area",  type="float", example="55.3", description="Площадь"),
  *     @OA\Property(property="state",  type="string", example="Московская область", description="Регион"),
  *     @OA\Property(property="city",  type="string", example="Москва", description="Город"),
@@ -60,7 +62,7 @@ namespace App\Http\Requests;
  *     @OA\Property(property="gender",  type="integer", example=0, description="Пол"),
  *     @OA\Property(property="weight",  type="integer", example=80, description="Вес"),
  *     @OA\Property(property="height",  type="integer", example=185, description="Рост"),
- *     @OA\Property(property="phone",  type="string", example="+7616516-51-61", description="Телефон"),
+ *     @OA\Property(property="phone",  type="string", example="+7999516-51-61", description="Телефон"),
  *     @OA\Property(property="email",  type="string", example="sdvkj@dfbvl.com", description="Почта"),
  *     @OA\Property(property="docSeries",  type="string", example="5616", description="Серия паспорта"),
  *     @OA\Property(property="docNumber",  type="string", example="516516", description="Номер паспорта"),
@@ -91,7 +93,7 @@ namespace App\Http\Requests;
  *     @OA\Property(property="middleName", type="string", example="Иванович", description="Отчество (если имеется)"),
  *     @OA\Property(property="birthDate", type="date", example="01-01-1980", description="Дата рождения"),
  *     @OA\Property(property="gender", type="integer", example=0, description="Пол: 1 - женский; 0 - мужской"),
- *     @OA\Property(property="phone", type="string", example="+7616516-51-61", description="Телефон"),
+ *     @OA\Property(property="phone", type="string", example="+7999516-51-61", description="Телефон"),
  *     @OA\Property(property="email", type="string", example="example@mail.com", description="Email"),
  *     @OA\Property(property="docSeries", type="string", example="2112", description="Серия паспорта"),
  *     @OA\Property(property="docNumber", type="string", example="543954", description="Номер паспорта"),
@@ -125,7 +127,7 @@ class CreatePolicyRequest extends Request
     {
         return [
             "programCode" => ['required','string'],
-            'activeFrom' => ['required|date'],
+            'activeFrom' => ['required', 'date'],
             'activeTo' => ['date'],
             'ownerCode' => ['string'],
             "remainingDebt" => ['required','int'],
@@ -138,28 +140,63 @@ class CreatePolicyRequest extends Request
             // objects->property rules
             'objects.property' => ['required_without:objects.life'],
             'objects.property.type' => ['string'],
-            'objects.property.buildYear' => ['required_if:objects.property', 'int','min:1900','max:2222'],
+            'objects.property.buildYear' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'int',
+                'min:1900',
+                'max:2222',
+            ],
             'objects.property.isWooden' => ['boolean'],
-            'objects.property.area' => ['required_if:objects.property', 'numeric','min:0'],
-            'objects.property.apartment' => ['required_if:objects.property', 'string'],
-            'objects.property.cityKladr' => ['required_if:objects.property', 'string'],
-
+            'objects.property.area' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'numeric',
+                'min:0'
+            ],
+            'objects.property.apartment' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'string',
+            ],
+            'objects.property.cityKladr' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.property')),
+                'string'
+            ],
 
             // objects->life rules
             'objects.life' => ['required_without:objects.property'],
-            'objects.life.firstName' => ['required_if:objects.life', 'string'],
-            'objects.life.lastName' => ['required_if:objects.life', 'string'],
+            'objects.life.firstName' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string'
+            ],
+            'objects.life.lastName' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string'
+            ],
             'objects.life.middleName' => 'string|nullable',
-            'objects.life.birthDate' => ['required_if:objects.life', 'date'],
-            'objects.life.gender' => ['required_if:objects.life', 'int','min:0','max:1'],
+            'objects.life.birthDate' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'date'
+            ],
+            'objects.life.gender' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'int',
+                'min:0',
+                'max:1'
+            ],
             'objects.life.weight' => ['numeric','max:255'],
             'objects.life.height' => ['numeric','max:255'],
-            'objects.life.phone' => ['required_if:objects.life', 'string', 'regex:/^\+7(?:[0-9\-]){11,11}[0-9]$/m'],
+            'objects.life.phone' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string',
+                'regex:/^\+7(?:[0-9\-]){11,11}[0-9]$/m'
+            ],
             'objects.life.docSeries' => ['integer','min:1000','max:9999'],
             'objects.life.docNumber' => ['integer','min:100000','max:999999'],
             'objects.life.docIssueDate' => ['string','date','before:today'],
             'objects.life.docIssuePlace' => ['string'],
-            'objects.life.kladr' => ['required_if:objects.life', 'string'],
+            'objects.life.kladr' => [
+                Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
+                'string'
+            ],
             'objects.life.apartment' => ['string','nullable'],
             'objects.life.sports' => ['array'],
             'objects.life.sports.*' => ['string'],

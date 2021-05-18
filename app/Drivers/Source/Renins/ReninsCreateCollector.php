@@ -14,7 +14,6 @@ class ReninsCreateCollector extends ReninsCalcCollector
     public function __construct()
     {
         parent::__construct();
-        $this->data['onlinePayment'] = true;
         $this->data['currCode'] = self::CURRENCY;
         $this->data['parameters']['parameters'] = [
             [
@@ -39,19 +38,13 @@ class ReninsCreateCollector extends ReninsCalcCollector
                 'name' => 'Валюта (спр)',
                 'code' => 'dogovor.ipotechnDogovor.currency.code',
                 'type' => 'Строка',
-                'boolValue' => self::CURRENCY,
+                'stringValue' => self::CURRENCY,
             ],
             [
                 'name' => 'Город выдачи кредита',
                 'code' => 'dogovor.gorodVidachiKredita',
                 'type' => 'Строка',
                 'stringValue' => self::CREDIT_CITY,
-            ],
-            [
-                'name' => 'Название',
-                'code' => 'dogovor.adresImushestva.strana.name',
-                'type' => 'Строка',
-                'stringValue' => self::COUNTRY,
             ],
             [
                 'name' => 'Дата',
@@ -114,19 +107,22 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function setPropertyAddress($state, $city, $street, $house)
+    public function setPropertyAddress($state, $city, $street, $house, $kladr)
     {
         $this->data['parameters']['parameters'][] = [
-            'name' => 'Регион объекта',
-            'code' => 'dogovor.adresImushestva.region.name',
+            'name' => 'Строковое представление адреса',
+            'code' => 'dogovor.adresImushestva.adresStroka',
             'type' => 'Строка',
-            'stringValue' => $state,
-        ];
-        $this->data['parameters']['parameters'][] = [
-            'name' => 'Код КЛАДР',
-            'code' => 'dogovor.adresImushestva.region.kodKLADR',
-            'type' => 'Строка',
-            'stringValue' => implode(', ', array_filter([self::COUNTRY, $state, $city, $street, $house])),
+            'stringValue' => implode(
+                ', ',
+                array_filter([
+                     self::COUNTRY,
+                     $state,
+                     $city,
+                     'ул.' . $street,
+                     'д.' . $house,
+                ])
+            ),
         ];
     }
 
@@ -168,8 +164,26 @@ class ReninsCreateCollector extends ReninsCalcCollector
             'name' => 'Номер',
             'code' => 'dogovor.ipotechnDogovor.nomer',
             'type' => 'Строка',
-            'decimalValue' => $number,
+            'stringValue' => $number,
         ];
+    }
+
+    public function setBirthDate(string $date)
+    {
+        $this->data['parameters']['parameters'][] = [
+            'name' => 'Дата рождения',
+            'code' => 'dogovor.zastr1.fl.dataRogd',
+            'type' => 'Дата',
+            'dateValue' => $this->toTime($date)
+        ];
+    }
+
+    public function setBirthDateSubject(string $date)
+    {
+        $this->data['insurant']['physical'] = array_merge(
+            $this->data['insurant']['physical'],
+            ['birthDate' => $this->toTime($date)]
+        );
     }
 
     public function setHumanInfo(array $subject)
@@ -180,7 +194,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
             'middleName' => \Arr::get($subject, 'middleName'),
             'birthDate' => $this->toTime(\Arr::get($subject, 'birthDate')),
             'email' => \Arr::get($subject, 'email'),
-            'phone' => \Arr::get($subject, 'phone'),
+            'phone' => self::getFormatPhone(\Arr::get($subject, 'phone')),
             'sex' => \Arr::get($subject, 'gender', 0) ? "F" : "M",
             'citizenship' => self::CITIZENSHIP,
             'document' => [
@@ -188,29 +202,43 @@ class ReninsCreateCollector extends ReninsCalcCollector
                 'series' => \Arr::get($subject, 'docSeries'),
                 'number' => \Arr::get($subject, 'docNumber'),
                 'placeOfIssue' => \Arr::get($subject, 'docIssuePlace'),
-                'dateOfIssue' => $this->toTime(\Arr::get($subject, 'docIssuePlace')),
+                'dateOfIssue' => $this->toTime(\Arr::get($subject, 'docIssueDate')),
                 'kodPodrazd' => '',
             ],
             'factAddress' => [
                 'country' => self::COUNTRY,
                 'postIndex' => self::POST_INDEX_MOSCOW,
-                'region' => \Arr::get($subject, 'state'),
+                'region' => trim(str_replace(
+                    [
+                        'Республика',
+                        'республика',
+                        'рес',
+                        ' р.',
+                        'Область',
+                        'область',
+                        'обл',
+                        ' о.',
+                        'Край',
+                        'край',
+                        'край',
+                        ' к.',
+                    ],
+                    '',
+                    \Arr::get($subject, 'state')
+                ), ".\n\r, \t\0"),
                 'addressText' => implode(
                     ', ',
                     array_filter([
                         self::POST_INDEX_MOSCOW,
                         self::COUNTRY,
-                        \Arr::get($subject, 'state'),
                         \Arr::get($subject, 'city'),
-                        \Arr::get($subject, 'street'),
+                        'ул. '  . \Arr::get($subject, 'street'),
                         \Arr::get($subject, 'house'),
                     ])
                 ),
             ],
         ];
     }
-
-
 
     public function toArray()
     {

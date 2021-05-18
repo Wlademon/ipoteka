@@ -102,6 +102,22 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
+    public static function getFormatPhone($phone) {
+        preg_match(
+            '/(\d{1,4})\s*\(?(\d{3,5})\)?\s*(\d{3})[\s-]?(\d{2})[\s-]?(\d{2})/',
+            $phone,
+            $matches
+        );
+        if (count($matches) !== 6) {
+            return false;
+        }
+
+        array_shift($matches);
+        $phone = sprintf('+%s (%s) %s-%s-%s', ...$matches);
+
+        return $phone;
+    }
+
     public function setBirthDate(string $date)
     {
         $this->data['insurant']['physical'] = [

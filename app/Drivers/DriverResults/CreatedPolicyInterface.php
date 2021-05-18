@@ -10,6 +10,8 @@ use Illuminate\Contracts\Support\Arrayable;
  */
 interface CreatedPolicyInterface extends Arrayable
 {
+    public function setContractId(int $value);
+
     /**
      * Идентификатор сделки
      * @return int
