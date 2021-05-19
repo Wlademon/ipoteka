@@ -17,8 +17,8 @@ class CreatedPolicy implements CreatedPolicyInterface
 
     public function __construct(
         ?int $contractId,
-        string $lifePolicyId,
-        string $propertyPolicyId,
+        ?string $lifePolicyId,
+        ?string $propertyPolicyId,
         ?float $lifePremium = null,
         ?float $propertyPremium = null,
         ?string $lifePolicyNumber = null,

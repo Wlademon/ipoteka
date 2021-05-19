@@ -57,15 +57,24 @@ class RensinsDriver implements DriverInterface
      */
     public function calculate(array $data): CalculatedInterface
     {
-        $result = $this->httpClient->calculate($this->collectCalcData($data));
-        $objects = \Arr::get($result, 'calcPolicyResult.calcResults.insuranceObjects.objects');
-        $risks = \Arr::pluck($objects, 'riskInfo.risks');
-        $propRisks = \Arr::where($risks, function($value, $key) {
-            return \Arr::get($value, 'name') === 'Страхование имущества';
-        });
-        $lifeRisks = \Arr::where($risks, function($value, $key) {
-            return in_array(\Arr::get($value, 'name'), ['Инвалидность', 'Страхование имущества']);
-        });
+        $propRisks = [];
+        $lifeRisks = [];
+        if ($this->isLive($data)) {
+            $result = $this->httpClient->calculate($this->collectCalcData($data, true));
+            $objects = \Arr::get($result, 'calcPolicyResult.calcResults.0.policy.insuranceObjects.objects');
+            $risks = Arr::first(Arr::pluck(\Arr::pluck($objects, 'riskInfo'), 'risks'));
+            $lifeRisks = \Arr::where($risks, function($value, $key) {
+                return in_array(\Arr::get($value, 'name'), ['Инвалидность', 'Смерть']);
+            });
+        }
+        if ($this->isProperty($data)) {
+            $result = $this->httpClient->calculate($this->collectCalcData($data, false));
+            $objects = \Arr::get($result, 'calcPolicyResult.calcResults.0.policy.insuranceObjects.objects');
+            $risks = Arr::first(Arr::pluck(\Arr::pluck($objects, 'riskInfo'), 'risks'));
+            $propRisks = \Arr::where($risks, function($value, $key) {
+                return \Arr::get($value, 'name') === 'Страхование имущества';
+            });
+        }
 
         $propSum = array_sum(\Arr::pluck($propRisks, 'insPrem'));
         $lifeSum = array_sum(\Arr::pluck($lifeRisks, 'insPrem'));
@@ -73,18 +82,18 @@ class RensinsDriver implements DriverInterface
         return new Calculated(null, $lifeSum, $propSum);
     }
 
-    protected function collectCalcData(array $data): Arrayable
+    protected function collectCalcData(array $data, bool $Life = false): Arrayable
     {
         $collector = new ReninsCalcCollector();
         $collector->setBankBik($this->getBankBIKByParams($data));
         $collector->setCreditSum($data['remainingDebt']);
         $collector->setCreditCity(self::CREDIT_CITY);
-        $collector->workStatus([]);
         $collector->setStartEnd($data['activeFrom'], $data['activeTo']);
-        if ($this->isLive($data)) {
+        if ($Life && $this->isLive($data)) {
             $objectLife = $data['objects']['life'];
             $collector->setSex($objectLife['gender']);
             $collector->subjectIsObject();
+            $collector->workStatus($objectLife);
             $collector->setBirthDate($objectLife['birthDate']);
             $collector->addObject(
                 [
@@ -96,7 +105,9 @@ class RensinsDriver implements DriverInterface
                 '_zastr1'
             );
         }
-        if ($this->isProperty($data)) {
+        if (!$Life && $this->isProperty($data)) {
+            $collector->workStatus(['professions' => ['Рабочий']]);
+            $collector->setBirthDate(date('Y-m-d', strtotime('-25 years')));
             $objectProperty = $data['objects']['property'];
             $collector->setBuildDate($objectProperty['buildYear']);
             $collector->addObject(
@@ -140,33 +151,21 @@ class RensinsDriver implements DriverInterface
         return !empty($data['objects']['property']);
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
-    {
-        $linkData = $this->httpClient->payLink(
-            collect(
-                [
-                    'policyID' => $contract->objects()->firstOrFail()->external_id
-                ]
-            )
-        );
-        parse_str(parse_url($linkData['url'], PHP_URL_QUERY), $result);
-
-        return new PayLink($result['mdOrder'], $linkData['url'], $contract->insured_sum);
-    }
-
     public function getStatus(Contracts $contract): array
     {
         if ($contract->status !== Contracts::STATUS_CONFIRMED) {
-            $result = $this->httpClient->getStatus(
-                collect(
-                    [
-                        'policyID' => $contract->objects()->firstOrFail()->external_id
-                    ]
-                )
-            );
+            try {
+                $result = $this->httpClient->getStatus(
+                    collect(
+                        [
+                            'policyID' => $contract->objects()->firstOrFail()->external_id
+                        ]
+                    )
+                );
+            } catch (\Throwable $throwable) {
+                self::error($throwable->getMessage());
+                $result = null;
+            }
 
             if ($result === self::ISSUE_SUCCESSFUL) {
                 $contract->status = Contracts::STATUS_CONFIRMED;
@@ -182,46 +181,61 @@ class RensinsDriver implements DriverInterface
      */
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
-        $createData = $this->collectCreateData($contract, $data, $this->calculate($data)->getPremiumSum());
-        $result = $this->httpClient->import($createData);
+        $calc = $this->calculate($data);
 
-        $objects = \Arr::get($result, 'policy.insuranceObjects.objects');
-        $risks = \Arr::pluck($objects, 'riskInfo.risks');
-        $propRisks = \Arr::where($risks, function($value, $key) {
-            return \Arr::get($value, 'name') === 'Страхование имущества';
-        });
-        $lifeRisks = \Arr::where($risks, function($value, $key) {
-            return in_array(\Arr::get($value, 'name'), ['Инвалидность', 'Страхование имущества']);
-        });
-        $policyId = \Arr::get($result,'policy.ID');
-        $policyNumber = \Arr::get($result,'policy.number');
-        $propSum = array_sum(\Arr::pluck($propRisks, 'insPrem'));
-        $lifeSum = array_sum(\Arr::pluck($lifeRisks, 'insPrem'));
-        $this->httpClient->issueAsync(collect(['policyID' => $policyId]));
+        if ($calc->getLifePremium()) {
+            $createData = $this->collectCreateData($contract, $data, $calc->getPremiumSum(), true);
+            $result = $this->httpClient->import($createData);
+            $objects = \Arr::get($result, 'policy.insuranceObjects.objects');
+
+            $risks = \Arr::first(\Arr::pluck($objects, 'riskInfo.risks'), null, []);
+            $lifeRisks = \Arr::where($risks, function($value, $key) {
+                return in_array(\Arr::get($value, 'name'), ['Инвалидность', 'Смерть']);
+            });
+            $policyIdLife = \Arr::get($result,'policy.ID');
+            $policyNumberLife = \Arr::get($result,'policy.number');
+            $lifeSum = array_sum(\Arr::pluck($lifeRisks, 'insPrem'));
+            $this->httpClient->issue(collect(['policyID' => $policyIdLife]));
+        }
+        if ($calc->getPropertyPremium()) {
+            $createData = $this->collectCreateData($contract, $data, $calc->getPremiumSum());
+            $result = $this->httpClient->import($createData);
+            $objects = \Arr::get($result, 'policy.insuranceObjects.objects');
+            $risks = \Arr::first(\Arr::pluck($objects, 'riskInfo.risks'), null, []);
+            $propRisks = \Arr::where($risks, function($value, $key) {
+                return \Arr::get($value, 'name') === 'Страхование имущества';
+            });
+            $policyIdProperty = \Arr::get($result,'policy.ID');
+            $policyNumberProperty = \Arr::get($result,'policy.number');
+            $propSum = array_sum(\Arr::pluck($propRisks, 'insPrem'));
+            $this->httpClient->issue(collect(['policyID' => $policyIdProperty]));
+        }
+
         return new CreatedPolicy(
             null,
-            $lifeSum ? $policyId : null,
-            $propSum ? $policyId : null,
-            $lifeSum,
-            $propSum,
-            $lifeSum ? $policyNumber : null,
-            $propSum ? $policyNumber : null,
+            isset($policyIdLife) ? $policyIdLife : null,
+            isset($policyIdProperty) ? $policyIdProperty : null,
+            $lifeSum ?? null,
+            $propSum ?? null,
+            $policyNumberLife ?? null,
+            $policyNumberProperty ?? null,
         );
     }
 
-    protected function collectCreateData(Contracts $contract, array $data, float $paySum)
+    protected function collectCreateData(Contracts $contract, array $data, float $paySum, bool $life = false)
     {
-        $isLive = $this->isLive($data);
-        $isProp = $this->isProperty($data);
         $collector = new ReninsCreateCollector();
         $collector->setPayPlan($contract->active_from, $paySum);
         $collector->setStartEnd($contract->active_from, $contract->active_to);
         $collector->setCreditSum($data['remainingDebt']);
         $collector->setHumanInfo($data['subject']);
         $collector->setCreditNumber($data['mortgageAgreementNumber']);
+        $collector->setBankBik($this->getBankBIKByParams($data));
         $collector->setCreditCity(self::CREDIT_CITY);
         $collector->workStatus($data['subject']);
-        if ($isLive) {
+        $collector->setBirthDateSubject($data['subject']['birthDate']);
+        if ($life) {
+            $collector->setBirthDate($data['objects']['life']['birthDate']);
             $collector->addObject(
                 [
                     [
@@ -236,8 +250,14 @@ class RensinsDriver implements DriverInterface
                 '_zastr1'
             );
         }
-        if ($isProp) {
+        if (!$life) {
             $objectProperty = $data['objects']['property'];
+            $state = Arr::get($objectProperty, 'state');
+            $city = Arr::get($objectProperty, 'city');
+            $street = Arr::get($objectProperty, 'street');
+            $house = Arr::get($objectProperty, 'house');
+            $cityKladr = Arr::get($objectProperty, 'cityKladr');
+            $collector->setPropertyAddress($state, $city, $street, $house, $cityKladr);
             $collector->setBuildDate($objectProperty['buildYear']);
             $collector->addObject(
                 [
@@ -253,6 +273,21 @@ class RensinsDriver implements DriverInterface
         return $collector;
     }
 
+    protected function getFilePolice(Contracts $contract)
+    {
+        $objects = $contract->objects;
+        $files = [];
+        foreach ($objects as $object) {
+            $filePathObject = self::createFilePath($contract, $object->id);
+            if (!$this->isFilePoliceExitst($contract, $filePathObject)) {
+                $this->printPolicy($contract, false, true);
+            }
+            $files[] = public_path($filePathObject);
+        }
+
+        return $files;
+    }
+
     /**
      * @inheritDoc
      */
@@ -260,34 +295,54 @@ class RensinsDriver implements DriverInterface
         Contracts $contract,
         bool $sample,
         bool $reset,
-        ?string
-        $filePath = null
-    ): string {
+        ?string $filePath = null
+    ) {
         if ($contract->status !== Contracts::STATUS_CONFIRMED) {
             throw new ReninsException('Status is not confirmed!');
         }
-        if ($this->isFilePoliceExitst($contract, $filePath)) {
-            return self::generateBase64($filePath);
-        }
-        $url = $this->httpClient->print(
-            collect(
-                [
-                    'policyID' => $contract->objects()->firstOrFail()->external_id
-                ]
-            )
-        );
-        throw_if(!$url, ReninsException::class, ['message' => 'Url not get!']);
-        $path = $this->httpClient->getFile($url);
-        $dirFiles = self::unpackZip($path);
-        $files = \Storage::allFiles($dirFiles);
-        $file = collect($files)->first(function($file) {
-            return stripos(last(explode(DIRECTORY_SEPARATOR, $file)), 'polis') !== false;
-        });
-        throw_if(!$file, ReninsException::class, ['Police file not set.']);
-        $actualFilePath = $this->gefaultFileName($contract);
-        \Storage::copy($file, 'public/' . $actualFilePath);
+        $filesOut = [];
+        $objects = $contract->objects;
+        foreach ($objects as $object) {
+            $filePathObject = self::createFilePath($contract, $object->id);
+            if ($this->isFilePoliceExitst($contract, $filePathObject)) {
+                $filesOut[] = self::generateBase64($filePathObject);
+                continue;
+            }
+            $url = $this->httpClient->print(
+                collect(
+                    [
+                        'calcID' => $object->external_id,
+                        'type' => 'Печать'
+                    ]
+                )
+            );
+            throw_if(!$url, ReninsException::class, ['message' => 'Url not get!']);
+            $path = $this->httpClient->getFile($url);
 
-        return self::generateBase64(public_path($actualFilePath));
+            $dirFiles = self::unpackZip($path);
+            $files = \Storage::allFiles($dirFiles);
+            $file = collect($files)->first(function($file) {
+                return stripos(last(explode(DIRECTORY_SEPARATOR, $file)), 'polis') !== false;
+            });
+            throw_if(!$file, ReninsException::class, 'Police file not set.');
+            $actualFilePath = self::createFilePath($contract, $object->id);
+            \File::move(storage_path('app/' . $file), public_path($actualFilePath));
+
+            $filesOut[] = self::generateBase64(public_path($actualFilePath));
+        }
+
+        return $filesOut;
+    }
+
+    protected static function createFilePath(Contracts $contract, $objectId)
+    {
+        $filePathObject = self::gefaultFileName($contract);
+        $filePathObjectArray = explode('.', $filePathObject);
+        $ext = array_pop($filePathObjectArray);
+        array_push($filePathObjectArray, $objectId, $ext);
+        $filePathObject = implode('.', $filePathObjectArray);
+
+        return $filePathObject;
     }
 
     /**

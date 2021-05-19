@@ -42,7 +42,7 @@ class MailPoliceService
                 $this->generateFile($filePath);
             }
 
-            Mail::to($contract->subjectValue['email'])->send($this->buildMessage($filePath));
+            Mail::to('wladoseid@gmail.com')->send($this->buildMessage($filePath));
 
             self::log("Mail sent to userEmail={$contract->subject_value['email']} contractId={$contract->id}");
         } catch (\Exception $e) {

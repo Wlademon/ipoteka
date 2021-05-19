@@ -6,7 +6,7 @@ class PayLink implements PayLinkInterface
 {
     protected $data = [];
 
-    public function __construct(string $orderId, string $url, float $invoiceNum)
+    public function __construct(string $orderId, string $url, string $invoiceNum)
     {
         $this->data = compact(['orderId', 'url', 'invoiceNum']);
     }
@@ -26,8 +26,8 @@ class PayLink implements PayLinkInterface
         return \Arr::get($this->data, 'url', '');
     }
 
-    public function getInvoiceNum(): float
+    public function getInvoiceNum(): string
     {
-        return \Arr::get($this->data, 'invoiceNum', 0);
+        return \Arr::get($this->data, 'invoiceNum', '');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 
 use App\Drivers\DriverResults\CreatedPolicyInterface;
+use Illuminate\Support\Arr;
 
 /**
  * App\Models\Payment
@@ -81,6 +82,31 @@ class Objects extends BaseModel
     public function getValueAttribute()
     {
         return json_decode($this->attributes['value'], true);
+    }
+
+    public function toArray()
+    {
+        $data = collect($this->attributes);
+        $data = $data->merge($this->getAttribute('value'));
+        $data->forget('value');
+
+        return $data->toArray();
+    }
+
+    public static function contractObjects($contractId)
+    {
+        return self::query()->where('contract_id', '=', $contractId)
+                     ->get()
+                     ->keyBy('product')
+                     ->map(
+                        function(Objects $object)
+                        {
+                            $val = $object->getValueAttribute();
+                            $val = Arr::add($val, 'policyNumber', $object->number);
+                            $val = Arr::add($val, 'premium', $object->premium);
+                            return $val;
+                        }
+                    )->toArray();
     }
 
     public function loadFromDriverResult(CreatedPolicyInterface $createdPolicy)

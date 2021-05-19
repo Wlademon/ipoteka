@@ -46,9 +46,9 @@ interface DriverInterface
      * @param bool $sample Шаблон
      * @param bool $reset Перепечатать
      * @param string|null $filePath Путь сохранения файла
-     * @return mixed Файл в формате base64
+     * @return string|array Файл в формате base64
      */
-    public function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null): string;
+    public function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null);
 
     /**
      * Функция вызываемая после оплаты полиса
