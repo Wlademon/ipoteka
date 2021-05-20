@@ -69,10 +69,37 @@ class ProgramsSetter extends Command
         ], [
             'code' => 'STRAHOVKA',
             'name' => 'Страховка.Ру',
-            'uwLogin' => 'systemuser1',
+            'uw_login' => 'systemuser1',
         ]);
 
         foreach ($programs as $p) {
+
+            if (!empty($p->matrix)) {
+                $company = Companies::updateOrCreate([
+                    'code' => $p->companyCode,
+                ], [
+                    'name' => $p->companyName,
+                ]);
+
+                $program = Programs::updateOrCreate([
+                    'company_id' => $company->id,
+                    'program_code' => $p->programCode,
+                    'program_name' => $p->programName,
+                ], [
+                    'description' => $p->description,
+                    'program_uw_code' => $p->programUwCode,
+                    'risks' => $p->risks,
+                    'issues' => $p->issues,
+                    'conditions' => $p->conditions,
+                    'is_property' => (bool)$p->isProperty,
+                    'is_life' => (bool)$p->isLife,
+                    'is_title' => (bool)$p->isTitle,
+                    'is_active' => (bool)$p->isActive,
+                    'is_recommended' => (bool)$p->isRecommended,
+                    'matrix' => $p->matrix
+                ]);
+            }
+
             $company = Companies::updateOrCreate([
                 'code' => $p->companyCode,
             ], [

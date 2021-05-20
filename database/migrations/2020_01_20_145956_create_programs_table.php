@@ -29,6 +29,7 @@ class CreateProgramsTable extends Migration
             $table->boolean('is_title')->index();
             $table->boolean('is_active')->default(false)->index();
             $table->boolean('is_recommended')->default(false)->index();
+            $table->longText('matrix')->nullable(true);
             $table->timestamps();
             $table->softDeletes();
         });

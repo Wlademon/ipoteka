@@ -75,6 +75,7 @@ class Programs extends BaseModel
         'is_recommended',
         'is_active',
         'program_uw_code',
+        'matrix'
     ];
 
     protected $casts = [
@@ -88,6 +89,7 @@ class Programs extends BaseModel
         'issues' => 'array',
         'risks' => 'array',
         'programCode' => 'string',
+        'matrix' => 'array'
     ];
 
     protected $hidden = [

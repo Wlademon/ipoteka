@@ -25,14 +25,14 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HigherOrderCollectionProxy;
 
-class Sberbank implements DriverInterface
+class Sberbank
 {
 
     use LoggerTrait;
-    use PlugDriverTrait;
 
     protected ?Request $request;
     /**
@@ -60,15 +60,7 @@ class Sberbank implements DriverInterface
      */
     protected ?array $calcData;
 
-    public function calculate(array $data): CalculatedInterface
-    {
-        // TODO: Implement calculate() method.
-    }
 
-    public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
-    {
-        // TODO: Implement getPayLink() method.
-    }
 
     public function getCalculate($data)
     {
@@ -76,8 +68,6 @@ class Sberbank implements DriverInterface
             "success" => true,
             "data" => [
                 "contractId" => 10,
-                "premiumSum" => 3000.50,
-                "lifePremium" => 2000.10,
                 "propertyPremium" => 1000.40
             ]
         ];
@@ -89,7 +79,7 @@ class Sberbank implements DriverInterface
      * @param Request $request
      * @return array
      */
-    public function createPolicy(array $data): CreatedPolicyInterface
+    public function createPolicy(Contracts $contract, array $data)
     {
         $this->data = $data;
         $this->isSaved = false;
@@ -239,57 +229,24 @@ class Sberbank implements DriverInterface
             "success" => true,
             "data" => [
                 'contractId' => $contract->id,
-                "premiumSum" => 3000.50,
-                "lifePolicyNumber" => 'ИПО-LIFE-'.$contract->id,
-                "lifePremium" => 2000.10,
                 "propertyPolicyNumber" => 'ИПО-PROP-'.$contract->id,
                 'propertyPremium' => $contract->premium,
             ]
         ];
     }
 
-    /**
-     * Функция вызываемая при удачном сохранении
-     */
-//    protected function afterSaveOrUpdate(): void
-//    {
-//        $contract = $this->contract;
-//
-//        foreach ($this->data as $obj) {
-//            Log::info(__METHOD__ . ". getUserData object", [$obj]);
-//            $siteService = new SiteService();
-//            $code = md5($obj['objects']['life']['lastName']
-//                . $obj['objects']['life']['firstName']
-//                . ($obj['objects']['life']['middleName'] ?? '')
-//                . $obj['objects']['life']['birthDate']
-//                . time());
-//            $obj['email'] = $code . '@strahovka.ru';
-//            $userObj = $siteService->getUserData($obj);
-//            if ($userObj) {
-//                $obj['login'] = Arr::get($userObj, 'login');
-//                $obj['subjectId'] = Arr::get($userObj, 'subjectId');
-//            }
-//            $object = new Objects(['value' => json_encode($obj, JSON_UNESCAPED_UNICODE)]);
-//            $object->contract()->associate($contract);
-//            $object->save();
-//        }
-//        $subject = new Subjects(['value' => json_encode($this->data['subject'], JSON_UNESCAPED_UNICODE)]);
-//        $subject->contract()->associate($contract);
-//        $subject->save();
-//    }
-
-    public function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null): string
+    public function getInsurancePremium(string $programCode, int $remainingDebt, bool $isWooden): int
     {
-        // TODO: Implement printPolicy() method.
-    }
+        $query = DB::table('programs')->where('program_code', $programCode)->first('matrix');
+        $decodeMatrix = (json_decode($query->matrix, true));
 
-    public function payAccept(Contracts $contract): void
-    {
-        // TODO: Implement payAccept() method.
-    }
+        $woodenRate = $decodeMatrix['tariff']['wooden']['percent'] ?? 1;
+        $stoneRate = $decodeMatrix['tariff']['stone']['percent'] ?? 1;
 
-    public function sendPolice(Contracts $contract): string
-    {
-        // TODO: Implement sendPolice() method.
+        if (!$isWooden) {
+            return $remainingDebt * $stoneRate;
+        }
+
+        return $remainingDebt * $woodenRate;
     }
 }
