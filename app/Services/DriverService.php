@@ -156,6 +156,7 @@ class DriverService
         try {
             \DB::beginTransaction();
             $model = new Contracts();
+
             $model->fill($data);
             $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
