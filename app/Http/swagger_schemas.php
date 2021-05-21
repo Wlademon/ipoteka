@@ -52,7 +52,7 @@ use OpenApi\Annotations as OA;
  *     @OA\Property(property="data", description="Возвращаемые данные", type="object", required={},
  *        @OA\Property(property="contractId", type="int", example=100, description="Идентификатор сделки"),
  *        @OA\Property(property="policyNumber", type="string", example="FRFFR-FDDFFDD-FG456-F344F", description="Номер полиса"),
- *        @OA\Property(property="premiumSum", type="float", example=1000.01, description="Премия"),
+ *        @OA\Property(property="premiumSum", type="float", example=1000.01, description="Премия")
  *     )
  * )
  */
