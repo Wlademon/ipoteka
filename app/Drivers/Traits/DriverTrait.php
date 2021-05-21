@@ -75,7 +75,7 @@ trait DriverTrait
      */
     protected function getFilePolice(Contracts $contract)
     {
-        $filename = config('ns.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
+        $filename = config('mortgage.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
         $filenameWithPath = public_path() . '/' . $filename;
         if (!file_exists($filenameWithPath)) {
             $this->printPolicy($contract, false, true, $filenameWithPath);
@@ -84,11 +84,20 @@ trait DriverTrait
         return $filenameWithPath;
     }
 
+    /**
+     * @param Contracts $contract
+     * @return string
+     */
     public static function gefaultFileName(Contracts $contract)
     {
-        return config('ns.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
+        return config('mortgage.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
     }
 
+    /**
+     * @param Contracts $contract
+     * @param string $filenameWithPath
+     * @return bool
+     */
     protected function isFilePoliceExitst(Contracts $contract, &$filenameWithPath = ''): bool
     {
         if (!$filenameWithPath) {
@@ -103,6 +112,12 @@ trait DriverTrait
         return file_exists(public_path() . '/' . $filenameWithPath);
     }
 
+    /**
+     * @param Contracts $contract
+     * @param PayLinks $links
+     * @return PayLink
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     */
     public function getPayLink(Contracts $contract, PayLinks $links): PayLink
     {
         $invoiceNum = sprintf("%s%03d%06d/%s", 'NS', $contract->company_id, $contract->id, Carbon::now()->format('His'));

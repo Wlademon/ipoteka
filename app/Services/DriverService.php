@@ -190,6 +190,11 @@ class DriverService
         return $result->toArray();
     }
 
+    /**
+     * @param Collection $collection
+     * @param string $type
+     * @return Objects|null
+     */
     protected function getObjectModel(Collection $collection, string $type): ?Objects
     {
         $object = $collection->get($type);
@@ -281,13 +286,7 @@ class DriverService
         ];
         Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
         $res = Helper::getPolicyNumber($params);
-        $contract->number = $res->data->bso_numbers[0];
-        $contract->save();
-
-        $resUwin = Helper::getUwinContractId($contract);
-        if ($resUwin) {
-            $contract->uwContractId = isset($resUwin->contractId) ? $resUwin->contractId : null;
-        }
+        $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
         $contract->save();
         $this->statusConfirmed($contract);
         self::log("Contract with ID {$contract->id} was saved.");

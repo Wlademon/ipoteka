@@ -8,26 +8,28 @@ use App\Drivers\DriverResults\CalculatedInterface;
 use App\Drivers\DriverResults\CreatedPolicy;
 use App\Drivers\DriverResults\CreatedPolicyInterface;
 use App\Drivers\Traits\DriverTrait;
+use App\Drivers\Traits\PrintPdfTrait;
 use App\Helpers\Helper;
 use App\Models\Contracts;
-use App\Printers\PolicyPrinter;
-use Illuminate\Support\Facades\DB;
+use App\Models\Programs;
 
 class SberinsDriver implements DriverInterface
 {
 
+    use PrintPdfTrait;
     use DriverTrait;
 
+    /**
+     * @param array $data
+     * @return CalculatedInterface
+     */
     public function calculate(array $data): CalculatedInterface
     {
-        $dataCollect = collect($data);
-        $objects = collect($dataCollect->get('objects'));
-        $property = collect($objects->get('property'));
-
         $propertyInsurancePremium = $this->getInsurancePremium(
-            $dataCollect->get('programCode'),
-            $dataCollect->get('remainingDebt'),
-            $property->get('isWooden'));
+            \Arr::get($data, 'programCode'),
+            \Arr::get($data, 'remainingDebt'),
+            \Arr::get($data, 'objects.property.isWooden'),
+        );
 
         return new Calculated(
             null,
@@ -45,7 +47,7 @@ class SberinsDriver implements DriverInterface
 
         $propertyPremium = $this->calculate($data)->getPropertyPremium();
         $contract->premium = $propertyPremium;
-        $contract->save();
+
         $res = Helper::getPolicyNumber($this->getDataForPolicyNumber($contract));
         $propertyPolicyNumber = $res->data->bso_numbers[0];
 
@@ -60,27 +62,37 @@ class SberinsDriver implements DriverInterface
         );
     }
 
-    public function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null)
-    {
-        $pdfPaths = [];
-        $policyPrinter = new PolicyPrinter($pdfPaths);
-        $template = mb_strtolower($contract->program->companyCode);
-        $filename = $policyPrinter->getFilenameWithDir($contract, $sample);
-        \PDF::setOptions(
-            [
-                'logOutputFile' => storage_path('logs/anti-mite-generate-pdf.htm'),
-                'tempDir' => $pdfPaths['tmp'],
-                'isHtml5ParserEnabled' => true,
-                'isRemoteEnabled' => true,
-                'dpi' => 96,
-            ]
-        )->loadView("templates.$template", compact('contract', 'sample'))
-            ->save($filename);
+    /**
+     * @param Contracts $contract
+     * @param bool $sample
+     * @param bool $reset
+     * @param string|null $filePath
+     * @return string
+     */
+    public function printPolicy(
+        Contracts $contract,
+        bool $sample,
+        bool $reset = false,
+        ?string $filePath = null
+    ): string {
+        $sampleText = $sample ? '_sample' : '';
+        if (!$filePath) {
+            $filename = public_path() . '/' . config('mortgage.pdf.path') . sha1(
+                    $contract->id . $contract->number
+                ) . $sampleText . '.pdf';
+        } else {
+            $filename = $filePath;
+        }
+        if (!file_exists($filename) || $reset) {
+            $filename = self::generatePdf($contract, $sample, $filename);
+        }
 
-        return $filename;
+        return self::generateBase64($filename);
     }
 
-
+    /**
+     * @param Contracts $contract
+     */
     public function payAccept(Contracts $contract): void
     {
         return;
@@ -94,19 +106,21 @@ class SberinsDriver implements DriverInterface
      */
     public function getInsurancePremium(string $programCode, int $remainingDebt, bool $isWooden): int
     {
-        $query = DB::table('programs')->where('program_code', $programCode)->first('matrix');
-        $decodeMatrix = (json_decode($query->matrix, true));
-
-        $woodenRate = $decodeMatrix['tariff']['wooden']['percent'] ?? 1;
-        $stoneRate = $decodeMatrix['tariff']['stone']['percent'] ?? 1;
+        $matrix = Programs::query()->where('program_code', $programCode)->first('matrix')->matrix;
+        $woodenRate = \Arr::get($matrix, 'tariff.wooden.percent', 1);
+        $stoneRate = \Arr::get($matrix, 'tariff.stone.percent', 1);
 
         if (!$isWooden) {
-            return $remainingDebt * $stoneRate;
+            return $remainingDebt / 100 * $stoneRate;
         }
 
-        return $remainingDebt * $woodenRate;
+        return $remainingDebt / 100 * $woodenRate;
     }
 
+    /**
+     * @param Contracts $contract
+     * @return array
+     */
     protected function getDataForPolicyNumber(Contracts $contract): array
     {
         return [
@@ -114,7 +128,7 @@ class SberinsDriver implements DriverInterface
             'program_code' => $contract->program->programCode,
             'bso_owner_code' => $contract->company->code,
             'bso_receiver_code' => 'STRAHOVKA', // Код получателя БСО'bso_receiver_code' => 'STRAHOVKA'
-            "count" => 1,
+            'count' => 1,
         ];
     }
 }

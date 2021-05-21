@@ -26,7 +26,7 @@ class CreateContractsTable extends Migration
             $table->dateTime('active_from');
             $table->dateTime('active_to');
             $table->dateTime('signed_at');
-            $table->float('remaining_debt', 14, 2);
+            $table->float('remainingDebt', 14, 2);
             $table->float('premium', 14, 2)->nullable();
             $table->timestamps();
             $table->softDeletes();

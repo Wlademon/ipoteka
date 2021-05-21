@@ -169,7 +169,7 @@ class Programs extends BaseModel
      */
     public function setConditionsAttribute($value)
     {
-        $this->attributes['conditions'] = json_encode($value);
+        $this->attributes['conditions'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -178,7 +178,7 @@ class Programs extends BaseModel
      */
     public function setMatrixAttribute($value)
     {
-        $this->attributes['matrix'] = json_encode($value);
+        $this->attributes['matrix'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -187,7 +187,7 @@ class Programs extends BaseModel
      */
     public function setRisksAttribute($value)
     {
-        $this->attributes['risks'] = json_encode($value);
+        $this->attributes['risks'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -196,7 +196,7 @@ class Programs extends BaseModel
      */
     public function setIssuesAttribute($value)
     {
-        $this->attributes['issues'] = json_encode($value);
+        $this->attributes['issues'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
     /**
@@ -212,7 +212,7 @@ class Programs extends BaseModel
      */
     public function getMatrixAttribute()
     {
-        return json_decode($this->attributes['matrix']);
+        return json_decode($this->attributes['matrix'], true);
     }
 
     /**
@@ -220,7 +220,7 @@ class Programs extends BaseModel
      */
     public function getRisksAttribute()
     {
-        return json_decode($this->attributes['risks']);
+        return json_decode($this->attributes['risks'], true);
     }
 
     /**
@@ -228,7 +228,7 @@ class Programs extends BaseModel
      */
     public function getIssuesAttribute()
     {
-        return json_decode($this->attributes['issues']);
+        return json_decode($this->attributes['issues'], true);
     }
 
     public function getOwnerCodeAttribute()
