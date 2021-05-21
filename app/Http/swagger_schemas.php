@@ -76,8 +76,8 @@ use OpenApi\Annotations as OA;
  *        @OA\Property(property="premium", type="float", example=3000.5, description="Премия по договору"),
  *        @OA\Property(property="status", type="integer", example=2, description="Статус договора"),
  *        @OA\Property(property="objects", type="object", description="Объекты страхования",
- *              @OA\Property(property="property", description="Жилье", ref="#/components/schemas/Property"),
- *              @OA\Property(property="life", description="Жизнь", ref="#/components/schemas/Life")
+ *              @OA\Property(property="property", description="Жилье", ref="#/components/schemas/ObjectProperty"),
+ *              @OA\Property(property="life", description="Жизнь", ref="#/components/schemas/ObjectLife")
  *        ),
  *        @OA\Property(property="subject", ref="#/components/schemas/Subject", description="Субъект страхования")
  *     )
