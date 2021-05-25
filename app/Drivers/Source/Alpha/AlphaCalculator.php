@@ -12,7 +12,7 @@ class AlphaCalculator
     const SALE_TYPE_SECOND = 'SECOND';
 
     const GENDER_MAN = 'M';
-    const GENDER_WOMAN = 'W';
+    const GENDER_FEMALE = 'F';
 
 
     protected array $data = [];
@@ -83,7 +83,7 @@ class AlphaCalculator
     public function setInsurant(bool $gender, string $dateBirth)
     {
         $this->data['insurant'] = [
-            'gender' => !empty($gender) ? self::GENDER_MAN : self::GENDER_WOMAN,
+            'gender' => $gender ? self::GENDER_MAN : self::GENDER_FEMALE,
             'insurantDateBirth' => Carbon::parse($dateBirth)->format('Y-m-d'),
         ];
     }
@@ -121,7 +121,7 @@ class AlphaCalculator
      * @param string $city
      * @param string $street
      */
-    public function setInsurer(string $city, string $street)
+    public function setInsurerAddress(string $city, string $street)
     {
         $this->data['insurer']['address'] = [
             'city' => $city,
@@ -132,9 +132,9 @@ class AlphaCalculator
     /**
      * @param string $email
      */
-    public function setEmail(string $email)
+    public function setInsurerEmail(string $email)
     {
-        $this->data['email'] = $email;
+        $this->data['insurer']['email'] = $email;
     }
 
     /**
@@ -142,11 +142,11 @@ class AlphaCalculator
      * @param string $lastName
      * @param string|null $middleName
      */
-    public function setFullName(string $name, string $lastName, ?string $middleName)
+    public function setInsurerFullName(string $name, string $lastName, ?string $middleName)
     {
-        $this->data['firstName'] = $name;
-        $this->data['lastName'] = $lastName;
-        $this->data['middleName'] = $middleName ?? '';
+        $this->data['insurer']['firstName'] = $name;
+        $this->data['insurer']['lastName'] = $lastName;
+        $this->data['insurer']['middleName'] = $middleName ?? '';
     }
 
     /**
@@ -154,9 +154,9 @@ class AlphaCalculator
      * @param int $number
      * @param int $seria
      */
-    public function setPersonDocument(string $dateOfIssue,int $number,int $seria)
+    public function setInsurerPersonDocument(string $dateOfIssue,int $number,int $seria)
     {
-        $this->data['personDocument'] = [
+        $this->data['insurer']['personDocument'] = [
             'dateOfIssue' => $dateOfIssue,
             'number' => $number,
             'seria' => $seria
@@ -166,9 +166,9 @@ class AlphaCalculator
     /**
      * @param string $phone
      */
-    public function setPhone(string $phone)
+    public function setInsurerPhone(string $phone)
     {
-        $this->data['phone'] = $phone;
+        $this->data['insurer']['phone'] = $phone;
     }
 
     /**

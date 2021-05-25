@@ -15,5 +15,6 @@ return [
         'host' => env('SC_ALFA_HOST'),
         'agentContractId' => env('SC_ALFA_AGENT_CONTRACT_ID'),
         'managerId' => env('SC_ALFA_AGENT_MANAGER_ID'),
+        'numberIterations' => env('METHOD_ALFA_NUMBER_ITERATIONS_GET_STATUS_CONTRACT')
     ]
 ];

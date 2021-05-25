@@ -4,15 +4,19 @@
 namespace App\Drivers\Services;
 
 
+use App\Drivers\Traits\LoggerTrait;
 use App\Exceptions\Drivers\AlphaException;
-use Carbon\Carbon;
 
 class MerchantServices
 {
-    const SOAP_XMLNS_WSSE="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
-    const SOAP_XMLNS_WSU="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
-    const SOAP_WSSE_PASSWORD="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest";
-    const SOAP_WSSE_NONCE="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary";
+    use LoggerTrait;
+
+
+    private $soap_xmlns_wsse = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
+    private $soap_xmlns_wsu = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd";
+    private $soap_wsse_password = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest";
+    private $soapMerchantServicesLogin = "E_PARTNER";
+    private $soap_wsse_nonce = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary";
 
     /** @var string */
     protected $idToken;
@@ -25,25 +29,141 @@ class MerchantServices
 
     protected array $data = [];
 
-    public function registerOrder()
+    public function getUpid()
     {
-
         $options = array(
             'soap_version' => SOAP_1_1,
-            'exceptions'   => false,
-            'trace'        => 1,
-            'cache_wsdl'   => WSDL_CACHE_NONE
+            'exceptions' => true,
+            'trace' => 1,
+            'cache_wsdl' => WSDL_CACHE_NONE
+        );
+        $soap = new \SoapClient('https://b2b-test2.alfastrah.ru/cxf/partner/PartnersInteraction?wsdl', $options);
+
+        try {
+            $result = $soap->__SoapCall('getUPID', [
+                'UPIDRequest' => [
+                    'callerCode' => 'E_PARTNER',
+                ],
+            ], null, $this->getHeaderForSoap());
+
+            $resp = $soap->__getLastRequestHeaders();
+        } catch (\Throwable $e) {
+            self::abortLog($e->getMessage(), AlphaException::class);
+        }
+
+        return collect($result);
+    }
+
+    public function getContractId($orderId)
+    {
+        $options = array(
+            'soap_version' => SOAP_1_1,
+            'exceptions' => true,
+            'trace' => 1,
+            'cache_wsdl' => WSDL_CACHE_NONE
+        );
+        $soap = new \SoapClient('https://b2b-test2.alfastrah.ru/cxf/partner/PartnersInteraction?wsdl', $options);
+
+        try {
+            $result = $soap->__SoapCall('getContractId', [
+                'getPayedContractRequest' => [
+                    'UPID' => $orderId,
+                ],
+            ], null, $this->getHeaderForSoap());
+
+            $resp = $soap->__getLastRequestHeaders();
+        } catch (\Throwable $e) {
+            self::abortLog($e->getMessage(), AlphaException::class);
+        }
+
+        return collect($result);
+    }
+
+    public function getContractSigned($orderId, $contractId)
+    {
+        $options = array(
+            'soap_version' => SOAP_1_1,
+            'exceptions' => true,
+            'trace' => 1,
+            'cache_wsdl' => WSDL_CACHE_NONE
+        );
+        $soap = new \SoapClient(env('SOAP_MS_GET_CONTRACT_SIGNED_WSDL'), $options);
+
+        try {
+            $result = $soap->__SoapCall('GetContractSigned', [
+                'GetContractSignedRequest' => [
+                    'UPID' => $orderId,
+                    'ContractId' => $contractId
+                ],
+            ], null, $this->getHeaderForSoap());
+
+            $resp = $soap->__getLastRequestHeaders();
+        } catch (\Throwable $e) {
+            dd($soap->__getLastRequest(), $soap->__getLastResponse());
+            self::abortLog($e->getMessage(), AlphaException::class);
+        }
+
+        return collect($result);
+    }
+
+    /**
+     * @param $orderId
+     * @return \Illuminate\Support\Collection
+     * @throws \SoapFault
+     */
+    public function getOrderStatus($orderId)
+    {
+        $options = array(
+            'soap_version' => SOAP_1_1,
+            'exceptions' => true,
+            'trace' => 1,
+            'cache_wsdl' => WSDL_CACHE_NONE
         );
         $soap = new \SoapClient(env('SOAP_MERCHANT_SERVICE_WSDL'), $options);
 
         try {
-            $result = $soap->__SoapCall('registerOrder', $this->data, null, $this->getHeaderForSoap());
+            $result = $soap->__SoapCall('getOrderStatus', [
+                'order' => [
+                    'orderId' => $orderId,
+                ],
+            ], null, $this->getHeaderForSoap());
+
             $resp = $soap->__getLastRequestHeaders();
-        } catch (\Exception $e) {
-            throw new AlphaException($soap->__getLastRequestHeaders());
+        } catch (\Throwable $e) {
+            self::abortLog($e->getMessage(), AlphaException::class);
         }
 
-        return $result;
+        return collect($result);
+    }
+
+    public function registerOrder()
+    {
+        $options = array(
+            'soap_version' => SOAP_1_1,
+            'exceptions' => true,
+            'trace' => 1,
+            'cache_wsdl' => WSDL_CACHE_NONE
+        );
+        $soap = new \SoapClient(env('SOAP_MERCHANT_SERVICE_WSDL'), $options);
+
+        try {
+            $result = $soap->__SoapCall('registerOrder', [
+                'order' => [
+                    'merchantOrderNumber' => $this->data['merchantOrderNumber'],
+                    'description' => $this->data['description'][1],
+                    'expirationDate' => $this->data['expirationDate'],
+                    'isOperDocument' => 'y',
+                    'returnUrl' => $this->data['returnUrl'],
+                    'failUrl' => $this->data['failUrl']
+                ],
+            ], null, $this->getHeaderForSoap());
+
+            $resp = $soap->__getLastRequestHeaders();
+        } catch (\Throwable $e) {
+            self::abortLog($e->getMessage(), AlphaException::class);
+        }
+
+        return collect($result);
     }
 
     protected function authParam()
@@ -73,27 +193,28 @@ class MerchantServices
         $xml =
             <<<XML
         <SOAP-ENV:Header>
-            <wsse:Security SOAP-ENV:mustUnderstand="1" xmlns:wsse={self::SOAP_XMLNS_WSSE}
-            xmlns:wsu={self::SOAP_XMLNS_WSU}>
-                <wsse:UsernameToken wsu:Id="$this->idToken" xmlns:wsu={self::SOAP_XMLNS_WSU}>
-                    <wsse:Username>{env('SOAP_MERCHANT_SERVICE_LOGIN')}</wsse:Username>
-                    <wsse:Password Type={self::SOAP_WSSE_PASSWORD}>{$this->passDigest}</wsse:Password>
-                    <wsse:Nonce EncodingType={self::SOAP_WSSE_NONCE}>{$this->nonceXML}</wsse:Nonce>
+            <wsse:Security SOAP-ENV:mustUnderstand="1" xmlns:wsse="{$this->soap_xmlns_wsse}"
+            xmlns:wsu="{$this->soap_xmlns_wsu}">
+                <wsse:UsernameToken wsu:Id="$this->idToken" xmlns:wsu="{$this->soap_xmlns_wsu}">
+                    <wsse:Username>{$this->soapMerchantServicesLogin}</wsse:Username>
+                    <wsse:Password Type="{$this->soap_wsse_password}">{$this->passDigest}</wsse:Password>
+                    <wsse:Nonce EncodingType="{$this->soap_wsse_nonce}">{$this->nonceXML}</wsse:Nonce>
                     <wsu:Created>{$this->timestamp}</wsu:Created>
                 </wsse:UsernameToken>
             </wsse:Security>
         </SOAP-ENV:Header>
         XML;
+
         $xml = str_replace("\n", '', $xml);
 
         $headerVar = new \SoapVar($xml, XSD_ANYXML);
 
-        return (new \SoapHeader(self::SOAP_XMLNS_WSSE, 'Security', $headerVar, true));
+        return (new \SoapHeader($this->soap_xmlns_wsse, 'Security', $headerVar, true));
     }
 
     public function setMerchantOrderNumber(int $merchantOrderNumber)
     {
-        $this->data['merchantOrderNumber'] =  $merchantOrderNumber;
+        $this->data['merchantOrderNumber'] = $merchantOrderNumber;
     }
 
     public function setDescription($description)

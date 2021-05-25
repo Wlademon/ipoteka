@@ -13,6 +13,7 @@ use App\Drivers\Services\RegisterUserProfile;
 use App\Drivers\Source\Alpha\AlfaAuth;
 use App\Drivers\Source\Alpha\AlphaCalculator;
 use App\Drivers\Traits\DriverTrait;
+use App\Drivers\Traits\LoggerTrait;
 use App\Exceptions\Drivers\AlphaException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
@@ -23,6 +24,7 @@ use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Class AbsolutDriver
@@ -30,16 +32,22 @@ use Illuminate\Support\Arr;
  */
 class AlfaMskDriver implements DriverInterface
 {
-    use DriverTrait;
+    use DriverTrait {
+        DriverTrait::getStatus as getTStatus;
+    }
+    use LoggerTrait;
 
+    const STATUS_DRAFT = 1;
+    const STATUS_CONFIRMED = 2;
+    const ISSUE_SUCCESSFUL = 'ISSUE_SUCCESSFUL';
     const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
-    const GET_POLICY_URL = '/msrv/mortgage/partner/contractStatus';
-    const POST_PAYMENT_RECEIPT = '/msrvg/payment/receipt';
+    const POST_POLICY_CREATE_URL = '/msrv/mortgage/partner/calcAndSave';
+    const GET_POLICY_STATUS_URL = '/msrv/mortgage/partner/contractStatus';
+    const POST_PAYMENT_RECEIPT = '/msrv/payment/receipt/common';
 
     protected string $host;
     protected Client $client;
     protected int $managerId = 0;
-    protected array $contractList = [];
 
     public function __construct(Repository $repository, string $prefix = '')
     {
@@ -71,8 +79,7 @@ class AlfaMskDriver implements DriverInterface
                     'json' => $calculator->getData()
                 ]
             );
-        }
-        catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             dd($e->getResponse()->getBody()->getContents());
         }
 
@@ -99,6 +106,7 @@ class AlfaMskDriver implements DriverInterface
 
         if ($objects->has('life')) {
             $life = collect($objects->get('life'));
+
             $calculator->setInsurant($life->get('gender'), $life->get('birthDate'));
             $calculator->setLifeRisk($life->get('professions', []), $life->get('sports', []));
         }
@@ -119,112 +127,37 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @throws \Throwable
      */
-    protected function createSingleAccount(): array
+    protected function createSingleAccount($authToken, $contractList): array
     {
-        $result = $this->client->post(
-            $this->host . self::POST_PAYMENT_RECEIPT, [
-                'json' => [
-                    'contractList' => implode(',', $this->contractList)
+        try {
+            $result = $this->client->post(
+                $this->host . self::POST_PAYMENT_RECEIPT, [
+                    'headers' => [
+                        'Authorization' => "Bearer {$authToken}"
+                    ],
+                    'json' => [
+                        'contractList' => $contractList
+                    ]
                 ]
-            ]
-        );
+            );
+        } catch (\Throwable $e) {
+            self::abortLog($e->getMessage(), AlphaException::class);
+        }
+
         throw_if($result->getStatusCode() !== 200, new AlphaException('Error create payment'));
         $decodeResult = json_decode($result->getBody()->getContents(), true);
         $text = ' Оплата страхового полиса ';
         return [
-            $text . Arr::get($decodeResult, 'id', 0),
-            $text . Arr::get($decodeResult, 'number', 0),
+            Arr::get($decodeResult, 'id', 0),
+            Arr::get($decodeResult, 'number', 0),
         ];
     }
-
-//    protected function getCross($contract)
-//    {
-//        if (empty($contract->id)) {
-//            throw new AlphaException('contractId is empty.');
-//        }
-//
-//        $getResult = $this->client->get(
-//            $this->host . self::CROSS_URL, [
-//                'contractId' => $contract->id,
-//            ]
-//        );
-//        if ($getResult->getStatusCode() !== 200) {
-//            throw new AlphaException('Error get data from getCross');
-//        }
-//        $decodeGetResult = json_decode($getResult->getBody()->getContents(), true);
-//
-//        $collectResult = collect($decodeGetResult);
-//        if (!$collectResult->has('crossProductList')) {
-//            return $decodeGetResult;
-//        }
-//
-//        $calculationIdList = [];
-//        foreach ($collectResult->only('crossProductList') as $param) {
-//            $calculationIdList = $param['id'];
-//        }
-//
-//        return [
-//            $decodeGetResult,
-//            $calculationIdList,
-//            $contract->id . $this->managerId
-//        ];
-//    }
-//
-//    protected function postSaveCross($contract): string
-//    {
-//        $postResult = $this->client->post(
-//            $this->host . self::CROSS_URL, [
-//                'json' => $this->getCross($contract)
-//            ]
-//        );
-//        if ($postResult->getStatusCode() !== 200) {
-//            throw new AlphaException('Error save crosses in contract.');
-//        }
-//
-//        $decodeGetResult = json_decode($postResult->getBody()->getContents(), true);
-//
-//        return Arr::get($decodeGetResult, 'saveRequestId', 0);
-//    }
-
-//    protected function getCrossStatus(Contracts $contract)
-//    {
-//        $getResult = $this->client->get(
-//            $this->host . self::CROSS_URL, [
-//                'contractId' => $this->postSaveCross($contract),
-//            ]
-//        );
-//        if ($getResult->getStatusCode() !== 200) {
-//            throw new AlphaException('Error get data from CrossStatus');
-//        }
-//        $decodeGetResult = json_decode($getResult->getBody()->getContents(), true);
-//    }
 
     protected function getIsOperDocument(): string // заглушка
     {
         return 'y';
     }
 
-    /**
-     * @throws AlphaException
-     */
-    public function registerUserProfile($contract): string
-    {
-        $registerProfile = new RegisterUserProfile();
-        $registerProfile->setEmail($contract->subject()->value['email']);
-        $registerProfile->setFullName(
-            $contract->subject()->value['firstName'],
-            $contract->subject()->value['lastName'],
-            $contract->subject()->value['middleName']
-        );
-        $registerProfile->setPassword(null);
-        $registerProfile->setPhone($contract->subject()->value['phone']); //Телефон. В любом формате, главное чтобы были все 11 цифр
-        $registerProfile->setBirthday((new Carbon($contract->subject()->value['birthDate']))->format('d.m.Y')); //birthday=08.11.1985
-        $registerProfile->setContractNumber($contract->number);
-        $registerProfile->setOfferAccepted('y'); // заглушка без метода
-        $registerProfile->setPartnerName('E_PARTNER'); //заглушка без метода
-
-        return $registerProfile->registerProfile($this->client, env('MS_REGISTER_USER_PROFILE'));
-    }
 
     /**
      * @inheritDoc
@@ -232,96 +165,175 @@ class AlfaMskDriver implements DriverInterface
      */
     public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
     {
+
+        $contractOptions = $contract->getOptionsAttribute();
+        $contractOptions['singleAccount'] = '';
+        $contractOptions['orderId'] = '';
+
+        $auth = new AlfaAuth();
+        $authToken = $auth->getToken($this->client)['access_token'];
+
         $registerOrder = new MerchantServices();
-        $registerOrder->setMerchantOrderNumber($contract->id);
-        $registerOrder->setDescription($this->createSingleAccount());
+        $singleAcc = $this->createSingleAccount(
+            $authToken,
+            $contract->getOptionsAttribute()['contractList']);
+        $contractOptions['singleAccount'] = $singleAcc[0];
+        $registerOrder->setDescription($singleAcc);
+        $registerOrder->setMerchantOrderNumber($singleAcc[0]);
+
         $registerOrder->setExpirationDate(Carbon::now()->addMinutes(20)->format('Y-m-d\TH:i:sP'));
         $registerOrder->setIsOperDocument($this->getIsOperDocument());
-        $registerOrder->setClientId($this->registerUserProfile($contract));
-        $registerOrder->setReturnUrl($payLinks->getSuccessUrl());
-        $registerOrder->setFailUrl($payLinks->getFailUrl());
+        $registerOrder->setReturnUrl($this->host . $payLinks->getSuccessUrl());
+        $registerOrder->setFailUrl($this->host . $payLinks->getFailUrl());
 
         $response = $registerOrder->registerOrder();
 
+        throw_if(empty($response->get('orderId')), new AlphaException('Missing orderId'));
+
+        $contractOptions['orderId'] = $response->get('orderId');
+        $contract->setOptionsAttribute($contractOptions);
+        $contract->save();
+
         return new PayLink(
-            $response->orderId->return,
-            $response->formUrl->return,
-            $contract->insured_sum
+            $response->get('orderId'),
+            $response->get('formUrl'),
+            $contract->remainingDebt
         );
     }
 
     /**
      * @inheritDoc
      */
+
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
-        dd(123);
+        $contractOptions = $contract->getOptionsAttribute();
+        $contractOptions['contractList'] = [];
+        $auth = new AlfaAuth();
+        $authToken = $auth->getToken($this->client)['access_token'];
+
         $dataCollect = collect($data);
         $policy = $this->CollectData($data);
-        $subject = $dataCollect->only('subject')->flatten();
-        $property = $dataCollect->only('objects')->flatten()->only(['property'])->flatten();
 
-        $policy->setInsurer($subject->get('city'), $subject->get('street'));
-        $policy->setEmail($subject->get('email'));
-        $policy->setFullName($subject->get('firstName'), $subject->get('lastName'), $subject->get('middleName'));
-        $policy->setPersonDocument($subject->get('docIssueDate'), $subject->get('docNumber'), $subject->get('docSeries'));
-        $policy->setPhone($subject->get('phone'));
+        $subject = collect($dataCollect->get('subject'));
+        $property = collect(Arr::get($data, 'objects.property'));
 
+        $policy->setInsurerAddress($subject->get('city'), $subject->get('street'));
+        $policy->setInsurerEmail($subject->get('email'));
+        $policy->setInsurerFullName($subject->get('firstName'), $subject->get('lastName'), $subject->get('middleName'));
+        $policy->setInsurerPersonDocument(
+            (new Carbon($subject->get('docIssueDate')))->format('Y-m-d'),
+            $subject->get('docNumber'),
+            $subject->get('docSeries')
+        );
+        $policy->setInsurerPhone($subject->get('phone'));
         if ($property->isNotEmpty()) {
             $policy->setAddress($property->only(['city', 'state', 'street', 'house', 'block', 'apartment'])->join(','));
             $policy->setAddressSquare($property->get('area'));
         }
-
-        $policy->setDateCreditDoc((new Carbon())->format('Y-d-m')); //?
+        $policy->setDateCreditDoc((new Carbon())->format('Y-m-d'));
         $policy->setNumberCreditDoc($dataCollect->get('mortgageAgreementNumber')); //?
 
-        $postResult = $this->client->post(
-            $this->host . self::POST_POLICY_URL, [
-                'json' => $policy->getData()
-            ]
+        $decodePostResult = $this->getDataFromCreatePolicy($authToken, $policy);
+        $decodeGetResult = $this->getStatusContract($authToken, Arr::get($decodePostResult, 'upid'), 'Error get data from createPolicy');
+
+        if (Arr::has($decodeGetResult['propertyContract'], 'contractId')) {
+            $contractOptions['contractList'][] = Arr::get($decodeGetResult['propertyContract'], 'contractId', 0);
+        }
+        if (Arr::has($decodeGetResult['lifeContract'], 'contractId')) {
+            $contractOptions['contractList'][] = Arr::get($decodeGetResult['lifeContract'], 'contractId', 0);
+        }
+        $contract->setOptionsAttribute($contractOptions);
+        $contract->save();
+
+        return new CreatedPolicy(
+            $contract->id,
+            Arr::get($decodeGetResult['lifeContract'], 'contractId', 0),
+            Arr::get($decodeGetResult['propertyContract'], 'contractId', 0),
+            Arr::get($decodeGetResult, 'lifePremium', 0),
+            Arr::get($decodeGetResult, 'propertyPremium', 0),
+            null,
+            null
         );
+    }
+
+    /**
+     * @param $authToken
+     * @param $policy
+     * @return array
+     * @throws AlphaException
+     */
+    protected function getDataFromCreatePolicy(string $authToken, object $policy): array
+    {
+        try {
+            $postResult = $this->client->post(
+                $this->host . self::POST_POLICY_CREATE_URL, [
+                    'headers' => [
+                        'Authorization' => "Bearer {$authToken}"
+                    ],
+                    'json' => $policy->getData()
+                ]
+            );
+        } catch (\Throwable $e) {
+            self::abortLog($e->getMessage(), AlphaException::class);
+        }
+
         if ($postResult->getStatusCode() !== 200) {
             throw new AlphaException('Error create policy');
         }
         $decodePostResult = json_decode($postResult->getBody()->getContents(), true);
 
-
-        if (!$decodePostResult->has('upid')) {
+        if (!Arr::has($decodePostResult, 'upid')) {
             throw new AlphaException('Response has not upid');
         }
 
-        $decodeGetResult = $this->getStatusContract(Arr::get($decodePostResult, 'upid'), 'Error get data from createPolicy');
-
-        if (Arr::has($decodeGetResult['propertyContract'], 'contractId')) {
-            $this->contractList[] = Arr::get($decodeGetResult['propertyContract'], 'contractId', 0);
-        }
-        if (Arr::has($decodeGetResult['lifeContract'], 'contractId')) {
-            $this->contractList[] = Arr::get($decodeGetResult['lifeContract'], 'contractId', 0);
-        }
-
-        return new CreatedPolicy(
-            $contract->id,
-            Arr::get($decodeGetResult, 'lifePremium', 0),
-            Arr::get($decodeGetResult, 'propertyPremium', 0),
-            Arr::get($decodeGetResult['lifeContract'], 'contractNumber', 0),
-            Arr::get($decodeGetResult['propertyContract'], 'contractNumber', 0),
-            Arr::get($decodeGetResult['lifeContract'], 'contractId', 0),
-            Arr::get($decodeGetResult['propertyContract'], 'contractId', 0),
-        );
+        return $decodePostResult;
     }
 
-    protected function getStatusContract($upid, $message)
+    protected function getStatusContract($authToken, $upid, $message)
     {
-        $getResult = $this->client->get(
-            $this->host . self::GET_POLICY_URL, [
-                'upid' => $upid,
-            ]
+        var_dump(json_encode([
+            'headers' => [
+                'Authorization' => "Bearer {$authToken}"
+            ],
+            'query' => [
+                'upid' => $upid
+            ]]));
+        $i = 0;
+        do {
+            $i++;
+            try {
+                $getResult = $this->client->get(
+                    $this->host . self::GET_POLICY_STATUS_URL, [
+                        'headers' => [
+                            'Authorization' => "Bearer {$authToken}"
+                        ],
+                        'query' => [
+                            'upid' => $upid
+                        ]
+                    ]
+                );
+            } catch (\Throwable $e) {
+                self::abortLog($e->getMessage(), AlphaException::class);
+            }
+            $response = json_decode($getResult->getBody()->getContents(), true);
+            $contracts = Arr::only($response, ['lifeContract', 'propertyContract']);
+            $contractIds = array_filter(Arr::pluck($contracts, 'contractId'));
+            usleep(500000);
+        } while (
+            (count($contracts) !== count($contractIds))
+           || ($i < intval(config('mortgage.alfaMsk.numberIterations')))
         );
+
+        if (count($contracts) !== count($contractIds)) {
+            throw new AlphaException('Misstake contractId');
+        }
+
         if ($getResult->getStatusCode() !== 200) {
             throw new AlphaException($message);
         }
-
-        return json_decode($getResult->getBody()->getContents(), true);
+        var_dump(json_encode($response));
+        return $response;
     }
 
     /**
@@ -331,14 +343,51 @@ class AlfaMskDriver implements DriverInterface
         Contracts $contract, bool $sample, bool $reset, ?string $filePath = null
     ): string
     {
+        $merchantService = new MerchantServices();
 
+//        dd($contract->getOptionsAttribute());
+//        $res = $merchantService->getUpid();
+//        $res = $merchantService->getContractId($contract->getOptionsAttribute()['orderId']);
+//        dd($res, $contract->getOptionsAttribute()['orderId']);
+
+        $response = $merchantService->getContractSigned(
+            $contract->getOptionsAttribute()['orderId'],
+            $contract->getOptionsAttribute()['singleAccount']
+        );
+
+
+        dd($response);
     }
 
     /**
-     * @inheritDoc
+     * @param Contracts $contract
+     * @return array
+     * @throws \Throwable
      */
+    public function getStatus(Contracts $contract): array
+    {
+        if (!empty($contract->getOptionsAttribute()['orderId'])) {
+            if ($contract->status !== Contracts::STATUS_CONFIRMED) {
+                try {
+                    $clientStatusOrder = new MerchantServices();
+                    $statusOrder = $clientStatusOrder->getOrderStatus($contract->getOptionsAttribute()['orderId']);
+
+                } catch (\Throwable $throwable) {
+                    self::error($throwable->getMessage());
+                }
+
+                if ($statusOrder->get('orderStatus') === self::STATUS_CONFIRMED) {
+                    $contract->status = Contracts::STATUS_CONFIRMED;
+                    $contract->saveOrFail();
+                }
+            }
+        }
+
+        return $this->getTStatus($contract);
+    }
+
     public function payAccept(Contracts $contract): void
     {
-
+        return;
     }
 }

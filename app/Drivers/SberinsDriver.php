@@ -13,6 +13,10 @@ use App\Helpers\Helper;
 use App\Models\Contracts;
 use App\Models\Programs;
 
+/**
+ * Class SberinsDriver
+ * @package App\Drivers
+ */
 class SberinsDriver implements DriverInterface
 {
 
@@ -40,6 +44,9 @@ class SberinsDriver implements DriverInterface
     }
 
     /**
+     * @param Contracts $contract
+     * @param array $data
+     * @return CreatedPolicyInterface
      * @throws \App\Exceptions\Services\PolicyServiceException
      */
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface

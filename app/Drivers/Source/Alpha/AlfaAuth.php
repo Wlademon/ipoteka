@@ -28,6 +28,7 @@ class AlfaAuth
         if ($result->getStatusCode() !== 200) {
             throw new AlphaException('Error auth');
         }
+
         return (json_decode($result->getBody()->getContents(), true));
     }
 }

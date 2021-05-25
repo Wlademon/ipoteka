@@ -221,6 +221,11 @@ class Contracts extends BaseModel
         return $this->attributes['premium'];
     }
 
+    public function getRemainingDebtAttribute()
+    {
+        return $this->attributes['remainingDebt'];
+    }
+
     public function getProgramNameAttribute()
     {
         if (!$this->program) {
