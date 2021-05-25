@@ -165,7 +165,6 @@ class AlfaMskDriver implements DriverInterface
      */
     public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
     {
-
         $contractOptions = $contract->getOptionsAttribute();
         $contractOptions['singleAccount'] = '';
         $contractOptions['orderId'] = '';
@@ -183,8 +182,8 @@ class AlfaMskDriver implements DriverInterface
 
         $registerOrder->setExpirationDate(Carbon::now()->addMinutes(20)->format('Y-m-d\TH:i:sP'));
         $registerOrder->setIsOperDocument($this->getIsOperDocument());
-        $registerOrder->setReturnUrl($this->host . $payLinks->getSuccessUrl());
-        $registerOrder->setFailUrl($this->host . $payLinks->getFailUrl());
+        $registerOrder->setReturnUrl(url($payLinks->getSuccessUrl()));
+        $registerOrder->setFailUrl(url($payLinks->getFailUrl()));
 
         $response = $registerOrder->registerOrder();
 
