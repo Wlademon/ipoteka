@@ -88,22 +88,28 @@ class MerchantServices
             'cache_wsdl' => WSDL_CACHE_NONE
         );
         $soap = new \SoapClient(env('SOAP_MS_GET_CONTRACT_SIGNED_WSDL'), $options);
+        $files = [];
+        foreach ($contractId as $id) {
+            try {
 
-        try {
-            $result = $soap->__SoapCall('GetContractSigned', [
-                'GetContractSignedRequest' => [
-                    'UPID' => $orderId,
-                    'ContractId' => $contractId
-                ],
-            ], null, $this->getHeaderForSoap());
+                $result = $soap->__SoapCall('GetContractSigned', [
+                    'GetContractSignedRequest' => [
+                        'UPID' => $orderId,
+                        'ContractId' => $id
+                    ],
+                ], null, $this->getHeaderForSoap());
 
-            $resp = $soap->__getLastRequestHeaders();
-        } catch (\Throwable $e) {
-            dd($soap->__getLastRequest(), $soap->__getLastResponse());
-            self::abortLog($e->getMessage(), AlphaException::class);
+                $resp = $soap->__getLastRequestHeaders();
+
+                $filePath = 'alpha/policy/' . uniqid(time(), false) . '.pdf';
+                \Storage::put($filePath, $result->Content);
+                $files[] = $filePath;
+            } catch (\Throwable $e) {
+                self::abortLog($e->getMessage(), AlphaException::class);
+            }
         }
 
-        return collect($result);
+        return $files;
     }
 
     /**

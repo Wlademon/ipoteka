@@ -235,6 +235,7 @@ class AlfaMskDriver implements DriverInterface
         $policy->setNumberCreditDoc($dataCollect->get('mortgageAgreementNumber')); //?
 
         $decodePostResult = $this->getDataFromCreatePolicy($authToken, $policy);
+        $contractOptions['upid'] = Arr::get($decodePostResult, 'upid');
         $decodeGetResult = $this->getStatusContract($authToken, Arr::get($decodePostResult, 'upid'), 'Error get data from createPolicy');
 
         if (Arr::has($decodeGetResult['propertyContract'], 'contractId')) {
@@ -345,18 +346,13 @@ class AlfaMskDriver implements DriverInterface
     {
         $merchantService = new MerchantServices();
 
-//        dd($contract->getOptionsAttribute());
-//        $res = $merchantService->getUpid();
-//        $res = $merchantService->getContractId($contract->getOptionsAttribute()['orderId']);
-//        dd($res, $contract->getOptionsAttribute()['orderId']);
-
         $response = $merchantService->getContractSigned(
-            $contract->getOptionsAttribute()['orderId'],
-            $contract->getOptionsAttribute()['singleAccount']
+            $contract->getOptionsAttribute()['upid'],
+            $contract->getOptionsAttribute()['contractList']
         );
 
 
-        dd($response);
+        var_dump($response);die;
     }
 
     /**
