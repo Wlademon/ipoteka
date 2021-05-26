@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Eloquent;
-use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 use Kyslik\LaravelFilterable\Filterable;
 
@@ -33,7 +33,7 @@ use Kyslik\LaravelFilterable\Filterable;
  * @property-read \App\Models\Programs|null $program
  * @property-read \App\Models\Companies|null $company
  * @property-read \App\Models\Owners|null $owner
- * @property-read \App\Models\Objects[]|array $objects
+ * @property-read \App\Models\Objects[]|array|Collection $objects
  * @property-read \App\Models\Subjects|null $subject
  * @property-read mixed $ownerCode
  * @property-read mixed $ownerUwLogin

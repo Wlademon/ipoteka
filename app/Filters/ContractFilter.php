@@ -11,7 +11,19 @@ class ContractFilter extends Filter
      *
      * @var array
      */
-    protected $filterables = ['id', 'number', 'status', 'premium', 'active_from', 'active_to', 'signed_at', 'program_id', 'owner_id', 'company_id', 'uw_contract_id'];
+    protected $filterables = [
+        'id',
+        'number',
+        'status',
+        'premium',
+        'active_from',
+        'active_to',
+        'owner_id',
+        'signed_at',
+        'program_id',
+        'company_id',
+        'uw_contract_id'
+    ];
 
 
     /**
