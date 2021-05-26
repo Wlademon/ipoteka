@@ -105,11 +105,23 @@ trait DriverTrait
             $filenameWithPath = public_path() . '/' . $filename;
         }
 
-        if (!file_exists(public_path() . '/' . $filenameWithPath)) {
-            dd(public_path() . '/' . $filenameWithPath);
-        }
-
         return file_exists(public_path() . '/' . $filenameWithPath);
+    }
+
+    /**
+     * @param Contracts $contract
+     * @param $objectId
+     * @return string
+     */
+    protected static function createFilePath(Contracts $contract, $objectId)
+    {
+        $filePathObject = self::gefaultFileName($contract);
+        $filePathObjectArray = explode('.', $filePathObject);
+        $ext = array_pop($filePathObjectArray);
+        array_push($filePathObjectArray, $objectId, $ext);
+        $filePathObject = implode('.', $filePathObjectArray);
+
+        return $filePathObject;
     }
 
     /**

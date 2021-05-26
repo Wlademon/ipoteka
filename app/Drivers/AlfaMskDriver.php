@@ -9,22 +9,18 @@ use App\Drivers\DriverResults\CreatedPolicyInterface;
 use App\Drivers\DriverResults\PayLink;
 use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\Services\MerchantServices;
-use App\Drivers\Services\RegisterUserProfile;
 use App\Drivers\Source\Alpha\AlfaAuth;
 use App\Drivers\Source\Alpha\AlphaCalculator;
 use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\LoggerTrait;
+use App\Drivers\Traits\PrintPdfTrait;
 use App\Exceptions\Drivers\AlphaException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
-use Carbon\Traits\Creator;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Class AbsolutDriver
@@ -36,10 +32,8 @@ class AlfaMskDriver implements DriverInterface
         DriverTrait::getStatus as getTStatus;
     }
     use LoggerTrait;
+    use PrintPdfTrait;
 
-    const STATUS_DRAFT = 1;
-    const STATUS_CONFIRMED = 2;
-    const ISSUE_SUCCESSFUL = 'ISSUE_SUCCESSFUL';
     const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
     const POST_POLICY_CREATE_URL = '/msrv/mortgage/partner/calcAndSave';
     const GET_POLICY_STATUS_URL = '/msrv/mortgage/partner/contractStatus';
@@ -48,7 +42,16 @@ class AlfaMskDriver implements DriverInterface
     protected string $host;
     protected Client $client;
     protected int $managerId = 0;
+    protected AlfaAuth $auth;
+    protected int $numberIterations = 5;
+    protected MerchantServices $merchantServices;
 
+    /**
+     * AlfaMskDriver constructor.
+     * @param Repository $repository
+     * @param string $prefix
+     * @throws \Throwable
+     */
     public function __construct(Repository $repository, string $prefix = '')
     {
         $this->client = new Client();
@@ -56,7 +59,20 @@ class AlfaMskDriver implements DriverInterface
             !$repository->get($prefix . 'host', false),
             new AlphaException('Not set host property')
         );
+        throw_if(
+            !($repository->get($prefix . 'auth.username') &&
+            $repository->get($prefix . 'auth.pass') &&
+            $repository->get($prefix . 'auth.auth_url')),
+            new AlphaException('Not set auth data')
+        );
+        $this->numberIterations = $repository->get($prefix . 'numberIterations', 5);
+        $this->auth = new AlfaAuth(
+            $repository->get($prefix . 'auth.username'),
+            $repository->get($prefix . 'auth.pass'),
+            $repository->get($prefix . 'auth.auth_url')
+        );
         $this->host = $repository->get($prefix . 'host');
+        $this->merchantServices = new MerchantServices($this->host);
     }
 
     /**
@@ -65,8 +81,7 @@ class AlfaMskDriver implements DriverInterface
      */
     public function calculate(array $data): CalculatedInterface
     {
-        $auth = new AlfaAuth();
-        $authToken = $auth->getToken($this->client)['access_token'];
+        $authToken = $this->auth->getToken($this->client)['access_token'];
 
         $calculator = $this->collectData($data);
 
@@ -95,36 +110,52 @@ class AlfaMskDriver implements DriverInterface
         );
     }
 
+    /**
+     * @param array $data
+     * @return AlphaCalculator
+     * @throws \Throwable
+     */
     protected function collectData(array $data): AlphaCalculator
     {
         $dataCollect = collect($data);
         $calculator = new AlphaCalculator();
-        $calculator->setBank($dataCollect->get('mortgageeBank'), $dataCollect->get('remainingDebt'));
+        $calculator->setBank(
+            $dataCollect->get('mortgageeBank'),
+            $dataCollect->get('remainingDebt')
+        );
         $calculator->setCalcDate($dataCollect->get('activeFrom'));
 
         $objects = collect($dataCollect->get('objects'));
 
         if ($objects->has('life')) {
-            $life = collect($objects->get('life'));
+            $life = $objects->get('life');
 
-            $calculator->setInsurant($life->get('gender'), $life->get('birthDate'));
-            $calculator->setLifeRisk($life->get('professions', []), $life->get('sports', []));
+            $calculator->setInsurant(
+                Arr::get($life, 'gender'),
+                Arr::get($life, 'birthDate')
+            );
+            $calculator->setLifeRisk(
+                $life->get('professions', []),
+                $life->get('sports', [])
+            );
         }
         if ($objects->has('property')) {
-            $property = collect($objects->get('property'));
+            $property = $objects->get('property');
             $calculator->setInsurance();
             $calculator->setPropertyRisk(
                 'Москва',
-                $property->get('isWooden', false),
-                $property->get('buildYear')
+                Arr::get($property,'isWooden', false),
+                Arr::get($property,'buildYear')
             );
         }
 
         return $calculator;
     }
 
-
     /**
+     * @param $authToken
+     * @param $contractList
+     * @return array
      * @throws \Throwable
      */
     protected function createSingleAccount($authToken, $contractList): array
@@ -144,7 +175,10 @@ class AlfaMskDriver implements DriverInterface
             self::abortLog($e->getMessage(), AlphaException::class);
         }
 
-        throw_if($result->getStatusCode() !== 200, new AlphaException('Error create payment'));
+        throw_if(
+            $result->getStatusCode() !== 200,
+            new AlphaException('Error create payment')
+        );
         $decodeResult = json_decode($result->getBody()->getContents(), true);
         $text = ' Оплата страхового полиса ';
         return [
@@ -153,15 +187,20 @@ class AlfaMskDriver implements DriverInterface
         ];
     }
 
-    protected function getIsOperDocument(): string // заглушка
+    /**
+     * @return string
+     */
+    protected function getIsOperDocument(): string
     {
         return 'y';
     }
 
-
     /**
-     * @inheritDoc
-     * @throws \Exception
+     * @param Contracts $contract
+     * @param PayLinks $payLinks
+     * @return PayLinkInterface
+     * @throws AlphaException
+     * @throws \Throwable
      */
     public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
     {
@@ -169,10 +208,9 @@ class AlfaMskDriver implements DriverInterface
         $contractOptions['singleAccount'] = '';
         $contractOptions['orderId'] = '';
 
-        $auth = new AlfaAuth();
-        $authToken = $auth->getToken($this->client)['access_token'];
+        $authToken = $this->auth->getToken($this->client)['access_token'];
 
-        $registerOrder = new MerchantServices();
+        $registerOrder = $this->merchantServices;
         $singleAcc = $this->createSingleAccount(
             $authToken,
             $contract->getOptionsAttribute()['contractList']);
@@ -180,14 +218,19 @@ class AlfaMskDriver implements DriverInterface
         $registerOrder->setDescription($singleAcc);
         $registerOrder->setMerchantOrderNumber($singleAcc[0]);
 
-        $registerOrder->setExpirationDate(Carbon::now()->addMinutes(20)->format('Y-m-d\TH:i:sP'));
+        $registerOrder->setExpirationDate(
+            Carbon::now()->addMinutes(20)->format('Y-m-d\TH:i:sP')
+        );
         $registerOrder->setIsOperDocument($this->getIsOperDocument());
         $registerOrder->setReturnUrl(url($payLinks->getSuccessUrl()));
         $registerOrder->setFailUrl(url($payLinks->getFailUrl()));
 
         $response = $registerOrder->registerOrder();
 
-        throw_if(empty($response->get('orderId')), new AlphaException('Missing orderId'));
+        throw_if(
+            empty($response->get('orderId')),
+            new AlphaException('Missing orderId')
+        );
 
         $contractOptions['orderId'] = $response->get('orderId');
         $contract->setOptionsAttribute($contractOptions);
@@ -203,16 +246,14 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
         $contractOptions = $contract->getOptionsAttribute();
         $contractOptions['contractList'] = [];
-        $auth = new AlfaAuth();
-        $authToken = $auth->getToken($this->client)['access_token'];
+        $authToken = $this->auth->getToken($this->client)['access_token'];
 
         $dataCollect = collect($data);
-        $policy = $this->CollectData($data);
+        $policy = $this->collectData($data);
 
         $subject = collect($dataCollect->get('subject'));
         $property = collect(Arr::get($data, 'objects.property'));
@@ -263,7 +304,7 @@ class AlfaMskDriver implements DriverInterface
      * @return array
      * @throws AlphaException
      */
-    protected function getDataFromCreatePolicy(string $authToken, object $policy): array
+    protected function getDataFromCreatePolicy(string $authToken, AlphaCalculator $policy): array
     {
         try {
             $postResult = $this->client->post(
@@ -275,7 +316,7 @@ class AlfaMskDriver implements DriverInterface
                 ]
             );
         } catch (\Throwable $e) {
-            self::abortLog($e->getMessage(), AlphaException::class);
+            throw new AlphaException($e->getMessage(), 400, $e);
         }
 
         if ($postResult->getStatusCode() !== 200) {
@@ -290,15 +331,16 @@ class AlfaMskDriver implements DriverInterface
         return $decodePostResult;
     }
 
+    /**
+     * @param $authToken
+     * @param $upid
+     * @param $message
+     * @return mixed
+     * @throws AlphaException
+     */
     protected function getStatusContract($authToken, $upid, $message)
     {
-        var_dump(json_encode([
-            'headers' => [
-                'Authorization' => "Bearer {$authToken}"
-            ],
-            'query' => [
-                'upid' => $upid
-            ]]));
+        sleep(5);
         $i = 0;
         do {
             $i++;
@@ -313,8 +355,11 @@ class AlfaMskDriver implements DriverInterface
                         ]
                     ]
                 );
+                if ($getResult->getStatusCode() !== 200) {
+                    throw new AlphaException($message);
+                }
             } catch (\Throwable $e) {
-                self::abortLog($e->getMessage(), AlphaException::class);
+                throw new AlphaException($e->getMessage(), 400, $e);
             }
             $response = json_decode($getResult->getBody()->getContents(), true);
             $contracts = Arr::only($response, ['lifeContract', 'propertyContract']);
@@ -322,17 +367,13 @@ class AlfaMskDriver implements DriverInterface
             usleep(500000);
         } while (
             (count($contracts) !== count($contractIds))
-           || ($i < intval(config('mortgage.alfaMsk.numberIterations')))
+           || ($i < ((int)$this->numberIterations))
         );
 
         if (count($contracts) !== count($contractIds)) {
             throw new AlphaException('Misstake contractId');
         }
 
-        if ($getResult->getStatusCode() !== 200) {
-            throw new AlphaException($message);
-        }
-        var_dump(json_encode($response));
         return $response;
     }
 
@@ -340,18 +381,37 @@ class AlfaMskDriver implements DriverInterface
      * @inheritDoc
      */
     public function printPolicy(
-        Contracts $contract, bool $sample, bool $reset, ?string $filePath = null
-    ): string
-    {
-        $merchantService = new MerchantServices();
+        Contracts $contract,
+        bool $sample,
+        bool $reset,
+        ?string $filePath = null
+    ) {
+        $files = [];
+        $merchantService = $this->merchantServices;
+        $objects = $contract->objects;
+        $objectIds = $objects->pluck('external_id', 'id');
+        foreach ($objectIds as $id => $extId) {
+            $filePath = self::createFilePath($contract, $id);
+            if ($this->isFilePoliceExitst($contract, $filePath)) {
+                $files[] = self::generateBase64($filePath);
+                $objectIds->forget($id);
+            }
+        }
+        if ($objectIds->count()) {
+            $response = $merchantService->getContractSigned(
+                $contract->getOptionsAttribute()['upid'],
+                $objectIds->values()->all()
+            );
+            if ($response) {
+                foreach ($response as $extId => $item) {
+                    $filePath = self::createFilePath($contract, $objectIds->flip()->get($extId));
+                    \File::move(storage_path('app/' . $item), public_path($filePath));
+                    $files[] = self::generateBase64($filePath);
+                }
+            }
+        }
 
-        $response = $merchantService->getContractSigned(
-            $contract->getOptionsAttribute()['upid'],
-            $contract->getOptionsAttribute()['contractList']
-        );
-
-
-        var_dump($response);die;
+        return $files;
     }
 
     /**
@@ -364,14 +424,16 @@ class AlfaMskDriver implements DriverInterface
         if (!empty($contract->getOptionsAttribute()['orderId'])) {
             if ($contract->status !== Contracts::STATUS_CONFIRMED) {
                 try {
-                    $clientStatusOrder = new MerchantServices();
-                    $statusOrder = $clientStatusOrder->getOrderStatus($contract->getOptionsAttribute()['orderId']);
+                    $clientStatusOrder = $this->merchantServices;
+                    $statusOrder = $clientStatusOrder->getOrderStatus(
+                        $contract->getOptionsAttribute()['orderId']
+                    );
 
                 } catch (\Throwable $throwable) {
                     self::error($throwable->getMessage());
                 }
 
-                if ($statusOrder->get('orderStatus') === self::STATUS_CONFIRMED) {
+                if ($statusOrder->get('orderStatus') === Contracts::STATUS_CONFIRMED) {
                     $contract->status = Contracts::STATUS_CONFIRMED;
                     $contract->saveOrFail();
                 }
@@ -381,6 +443,9 @@ class AlfaMskDriver implements DriverInterface
         return $this->getTStatus($contract);
     }
 
+    /**
+     * @param Contracts $contract
+     */
     public function payAccept(Contracts $contract): void
     {
         return;

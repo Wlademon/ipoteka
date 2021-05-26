@@ -3,11 +3,15 @@
 namespace App\Drivers\Source\Alpha;
 
 use App\Exceptions\Drivers\AlphaException;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Carbon;
 
+/**
+ * Class AlphaCalculator
+ * @package App\Drivers\Source\Alpha
+ */
 class AlphaCalculator
 {
-    const SALE_TYPE_FIRST = 'FIRST';
     const BILDING_TYPE = 'FLAT';
     const SALE_TYPE_SECOND = 'SECOND';
 
@@ -17,6 +21,10 @@ class AlphaCalculator
 
     protected array $data = [];
 
+    /**
+     * AlphaCalculator constructor.
+     * @throws \Throwable
+     */
     public function __construct()
     {
         throw_if(
@@ -29,8 +37,8 @@ class AlphaCalculator
         );
 
         $this->data['agent'] = [
-            'agentContractId' => intval(env('SC_ALFA_AGENT_CONTRACT_ID')),
-            'managerId' => intval(env('SC_ALFA_AGENT_MANAGER_ID'))
+            'agentContractId' => ((int)env('SC_ALFA_AGENT_CONTRACT_ID')),
+            'managerId' => ((int)env('SC_ALFA_AGENT_MANAGER_ID'))
         ];
     }
 
@@ -46,7 +54,7 @@ class AlphaCalculator
      * @param string $name
      * @param float $creditSum
      */
-    public function setBank(string $name, float $creditSum)
+    public function setBank(string $name, float $creditSum): void
     {
         $this->data['bank'] = [
             'bankName' => $name,
@@ -57,7 +65,7 @@ class AlphaCalculator
     /**
      * @param string $beginDate
      */
-    public function setCalcDate(string $beginDate)
+    public function setCalcDate(string $beginDate): void
     {
         $this->data['calculation'] = [
             'beginDate' => Carbon::parse($beginDate)->format('Y-m-d'),
@@ -68,7 +76,7 @@ class AlphaCalculator
     /**
      * @param string $saleType
      */
-    public function setInsurance(string $saleType = self::SALE_TYPE_SECOND)
+    public function setInsurance(string $saleType = self::SALE_TYPE_SECOND): void
     {
         $this->data['insurance'] = [
             'buildingType' => self::BILDING_TYPE,
@@ -80,7 +88,7 @@ class AlphaCalculator
      * @param bool $gender
      * @param string $dateBirth
      */
-    public function setInsurant(bool $gender, string $dateBirth)
+    public function setInsurant(bool $gender, string $dateBirth): void
     {
         $this->data['insurant'] = [
             'gender' => $gender ? self::GENDER_MAN : self::GENDER_FEMALE,
@@ -92,7 +100,7 @@ class AlphaCalculator
      * @param array $profession
      * @param array $sport
      */
-    public function setLifeRisk(array $profession = [], array $sport = [])
+    public function setLifeRisk(array $profession = [], array $sport = []): void
     {
         $this->data['lifeRisk'] = [
             'illness' => false,
@@ -107,9 +115,14 @@ class AlphaCalculator
      * @param int|null $year
      * @throws \Throwable
      */
-    public function setPropertyRisk(?string $address, bool $goruch, ?int $year)
+    public function setPropertyRisk(?string $address, bool $goruch, ?int $year): void
     {
-        throw_if($year && ($year < 1950 || $year > 2100), new AlphaException('Год постройки больше максимального или меньше минимального порога'));
+        throw_if(
+            $year && ($year < 1950 || $year > 2100),
+            new AlphaException(
+                'Год постройки больше максимального или меньше минимального порога'
+            )
+        );
         $this->data['propertyRisk'] = [
             'address' => $address,
             'goruch' => $goruch,
@@ -121,7 +134,7 @@ class AlphaCalculator
      * @param string $city
      * @param string $street
      */
-    public function setInsurerAddress(string $city, string $street)
+    public function setInsurerAddress(string $city, string $street): void
     {
         $this->data['insurer']['address'] = [
             'city' => $city,
@@ -132,7 +145,7 @@ class AlphaCalculator
     /**
      * @param string $email
      */
-    public function setInsurerEmail(string $email)
+    public function setInsurerEmail(string $email): void
     {
         $this->data['insurer']['email'] = $email;
     }
@@ -142,7 +155,7 @@ class AlphaCalculator
      * @param string $lastName
      * @param string|null $middleName
      */
-    public function setInsurerFullName(string $name, string $lastName, ?string $middleName)
+    public function setInsurerFullName(string $name, string $lastName, ?string $middleName): void
     {
         $this->data['insurer']['firstName'] = $name;
         $this->data['insurer']['lastName'] = $lastName;
@@ -154,7 +167,7 @@ class AlphaCalculator
      * @param int $number
      * @param int $seria
      */
-    public function setInsurerPersonDocument(string $dateOfIssue,int $number,int $seria)
+    public function setInsurerPersonDocument(string $dateOfIssue,int $number,int $seria): void
     {
         $this->data['insurer']['personDocument'] = [
             'dateOfIssue' => $dateOfIssue,
@@ -166,7 +179,7 @@ class AlphaCalculator
     /**
      * @param string $phone
      */
-    public function setInsurerPhone(string $phone)
+    public function setInsurerPhone(string $phone): void
     {
         $this->data['insurer']['phone'] = $phone;
     }
@@ -174,7 +187,7 @@ class AlphaCalculator
     /**
      * @param string $address
      */
-    public function setAddress(string $address)
+    public function setAddress(string $address): void
     {
         $this->data['address'] = $address;
     }
@@ -182,7 +195,7 @@ class AlphaCalculator
     /**
      * @param float $addressSquare
      */
-    public function setAddressSquare(float $addressSquare)
+    public function setAddressSquare(float $addressSquare): void
     {
         $this->data['addressSquare'] = $addressSquare;
     }
@@ -190,7 +203,7 @@ class AlphaCalculator
     /**
      * @param string $dateCreditDoc
      */
-    public function setDateCreditDoc(string $dateCreditDoc)
+    public function setDateCreditDoc(string $dateCreditDoc): void
     {
         $this->data['dateCreditDoc'] = $dateCreditDoc;
     }
@@ -198,7 +211,7 @@ class AlphaCalculator
     /**
      * @param string $numberCreditDoc
      */
-    public function setNumberCreditDoc(string $numberCreditDoc)
+    public function setNumberCreditDoc(string $numberCreditDoc): void
     {
         $this->data['numberCreditDoc'] = $numberCreditDoc;
     }

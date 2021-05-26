@@ -6,10 +6,13 @@ namespace App\Drivers\Services;
 
 use App\Drivers\Traits\LoggerTrait;
 use App\Exceptions\Drivers\AlphaException;
+use Illuminate\Support\Collection;
 
 class MerchantServices
 {
     use LoggerTrait;
+
+    const PARTNERS_INTERACTION = '/cxf/partner/PartnersInteraction?wsdl';
 
 
     private $soap_xmlns_wsse = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd";
@@ -20,16 +23,35 @@ class MerchantServices
 
     /** @var string */
     protected $idToken;
+
     /** @var string */
     protected $nonceXML;
+
     /** @var string */
     protected $timestamp;
+
     /** @var string */
     protected $passDigest;
 
+    /** @var string */
+    protected string $host;
+
     protected array $data = [];
 
-    public function getUpid()
+    /**
+     * MerchantServices constructor.
+     * @param string $host
+     */
+    public function __construct(string $host)
+    {
+        $this->host = $host;
+    }
+
+    /**
+     * @return Collection
+     * @throws \SoapFault
+     */
+    public function getUpid(): Collection
     {
         $options = array(
             'soap_version' => SOAP_1_1,
@@ -37,7 +59,7 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new \SoapClient('https://b2b-test2.alfastrah.ru/cxf/partner/PartnersInteraction?wsdl', $options);
+        $soap = new \SoapClient($this->host . self::PARTNERS_INTERACTION, $options);
 
         try {
             $result = $soap->__SoapCall('getUPID', [
@@ -54,7 +76,12 @@ class MerchantServices
         return collect($result);
     }
 
-    public function getContractId($orderId)
+    /**
+     * @param $orderId
+     * @return \Illuminate\Support\Collection
+     * @throws \SoapFault
+     */
+    public function getContractId($orderId): Collection
     {
         $options = array(
             'soap_version' => SOAP_1_1,
@@ -62,7 +89,10 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new \SoapClient('https://b2b-test2.alfastrah.ru/cxf/partner/PartnersInteraction?wsdl', $options);
+        $soap = new \SoapClient(
+            $this->host . self::PARTNERS_INTERACTION,
+            $options
+        );
 
         try {
             $result = $soap->__SoapCall('getContractId', [
@@ -79,7 +109,13 @@ class MerchantServices
         return collect($result);
     }
 
-    public function getContractSigned($orderId, $contractId)
+    /**
+     * @param $orderId
+     * @param $contractId
+     * @return array
+     * @throws \SoapFault
+     */
+    public function getContractSigned($orderId, $contractId): array
     {
         $options = array(
             'soap_version' => SOAP_1_1,
@@ -103,7 +139,7 @@ class MerchantServices
 
                 $filePath = 'alpha/policy/' . uniqid(time(), false) . '.pdf';
                 \Storage::put($filePath, $result->Content);
-                $files[] = $filePath;
+                $files[$id] = $filePath;
             } catch (\Throwable $e) {
                 self::abortLog($e->getMessage(), AlphaException::class);
             }
@@ -117,7 +153,7 @@ class MerchantServices
      * @return \Illuminate\Support\Collection
      * @throws \SoapFault
      */
-    public function getOrderStatus($orderId)
+    public function getOrderStatus($orderId): Collection
     {
         $options = array(
             'soap_version' => SOAP_1_1,
@@ -142,7 +178,11 @@ class MerchantServices
         return collect($result);
     }
 
-    public function registerOrder()
+    /**
+     * @return Collection
+     * @throws \SoapFault
+     */
+    public function registerOrder(): Collection
     {
         $options = array(
             'soap_version' => SOAP_1_1,
@@ -172,7 +212,8 @@ class MerchantServices
         return collect($result);
     }
 
-    protected function authParam()
+
+    protected function authParam(): void
     {
         $nonce = mt_rand();
         $this->idToken = md5(base64_encode(pack('H*', $nonce)));
@@ -192,6 +233,9 @@ class MerchantServices
         $this->passDigest = base64_encode($packedHash);
     }
 
+    /**
+     * @return \SoapHeader
+     */
     protected function getHeaderForSoap(): \SoapHeader
     {
         $this->authParam();
@@ -218,37 +262,58 @@ class MerchantServices
         return (new \SoapHeader($this->soap_xmlns_wsse, 'Security', $headerVar, true));
     }
 
-    public function setMerchantOrderNumber(int $merchantOrderNumber)
+    /**
+     * @param int $merchantOrderNumber
+     */
+    public function setMerchantOrderNumber(int $merchantOrderNumber): void
     {
         $this->data['merchantOrderNumber'] = $merchantOrderNumber;
     }
 
-    public function setDescription($description)
+    /**
+     * @param $description
+     */
+    public function setDescription(string $description): void
     {
         $this->data['description'] = $description;
     }
 
-    public function setExpirationDate(string $expirationDate)
+    /**
+     * @param string $expirationDate
+     */
+    public function setExpirationDate(string $expirationDate): void
     {
         $this->data['expirationDate'] = $expirationDate;
     }
 
-    public function setIsOperDocument(string $isOperDocument)
+    /**
+     * @param string $isOperDocument
+     */
+    public function setIsOperDocument(string $isOperDocument): void
     {
         $this->data['isOperDocument'] = $isOperDocument;
     }
 
-    public function setClientId(int $clientId)
+    /**
+     * @param int $clientId
+     */
+    public function setClientId(int $clientId): void
     {
         $this->data['clientId'] = $clientId;
     }
 
-    public function setReturnUrl(string $returnUrl)
+    /**
+     * @param string $returnUrl
+     */
+    public function setReturnUrl(string $returnUrl): void
     {
         $this->data['returnUrl'] = $returnUrl;
     }
 
-    public function setFailUrl(string $failUrl)
+    /**
+     * @param string $failUrl
+     */
+    public function setFailUrl(string $failUrl): void
     {
         $this->data['failUrl'] = $failUrl;
     }
