@@ -278,10 +278,10 @@ class DriverService
         $company = $contract->company;
         $contract->status = Contracts::STATUS_CONFIRMED;
         $params = [
-            'product_code' => 'telemed',
+            'product_code' => 'mortgage',
             'program_code' => $contract->program->programCode,
             'bso_owner_code' => $company->code,
-            'bso_receiver_code' => $contract->owner_code, // Код получателя БСО'bso_receiver_code' => 'STRAHOVKA'
+            'bso_receiver_code' => 'STRAHOVKA', // Код получателя БСО'bso_receiver_code' => 'STRAHOVKA'
             "count" => 1,
         ];
         Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
