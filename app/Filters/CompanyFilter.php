@@ -24,16 +24,4 @@ class CompanyFilter extends Filter
     {
 		//
 	}
-//    public function filterMap(): array
-//    {
-//        return ['deleted' => ['deleted'], 'code' => ['code']];
-//    }
-//
-//	public function deleted($flag = null)
-//    {
-//        // TODO сделать три варианта
-//        // Проверить работают ли женерики
-//        return $this->builder->withTrashed()->whereNotNull('deleted_at');
-//    }
-
 }

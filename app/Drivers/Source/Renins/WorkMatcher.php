@@ -2,8 +2,16 @@
 
 namespace App\Drivers\Source\Renins;
 
+/**
+ * Class WorkMatcher
+ * @package App\Drivers\Source\Renins
+ */
 class WorkMatcher
 {
+    /**
+     * @param array $works
+     * @return string
+     */
     public static function match(array $works): string
     {
         if (count($works) === 0) {

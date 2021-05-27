@@ -12,6 +12,7 @@ use App\Drivers\Traits\PrintPdfTrait;
 use App\Helpers\Helper;
 use App\Models\Contracts;
 use App\Models\Programs;
+use Arr;
 
 /**
  * Class SberinsDriver
@@ -30,9 +31,9 @@ class SberinsDriver implements DriverInterface
     public function calculate(array $data): CalculatedInterface
     {
         $propertyInsurancePremium = $this->getInsurancePremium(
-            \Arr::get($data, 'programCode'),
-            \Arr::get($data, 'remainingDebt'),
-            \Arr::get($data, 'objects.property.isWooden'),
+            Arr::get($data, 'programCode'),
+            Arr::get($data, 'remainingDebt'),
+            Arr::get($data, 'objects.property.isWooden'),
         );
 
         return new Calculated(
@@ -114,8 +115,8 @@ class SberinsDriver implements DriverInterface
     public function getInsurancePremium(string $programCode, int $remainingDebt, bool $isWooden): int
     {
         $matrix = Programs::query()->where('program_code', $programCode)->first('matrix')->matrix;
-        $woodenRate = \Arr::get($matrix, 'tariff.wooden.percent', 1);
-        $stoneRate = \Arr::get($matrix, 'tariff.stone.percent', 1);
+        $woodenRate = Arr::get($matrix, 'tariff.wooden.percent', 1);
+        $stoneRate = Arr::get($matrix, 'tariff.stone.percent', 1);
 
         if (!$isWooden) {
             return $remainingDebt / 100 * $stoneRate;
@@ -134,7 +135,7 @@ class SberinsDriver implements DriverInterface
             'product_code' => 'mortgage',
             'program_code' => $contract->program->programCode,
             'bso_owner_code' => $contract->company->code,
-            'bso_receiver_code' => 'STRAHOVKA', // Код получателя БСО'bso_receiver_code' => 'STRAHOVKA'
+            'bso_receiver_code' => 'STRAHOVKA',
             'count' => 1,
         ];
     }

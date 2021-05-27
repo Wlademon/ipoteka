@@ -5,11 +5,20 @@ namespace App\Drivers\Traits;
 use App\Exceptions\Drivers\ReninsException;
 use ZanySoft\Zip\Zip;
 
+/**
+ * Trait ZipTrait
+ * @package App\Drivers\Traits
+ */
 trait ZipTrait
 {
     protected static $tempPathZip = 'temp/zip/';
 
-    public static function unpackZip($file)
+    /**
+     * @param $file
+     * @return string
+     * @throws \Throwable
+     */
+    public static function unpackZip(string $file): string
     {
         $zip = new \ZipArchive();
         throw_if(

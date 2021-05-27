@@ -5,6 +5,11 @@ return [
         'path' => env('PDF_PATH', 'ns/pdf/'),
         'tmp' => env('PDF_TMP_DIR', 'tmp/')
     ],
+    'drivers' => [
+        'rensins' => \App\Drivers\RensinsDriver::class,
+        'alfa_msk' => \App\Drivers\AlfaMskDriver::class,
+        'sberins' => \App\Drivers\SberinsDriver::class,
+    ],
     'ccMailNotification' => env('CC_MAIL_NOTIFICATION', 'valentin.lukyanov@strahovka.ru'),
     'rensins' => [
         'host' => env('SC_RENISANS_HOST'),
