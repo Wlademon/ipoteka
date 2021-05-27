@@ -27,7 +27,7 @@
         "laravelcollective/annotations": "^5",
         "setasign/fpdi": "^2.3",
         "strahovka/payment": "1.*",
-        "swagger-api/swagger-ui": "3.31.1",
+        "swagger-api/swagger-ui": "3.49.0",
 	    "ext-mbstring": "*",
         "ext-zip": "*",
         "zanysoft/laravel-zip": "^1.0",
