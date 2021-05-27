@@ -1,0 +1,32 @@
+variables:
+  APP_TYPE: "laravel"
+  PHP_VERSION: 74
+
+stages:
+  - ansible_repo
+  - deploy
+
+ansible_repo:
+  stage: ansible_repo
+  script:
+    - export
+    - /bin/su -- price -c 'cd ~/ansible && git pull'
+
+deploy_stage:
+  stage: deploy
+  script:
+    - /bin/su -- price -c 'ansible-playbook ${ANSIBLE_PLAYBOOKS_DIR}/str_deploy.yml -e deploy74=1 -t ${APP_TYPE} -i ${ANSIBLE_PLAYBOOKS_DIR}/inventory/strahovka/stage'
+  only:
+    - stage
+  environment:
+    name: staging
+
+deploy_master:
+  stage: deploy
+  when: manual  
+  script:
+    - /bin/su -- price -c 'ansible-playbook ${ANSIBLE_PLAYBOOKS_DIR}/str_deploy.yml -e deploy74=1 -t ${APP_TYPE} -i ${ANSIBLE_PLAYBOOKS_DIR}/inventory/strahovka/prod/'
+  only:
+    - master
+  environment:
+    name: production
