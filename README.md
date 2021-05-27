@@ -56,5 +56,5 @@ php artisan migrate:fresh --seed
 ####  Данные в БД (если используются)
 * выполнить, чтобы создать записи в таблицах:
 ```
-php artisan companies:set // Обновление компаний в БД.
+php artisan programs:set // Обновление программ в БД.
 ```
