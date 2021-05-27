@@ -1,4 +1,4 @@
-# adt_osago
+# adt-mortgage
 This project was generated with [Laravel](https://laravel.com/docs/5.8) version 5.8
 
 ## Dependencies
