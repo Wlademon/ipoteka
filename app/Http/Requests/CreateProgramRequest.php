@@ -42,11 +42,7 @@ use Illuminate\Validation\Rule;
  *     @OA\Property(property="diseaseRefundPercent", type="integer", format="int64", example=2),
  *     @OA\Property(
  *          property="adultAges",
- *          type="object",
- *          example={
- *              "min": 18,
- *              "max": 65
- *          },
+ *          type="array",
  *         @OA\Items(
  *              type="object",
  *              @OA\Property(property="min", type="integer", example=1),
@@ -55,11 +51,7 @@ use Illuminate\Validation\Rule;
  *     ),
  *     @OA\Property(
  *          property="childAges",
- *          type="object",
- *          example={
- *              "min": 18,
- *              "max": 65
- *          },
+ *          type="array",
  *         @OA\Items(
  *              type="object",
  *              @OA\Property(property="min", type="integer", example=1),
