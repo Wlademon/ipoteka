@@ -2,6 +2,10 @@
 
 namespace App\Drivers\Source\Renins;
 
+/**
+ * Class ReninsCreateCollector
+ * @package App\Drivers\Source\Renins
+ */
 class ReninsCreateCollector extends ReninsCalcCollector
 {
     const CITIZENSHIP = 'Россия';
@@ -11,6 +15,9 @@ class ReninsCreateCollector extends ReninsCalcCollector
     const CREDIT_CITY = 'Москва';
     const CURRENCY = 'RUR';
 
+    /**
+     * ReninsCreateCollector constructor.
+     */
     public function __construct()
     {
         parent::__construct();
@@ -97,7 +104,11 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function setPayPlan($dateStart, float $sum)
+    /**
+     * @param $dateStart
+     * @param float $sum
+     */
+    public function setPayPlan(string $dateStart, float $sum): void
     {
         $this->data['paymentsPlan']['payments'][] = [
             'number' => 1,
@@ -107,8 +118,18 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function setPropertyAddress($state, $city, $street, $house, $kladr)
-    {
+    /**
+     * @param string $state
+     * @param string $city
+     * @param string $street
+     * @param string $house
+     */
+    public function setPropertyAddress(
+        string $state,
+        string $city,
+        string $street,
+        string $house
+    ): void {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Строковое представление адреса',
             'code' => 'dogovor.adresImushestva.adresStroka',
@@ -126,7 +147,10 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function setKladr(string $kladr)
+    /**
+     * @param string $kladr
+     */
+    public function setKladr(string $kladr): void
     {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Код КЛАДР',
@@ -136,29 +160,39 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function setStartEnd($dateStart, $dateEnd): void
+    /**
+     * @param string $dateStart
+     * @param string $dateEnd
+     */
+    public function setStartEnd(string $dateStart, string $dateEnd): void
     {
         $this->data['dateBeg'] = $this->toTime($dateStart);
         $this->data['dateEnd'] = $this->toTime($dateEnd);
     }
 
+    /**
+     * @param float $sum
+     */
     public function setCreditSum(float $sum): void
     {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Страховая стоимость объекта',
             'code' => 'dogovor.strahStoimostObjekta',
             'type' => 'Вещественный',
-            'decimalValue' => 3000000,
+            'decimalValue' => $sum,
         ];
         $this->data['parameters']['parameters'][] = [
             'name' => 'Сумма кредита',
             'code' => 'dogovor.ipotechnDogovor.summaKredita',
             'type' => 'Вещественный',
-            'decimalValue' => 3000000,
+            'decimalValue' => $sum,
         ];
     }
 
-    public function setCreditNumber(string $number)
+    /**
+     * @param string $number
+     */
+    public function setCreditNumber(string $number): void
     {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Номер',
@@ -168,7 +202,10 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function setBirthDate(string $date)
+    /**
+     * @param string $date
+     */
+    public function setBirthDate(string $date): void
     {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Дата рождения',
@@ -178,7 +215,10 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function setBirthDateSubject(string $date)
+    /**
+     * @param string $date
+     */
+    public function setBirthDateSubject(string $date): void
     {
         $this->data['insurant']['physical'] = array_merge(
             $this->data['insurant']['physical'],
@@ -186,7 +226,10 @@ class ReninsCreateCollector extends ReninsCalcCollector
         );
     }
 
-    public function setHumanInfo(array $subject)
+    /**
+     * @param array $subject
+     */
+    public function setHumanInfo(array $subject): void
     {
         $this->data['insurant']['physical'] = [
             'lastName' => \Arr::get($subject, 'lastName'),
@@ -240,7 +283,10 @@ class ReninsCreateCollector extends ReninsCalcCollector
         ];
     }
 
-    public function toArray()
+    /**
+     * @return array
+     */
+    public function toArray(): array
     {
         return [
             'policy' => $this->data

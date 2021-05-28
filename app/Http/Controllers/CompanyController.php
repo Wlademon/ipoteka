@@ -7,8 +7,17 @@ use App\Http\Requests\CreateCompanyRequest;
 use App\Models\Companies;
 use Illuminate\Http\Request;
 
+/**
+ * Class CompanyController
+ * @package App\Http\Controllers
+ */
 class CompanyController extends BaseController
 {
+    /**
+     * CompanyController constructor.
+     * @param Companies $model
+     * @param CompanyFilter $filter
+     */
     public function __construct(Companies $model, CompanyFilter $filter)
     {
         $this->model = $model;

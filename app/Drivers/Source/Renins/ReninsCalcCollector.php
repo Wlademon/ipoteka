@@ -5,12 +5,19 @@ namespace App\Drivers\Source\Renins;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Carbon;
 
+/**
+ * Class ReninsCalcCollector
+ * @package App\Drivers\Source\Renins
+ */
 class ReninsCalcCollector implements Arrayable
 {
     protected const TIME_FORMAT = 'Y-m-d\TH:i:s.v\Z';
 
     protected array $data = [];
 
+    /**
+     * ReninsCalcCollector constructor.
+     */
     public function __construct()
     {
         $this->data = [
@@ -63,14 +70,20 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
-    public function setStartEnd($dateStart, $dateEnd): void
+    /**
+     * @param $dateStart
+     * @param $dateEnd
+     */
+    public function setStartEnd(string $dateStart, string $dateEnd): void
     {
         $this->data['dateBeg'] = $this->toTime($dateStart);
         $this->data['dateEnd'] = $this->toTime($dateEnd);
     }
 
-    // только для life
-    public function workStatus(array $subject)
+    /**
+     * @param array $subject
+     */
+    public function workStatus(array $subject): void
     {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Статус занятости Страхователя',
@@ -80,8 +93,10 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
-    // только для life
-    public function subjectIsObject(bool $is = true)
+    /**
+     * @param bool $is
+     */
+    public function subjectIsObject(bool $is = true): void
     {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Застрахованный является Страхователем',
@@ -91,8 +106,10 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
-    // только property
-    public function setBuildDate(int $year)
+    /**
+     * @param int $year
+     */
+    public function setBuildDate(int $year): void
     {
         $this->data['parameters']['parameters'][] = [
             'name' => 'Год постройки',
@@ -102,14 +119,18 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
-    public static function getFormatPhone($phone) {
+    /**
+     * @param $phone
+     */
+    public static function getFormatPhone(string $phone): ?string
+    {
         preg_match(
             '/(\d{1,4})\s*\(?(\d{3,5})\)?\s*(\d{3})[\s-]?(\d{2})[\s-]?(\d{2})/',
             $phone,
             $matches
         );
         if (count($matches) !== 6) {
-            return false;
+            return null;
         }
 
         array_shift($matches);
@@ -118,7 +139,10 @@ class ReninsCalcCollector implements Arrayable
         return $phone;
     }
 
-    public function setBirthDate(string $date)
+    /**
+     * @param string $date
+     */
+    public function setBirthDate(string $date): void
     {
         $this->data['insurant']['physical'] = [
             'birthDate' => $this->toTime($date)
@@ -131,7 +155,9 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
-    // только для life
+    /**
+     * @param int $sex
+     */
     public function setSex(int $sex): void
     {
         $this->data['parameters']['parameters'][] = [
@@ -142,6 +168,9 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
+    /**
+     * @param string $city
+     */
     public function setCreditCity(string $city): void
     {
         $this->data['parameters']['parameters'][] = [
@@ -152,6 +181,9 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
+    /**
+     * @param float $sum
+     */
     public function setCreditSum(float $sum): void
     {
         $this->data['parameters']['parameters'][] = [
@@ -162,6 +194,9 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
+    /**
+     * @param string $bik
+     */
     public function setBankBik(string $bik): void
     {
         $this->data['parameters']['parameters'][] = [
@@ -172,6 +207,10 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
+    /**
+     * @param array $risks
+     * @param string $alias
+     */
     public function addObject(array $risks, string $alias): void
     {
         $this->data['insuranceObjects']['objects'][] =[
@@ -184,6 +223,10 @@ class ReninsCalcCollector implements Arrayable
         ];
     }
 
+    /**
+     * @param $date
+     * @return string|null
+     */
     protected function toTime($date): ?string
     {
         if (is_numeric($date)) {
@@ -199,6 +242,9 @@ class ReninsCalcCollector implements Arrayable
         return null;
     }
 
+    /**
+     * @return array
+     */
     public function toArray()
     {
         return [

@@ -25,14 +25,9 @@ abstract class Repository extends BaseRepository
      * @param bool|true $addOwner
      * @return BaseModel|Model
      */
-    public function create(array $attributes = [], $addOwner = true)
+    public function create(array $attributes = [])
     {
-        if($addOwner){
-//            $attributes['owner_id'] = Auth::getUser()->id;
-        }
-        $newModel = $this->model->create($attributes);
-
-        return $newModel;
+        return $this->model->create($attributes);
     }
 
     /**
@@ -40,14 +35,9 @@ abstract class Repository extends BaseRepository
      * @param bool|false $logging
      * @return bool
      */
-    public function save(array $options = [], $logging = false)
+    public function save(array $options = [])
     {
-        $saved = $this->model->save($options);
-        if($logging){
-            //logging
-        }
-
-        return $saved;
+        return $this->model->save($options);
     }
 
     /**

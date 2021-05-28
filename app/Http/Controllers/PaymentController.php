@@ -8,8 +8,17 @@ use App\Http\Requests\CreatePaymentRequest;
 use App\Models\Payments;
 use Illuminate\Http\Request;
 
+/**
+ * Class PaymentController
+ * @package App\Http\Controllers
+ */
 class PaymentController extends BaseController
 {
+    /**
+     * PaymentController constructor.
+     * @param Payments $model
+     * @param PaymentFilter $filter
+     */
     public function __construct(Payments $model, PaymentFilter $filter)
     {
         $this->model = $model;

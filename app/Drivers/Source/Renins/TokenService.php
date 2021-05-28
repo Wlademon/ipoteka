@@ -2,19 +2,30 @@
 
 namespace App\Drivers\Source\Renins;
 
+use App\Exceptions\Drivers\ReninsException;
 use App\Services\HttpClientService;
-use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Support\Facades\Cache;
+use function hash;
 
+/**
+ * Class TokenService
+ * @package App\Drivers\Source\Renins
+ */
 class TokenService
 {
     const URL_AUTHORIZE = '/token';
 
     protected HttpClientService $client;
-    protected $login;
-    protected $pass;
+    protected string $login;
+    protected string $pass;
 
-    protected function __construct($host, string $login, string $pass)
+    /**
+     * TokenService constructor.
+     * @param string $host
+     * @param string $login
+     * @param string $pass
+     */
+    protected function __construct(string $host, string $login, string $pass)
     {
         $this->login = $login;
         $this->pass = $pass;
@@ -22,17 +33,21 @@ class TokenService
             $host,
             [
                'headers' => [
-                   'Authorization' => "Basic " . base64_encode("$login:$pass")
+                   'Authorization' => 'Basic ' . base64_encode("{$login}:{$pass}")
                ]
            ]
         );
     }
 
-    public static function getToken(
-        string $host,
-        string $login,
-        string $pass
-    ): string {
+    /**
+     * @param string $host
+     * @param string $login
+     * @param string $pass
+     * @return string
+     * @throws ReninsException
+     */
+    public static function getToken(string $host, string $login, string $pass): string
+    {
 
         $tokenGetter = new static($host, $login, $pass);
         $token = $tokenGetter->getCacheToken();
@@ -46,6 +61,9 @@ class TokenService
         return $token;
     }
 
+    /**
+     * @return string|null
+     */
     protected function getCacheToken(): ?string
     {
         $key = $this->hash();
@@ -53,11 +71,18 @@ class TokenService
         return Cache::get($key);
     }
 
+    /**
+     * @return string
+     */
     protected function hash(): string
     {
-        return \hash('sha256', $this->login . $this->pass);
+        return hash('sha256', $this->login . $this->pass);
     }
 
+    /**
+     * @return string
+     * @throws ReninsException
+     */
     protected function authorize(): string
     {
         $result = $this->client->sendPost(
@@ -70,13 +95,17 @@ class TokenService
         );
 
         if ($result->getStatusCode() > 300) {
-            throw new \Exception($this->client->getLastError()['error_description']);
+            throw new ReninsException($this->client->getLastError()['error_description']);
         }
 
         return json_decode($result->getBody()->getContents(), true)['access_token'];
     }
 
-    protected function cacheToken($token): void
+    /**
+     * @param $token
+     * @throws \Psr\SimpleCache\InvalidArgumentException
+     */
+    protected function cacheToken(string $token): void
     {
         $key = $this->hash();
         Cache::set($key, $token, 300);

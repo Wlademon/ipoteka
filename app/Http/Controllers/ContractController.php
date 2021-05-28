@@ -9,6 +9,10 @@ use App\Services\DriverService;
 use App\Services\PolicyService;
 use Illuminate\Http\Request;
 
+/**
+ * Class ContractController
+ * @package App\Http\Controllers
+ */
 class ContractController extends BaseController
 {
     public function __construct(Contracts $model, ContractFilter $filter)
