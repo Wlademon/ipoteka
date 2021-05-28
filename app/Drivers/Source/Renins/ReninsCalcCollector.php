@@ -74,7 +74,7 @@ class ReninsCalcCollector implements Arrayable
      * @param $dateStart
      * @param $dateEnd
      */
-    public function setStartEnd(string $dateStart, string $dateEnd): void
+    public function setContractStartEnd(string $dateStart, string $dateEnd): void
     {
         $this->data['dateBeg'] = $this->toTime($dateStart);
         $this->data['dateEnd'] = $this->toTime($dateEnd);

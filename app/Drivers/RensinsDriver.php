@@ -98,7 +98,7 @@ class RensinsDriver implements DriverInterface
         $collector->setBankBik($this->getBankBIKByParams($data));
         $collector->setCreditSum($data['remainingDebt']);
         $collector->setCreditCity(self::CREDIT_CITY);
-        $collector->setStartEnd($data['activeFrom'], $data['activeTo']);
+        $collector->setContractStartEnd($data['activeFrom'], $data['activeTo']);
         if ($Life && $this->isLive($data)) {
             $objectLife = $data['objects']['life'];
             $collector->setSex($objectLife['gender']);
@@ -268,7 +268,7 @@ class RensinsDriver implements DriverInterface
     ): ReninsCreateCollector {
         $collector = new ReninsCreateCollector();
         $collector->setPayPlan($contract->active_from, $paySum);
-        $collector->setStartEnd($contract->active_from, $contract->active_to);
+        $collector->setContractStartEnd($contract->active_from, $contract->active_to);
         $collector->setCreditSum($data['remainingDebt']);
         $collector->setHumanInfo($data['subject']);
         $collector->setCreditNumber($data['mortgageAgreementNumber']);
