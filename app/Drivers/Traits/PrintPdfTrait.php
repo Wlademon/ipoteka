@@ -10,10 +10,18 @@ use http\Exception\RuntimeException;
 use setasign\Fpdi\FpdfTpl;
 use setasign\Fpdi\Fpdi;
 
+/**
+ * Trait PrintPdfTrait
+ * @package App\Drivers\Traits
+ */
 trait PrintPdfTrait
 {
     use LoggerTrait;
 
+    /**
+     * @param $path
+     * @return string
+     */
     public static function generateBase64($path): string
     {
         return base64_encode(file_get_contents($path));
@@ -57,6 +65,11 @@ trait PrintPdfTrait
         return $filename;
     }
 
+    /**
+     * @param string $path
+     * @param string $content
+     * @return bool
+     */
     protected static function saveFileFromContent(string $path, string $content): bool
     {
         $dir = substr($path, 0, strrpos($path, DIRECTORY_SEPARATOR));
@@ -68,6 +81,13 @@ trait PrintPdfTrait
         return (bool)file_put_contents($path, $content);
     }
 
+    /**
+     * @param $pathPdf
+     * @param $pathWatermark
+     * @param $resultPath
+     * @return string
+     * @throws \Exception
+     */
     public static function setWatermark($pathPdf, $pathWatermark, $resultPath): string
     {
         $watermark = new WatermarkService($pathPdf, true);
@@ -75,7 +95,10 @@ trait PrintPdfTrait
         $pdf = $watermark->withImage($pathWatermark, $resultPath);
 
         if (!$pdf) {
-            self::abortLog('Not install imagic or not set rules for pdf', RuntimeException::class);
+            self::abortLog(
+                'Not install imagic or not set rules for pdf',
+                RuntimeException::class
+            );
         }
 
         return $pdf;

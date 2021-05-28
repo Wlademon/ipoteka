@@ -132,7 +132,13 @@ trait DriverTrait
      */
     public function getPayLink(Contracts $contract, PayLinks $links): PayLink
     {
-        $invoiceNum = sprintf("%s%03d%06d/%s", 'NS', $contract->company_id, $contract->id, Carbon::now()->format('His'));
+        $invoiceNum = sprintf(
+            '%s%03d%06d/%s',
+            'NS',
+            $contract->company_id,
+            $contract->id,
+            Carbon::now()->format('His')
+        );
 
         if (in_array(env('APP_ENV'), ['local', 'testing'])) {
             $invoiceNum = time() % 100 . $invoiceNum;
@@ -153,7 +159,10 @@ trait DriverTrait
         $response = app()->make(PayService::class)->getPayLink($data);
 
         if (isset($response->errorCode) && $response->errorCode !== 0) {
-            throw new \Exception($response->errorMessage . ' (code: ' . $response->errorCode . ')', 500);
+            throw new Exception(
+                $response->errorMessage . ' (code: ' . $response->errorCode . ')',
+                400
+            );
         }
 
         return new PayLink($response->orderId, $response->formUrl, $invoiceNum);

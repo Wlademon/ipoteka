@@ -7,8 +7,17 @@ use App\Http\Requests\CreateOwnerRequest;
 use App\Models\Owners;
 use Illuminate\Http\Request;
 
+/**
+ * Class OwnerController
+ * @package App\Http\Controllers
+ */
 class OwnerController extends BaseController
 {
+    /**
+     * OwnerController constructor.
+     * @param Owners $model
+     * @param OwnerFilter $filter
+     */
     public function __construct(Owners $model, OwnerFilter $filter)
     {
         $this->model = $model;

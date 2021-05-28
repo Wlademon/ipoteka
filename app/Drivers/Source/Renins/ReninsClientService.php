@@ -4,14 +4,17 @@ namespace App\Drivers\Source\Renins;
 
 use App\Exceptions\Drivers\ReninsException;
 use App\Services\HttpClientService;
-use GuzzleHttp\Exception\ClientException;
-use http\Client;
+use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Http\File;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 
+/**
+ * Class ReninsClientService
+ * @package App\Drivers\Source\Renins
+ */
 class ReninsClientService
 {
     const URL_CALCULATE = '/IpotekaAPI/1.0.0/calculate';
@@ -28,6 +31,12 @@ class ReninsClientService
 
     protected HttpClientService $client;
 
+    /**
+     * ReninsClientService constructor.
+     * @param Repository $repository
+     * @param string $prefix
+     * @throws ReninsException
+     */
     public function __construct(Repository $repository, string $prefix = '')
     {
         $host = $repository->get($prefix . 'host');
@@ -52,11 +61,17 @@ class ReninsClientService
         );
     }
 
-    protected function send(Arrayable $data, string $url)
+    /**
+     * @param Arrayable $data
+     * @param string $url
+     * @return array|null
+     * @throws ReninsException
+     */
+    protected function send(Arrayable $data, string $url): ?array
     {
         try {
             $result = $this->client->sendJson($url, $data->toArray());
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             throw new ReninsException($throwable->getMessage());
         }
         if ($this->client->getLastError()) {
@@ -66,6 +81,11 @@ class ReninsClientService
         return $result;
     }
 
+    /**
+     * @param Arrayable $data
+     * @return array|null
+     * @throws ReninsException
+     */
     public function calculate(Arrayable $data)
     {
         $result = $this->send($data, self::URL_CALCULATE);
@@ -76,7 +96,12 @@ class ReninsClientService
         return $result;
     }
 
-    public function import(Arrayable $data)
+    /**
+     * @param Arrayable $data
+     * @return array|null
+     * @throws ReninsException
+     */
+    public function import(Arrayable $data): ?array
     {
         $result = $this->send($data, self::URL_IMPORT);
         if ($errors = Arr::get($result, 'errors.errors')) {
@@ -86,7 +111,12 @@ class ReninsClientService
         return $result;
     }
 
-    public function issue(Arrayable $data)
+    /**
+     * @param Arrayable $data
+     * @return array|null
+     * @throws ReninsException
+     */
+    public function issue(Arrayable $data): ?array
     {
         $result = $this->send($data, self::URL_ISSUE);
         if ($errors = Arr::get($result, 'errors.errors')) {
@@ -96,7 +126,12 @@ class ReninsClientService
         return $result;
     }
 
-    public function payLink(Arrayable $data)
+    /**
+     * @param Arrayable $data
+     * @return array|null
+     * @throws ReninsException
+     */
+    public function payLink(Arrayable $data): ?array
     {
         $result = $this->send($data, self::URL_PAY);
         if ($errors = Arr::get($result, 'errors.errors')) {
@@ -106,6 +141,11 @@ class ReninsClientService
         return $result;
     }
 
+    /**
+     * @param Arrayable $data
+     * @return string
+     * @throws ReninsException
+     */
     public function getStatus(Arrayable $data): string
     {
         $result = $this->send($data, self::URL_STATUS);
@@ -119,7 +159,12 @@ class ReninsClientService
         return $state;
     }
 
-    public function print(Arrayable $data)
+    /**
+     * @param Arrayable $data
+     * @return string
+     * @throws ReninsException
+     */
+    public function print(Arrayable $data): string
     {
         $result = $this->send($data, self::URL_PRINT);
         if ($errors = Arr::get($result, 'errors.errors')) {
@@ -129,10 +174,15 @@ class ReninsClientService
         return Arr::get($result, 'url');
     }
 
+    /**
+     * @param string $url
+     * @return string
+     * @throws ReninsException
+     */
     public function getFile(string $url): string
     {
         try {
-            $response = (new \GuzzleHttp\Client([
+            $response = (new Client([
                     'curl'   => [CURLOPT_SSL_VERIFYPEER => false],
                     'verify' => false,
                 ]))->get($url);
@@ -153,7 +203,7 @@ class ReninsClientService
                 ['File not saved.']
             );
 
-        } catch (\Throwable $throwable) {
+        } catch (Throwable $throwable) {
             throw new ReninsException($throwable->getMessage());
         }
 

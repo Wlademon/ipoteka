@@ -27,11 +27,14 @@ class DateFilter extends Filter
 
     public function deleted($flag = null)
     {
-        if ($flag == true)
+        if ($flag === true) {
             return $this->builder->withTrashed()->whereNull('deleted_at');
-        elseif ($flag == false)
+        }
+        if ($flag === false) {
             return $this->builder->withTrashed()->whereNotNull('deleted_at');
-        else return $this->builder->withTrashed();
+        }
+
+        return $this->builder->withTrashed();
     }
 
 }
