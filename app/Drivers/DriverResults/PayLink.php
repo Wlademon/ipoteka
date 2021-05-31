@@ -2,6 +2,8 @@
 
 namespace App\Drivers\DriverResults;
 
+use Arr;
+
 class PayLink implements PayLinkInterface
 {
     protected $data = [];
@@ -18,16 +20,16 @@ class PayLink implements PayLinkInterface
 
     public function getOrderId(): string
     {
-        return \Arr::get($this->data, 'orderId', '');
+        return Arr::get($this->data, 'orderId', '');
     }
 
     public function getUrl(): string
     {
-        return \Arr::get($this->data, 'url', '');
+        return Arr::get($this->data, 'url', '');
     }
 
     public function getInvoiceNum(): string
     {
-        return \Arr::get($this->data, 'invoiceNum', '');
+        return Arr::get($this->data, 'invoiceNum', '');
     }
 }
