@@ -3,7 +3,8 @@
 namespace App\Drivers\Traits;
 
 use App\Exceptions\Drivers\ReninsException;
-use ZanySoft\Zip\Zip;
+use Storage;
+use ZipArchive;
 
 /**
  * Trait ZipTrait
@@ -20,14 +21,14 @@ trait ZipTrait
      */
     public static function unpackZip(string $file): string
     {
-        $zip = new \ZipArchive();
+        $zip = new ZipArchive();
         throw_if(
-            $zip->open(storage_path($file), \ZipArchive::CHECKCONS) !== true,
+            $zip->open(storage_path($file), ZipArchive::CHECKCONS) !== true,
             ReninsException::class,
             'Can\'t open ZIP-file!'
         );
         $dirFile = static::$tempPathZip . uniqid(date('Y_m_d_H_i_s'), false) . '/';
-        \Storage::makeDirectory($dirFile);
+        Storage::makeDirectory($dirFile);
         $zip->extractTo(
             storage_path('app/' . $dirFile)
         );

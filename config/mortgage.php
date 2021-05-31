@@ -1,14 +1,18 @@
 <?php
 
+use App\Drivers\AlfaMskDriver;
+use App\Drivers\RensinsDriver;
+use App\Drivers\SberinsDriver;
+
 return [
     'pdf' => [
         'path' => env('PDF_PATH', 'ns/pdf/'),
         'tmp' => env('PDF_TMP_DIR', 'tmp/')
     ],
     'drivers' => [
-        'rensins' => \App\Drivers\RensinsDriver::class,
-        'alfa_msk' => \App\Drivers\AlfaMskDriver::class,
-        'sberins' => \App\Drivers\SberinsDriver::class,
+        'rensins' => RensinsDriver::class,
+        'alfa_msk' => AlfaMskDriver::class,
+        'sberins' => SberinsDriver::class,
     ],
     'ccMailNotification' => env('CC_MAIL_NOTIFICATION', 'valentin.lukyanov@strahovka.ru'),
     'rensins' => [

@@ -2,6 +2,8 @@
 
 namespace App\Drivers\Source\Renins;
 
+use Arr;
+
 /**
  * Class ReninsCreateCollector
  * @package App\Drivers\Source\Renins
@@ -164,7 +166,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
      * @param string $dateStart
      * @param string $dateEnd
      */
-    public function setStartEnd(string $dateStart, string $dateEnd): void
+    public function setContractStartEnd(string $dateStart, string $dateEnd): void
     {
         $this->data['dateBeg'] = $this->toTime($dateStart);
         $this->data['dateEnd'] = $this->toTime($dateEnd);
@@ -232,20 +234,20 @@ class ReninsCreateCollector extends ReninsCalcCollector
     public function setHumanInfo(array $subject): void
     {
         $this->data['insurant']['physical'] = [
-            'lastName' => \Arr::get($subject, 'lastName'),
-            'firstName' => \Arr::get($subject, 'firstName'),
-            'middleName' => \Arr::get($subject, 'middleName'),
-            'birthDate' => $this->toTime(\Arr::get($subject, 'birthDate')),
-            'email' => \Arr::get($subject, 'email'),
-            'phone' => self::getFormatPhone(\Arr::get($subject, 'phone')),
-            'sex' => \Arr::get($subject, 'gender', 0) ? "F" : "M",
+            'lastName' => Arr::get($subject, 'lastName'),
+            'firstName' => Arr::get($subject, 'firstName'),
+            'middleName' => Arr::get($subject, 'middleName'),
+            'birthDate' => $this->toTime(Arr::get($subject, 'birthDate')),
+            'email' => Arr::get($subject, 'email'),
+            'phone' => self::getFormatPhone(Arr::get($subject, 'phone')),
+            'sex' => Arr::get($subject, 'gender', 0) ? "F" : "M",
             'citizenship' => self::CITIZENSHIP,
             'document' => [
                 'type' => self::DOC_TYPE,
-                'series' => \Arr::get($subject, 'docSeries'),
-                'number' => \Arr::get($subject, 'docNumber'),
-                'placeOfIssue' => \Arr::get($subject, 'docIssuePlace'),
-                'dateOfIssue' => $this->toTime(\Arr::get($subject, 'docIssueDate')),
+                'series' => Arr::get($subject, 'docSeries'),
+                'number' => Arr::get($subject, 'docNumber'),
+                'placeOfIssue' => Arr::get($subject, 'docIssuePlace'),
+                'dateOfIssue' => $this->toTime(Arr::get($subject, 'docIssueDate')),
                 'kodPodrazd' => '',
             ],
             'factAddress' => [
@@ -267,16 +269,16 @@ class ReninsCreateCollector extends ReninsCalcCollector
                         ' к.',
                     ],
                     '',
-                    \Arr::get($subject, 'state')
+                    Arr::get($subject, 'state')
                 ), ".\n\r, \t\0"),
                 'addressText' => implode(
                     ', ',
                     array_filter([
                         self::POST_INDEX_MOSCOW,
                         self::COUNTRY,
-                        \Arr::get($subject, 'city'),
-                        'ул. '  . \Arr::get($subject, 'street'),
-                        \Arr::get($subject, 'house'),
+                        Arr::get($subject, 'city'),
+                        'ул. '  . Arr::get($subject, 'street'),
+                        Arr::get($subject, 'house'),
                     ])
                 ),
             ],
