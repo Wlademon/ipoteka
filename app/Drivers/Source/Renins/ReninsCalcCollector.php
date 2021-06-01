@@ -2,6 +2,7 @@
 
 namespace App\Drivers\Source\Renins;
 
+use DateTime;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Carbon;
 
@@ -74,10 +75,10 @@ class ReninsCalcCollector implements Arrayable
      * @param $dateStart
      * @param $dateEnd
      */
-    public function setContractStartEnd(string $dateStart, string $dateEnd): void
+    public function setContractStartEnd(string $policyStartDate, string $policyEndDate): void
     {
-        $this->data['dateBeg'] = $this->toTime($dateStart);
-        $this->data['dateEnd'] = $this->toTime($dateEnd);
+        $this->data['dateBeg'] = $this->toTime($policyStartDate);
+        $this->data['dateEnd'] = $this->toTime($policyEndDate);
     }
 
     /**
@@ -235,7 +236,7 @@ class ReninsCalcCollector implements Arrayable
         if (is_string($date)) {
             return Carbon::parse($date)->format(self::TIME_FORMAT);
         }
-        if ($date instanceof \DateTime) {
+        if ($date instanceof DateTime) {
             return $date->format(self::TIME_FORMAT);
         }
 
