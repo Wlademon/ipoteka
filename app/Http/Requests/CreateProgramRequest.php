@@ -20,6 +20,7 @@ use Illuminate\Validation\Rule;
  * @OA\Property(property="is_family", type="boolean", example="1", description="Семейная"),
  * @OA\Property(
  *     property="issues",
+ *     schema="Objects",
  *     type="array",
  *     description="Страховые выплаты",
  *     example={
@@ -42,7 +43,8 @@ use Illuminate\Validation\Rule;
  *     @OA\Property(property="diseaseRefundPercent", type="integer", format="int64", example=2),
  *     @OA\Property(
  *          property="adultAges",
- *          type="object",
+ *     schema="Objects",
+ *     type="array",
  *          example={
  *              "min": 18,
  *              "max": 65
@@ -55,7 +57,8 @@ use Illuminate\Validation\Rule;
  *     ),
  *     @OA\Property(
  *          property="childAges",
- *          type="object",
+ *     schema="Objects",
+ *     type="array",
  *          example={
  *              "min": 18,
  *              "max": 65
@@ -75,6 +78,7 @@ use Illuminate\Validation\Rule;
  * ),
  * @OA\Property(
  *     property="risks",
+ *     schema="Objects",
  *     type="array",
  *     description="Риски",
  *     @OA\Items(
@@ -86,6 +90,7 @@ use Illuminate\Validation\Rule;
  * ),
  * @OA\Property(
  *     property="matrix",
+ *     schema="Objects",
  *     type="array",
  *     description="Матрица расчета",
  *     @OA\Items(
