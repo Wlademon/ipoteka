@@ -146,7 +146,7 @@ class CreatedPolicy implements CreatedPolicyInterface
         $this->propertyPolicyId = $propertyPolicyId;
     }
 
-    public function getLifePolicyId(): string
+    public function getLifePolicyId(): ?string
     {
         return $this->lifePolicyId;
     }
