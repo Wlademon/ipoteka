@@ -66,7 +66,7 @@ class Handler extends ExceptionHandler
             AuthorizationException::class => function (AuthorizationException $e) {
                 return [
                     'statusCode' => Response::HTTP_FORBIDDEN,
-                    'error' => sprintf("Access denied %s", URL::current()),
+                    'error' => 'Access denied ' . URL::current(),
                     'errorCode' => Response::HTTP_FORBIDDEN,
                 ];
             },
@@ -81,14 +81,14 @@ class Handler extends ExceptionHandler
             NotFoundHttpException::class => function (NotFoundHttpException $e) {
                 return [
                     'statusCode' => Response::HTTP_NOT_FOUND,
-                    'error' => sprintf("Resource %s not found", URL::current()),
+                    'error' => 'Resource ' . URL::current() . ' not found',
                     'errorCode' => Response::HTTP_NOT_FOUND,
                 ];
             },
             ModelNotFoundException::class => function (ModelNotFoundException $e) {
                 return [
                     'statusCode' => Response::HTTP_NOT_FOUND,
-                    'error' => sprintf("Model not found. %s", URL::current()),
+                    'error' => "Model not found. " . URL::current(),
                     'errorCode' => Response::HTTP_NOT_FOUND,
                 ];
             }

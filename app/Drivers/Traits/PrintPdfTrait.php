@@ -56,7 +56,7 @@ trait PrintPdfTrait
         $dir = substr($filename, 0, strrpos($filename, DIRECTORY_SEPARATOR) + 1);
         if (!file_exists($dir)) {
             if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                throw new RuntimeException(sprintf('Directory "%s" was not created :' . $dir, $dir));
+                throw new RuntimeException('Directory "%s" was not created :' . $dir);
             }
         }
         $pdf->save($filename);
@@ -74,7 +74,7 @@ trait PrintPdfTrait
         $dir = substr($path, 0, strrpos($path, DIRECTORY_SEPARATOR));
         if (!file_exists($dir)) {
             if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
+                throw new RuntimeException("Directory '$dir' was not created");
             }
         }
         return (bool)file_put_contents($path, $content);

@@ -47,10 +47,10 @@ class BaseModel extends Model
             } elseif ($this->isFillable(Str::snake($key))) {
                 $this->setAttribute(Str::snake($key), $value);
             } elseif ($totallyGuarded) {
-                throw new MassAssignmentException(sprintf(
-                    'Add [%s] to fillable property to allow mass assignment on [%s].',
-                    $key, get_class($this)
-                ));
+                $class = get_class($this);
+                throw new MassAssignmentException(
+                    "Add [{$key}] to fillable property to allow mass assignment on [{$class}].",
+                );
             }
         }
 
