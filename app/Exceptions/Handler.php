@@ -55,6 +55,7 @@ class Handler extends ExceptionHandler
     protected function setHandlers(): void
     {
         $this->handlers = [
+
             AuthenticationException::class => function (AuthenticationException $e) {
                 return [
                     'statusCode' => Response::HTTP_UNAUTHORIZED,
@@ -73,6 +74,7 @@ class Handler extends ExceptionHandler
                 return [
                     'statusCode' => Response::HTTP_UNPROCESSABLE_ENTITY,
                     'error' => 'Rules validation error',
+                    'errors' => $e->errors(),
                     'errorCode' => Response::HTTP_UNPROCESSABLE_ENTITY,
                 ];
             },
@@ -104,7 +106,14 @@ class Handler extends ExceptionHandler
             'success' => false
         ];
         $error = $this->resolveHandler($e)($e);
-        $response = array_merge($response, ['error' => $error['error'], 'errorCode' => $error['errorCode']]);
+        $response = array_merge($response, [
+            'error' => $error['error'],
+            'errorCode' => $error['errorCode'],
+        ]);
+
+        if (\Arr::get($error, 'errors')) {
+            $response['errors'] = \Arr::get($error, 'errors');
+        }
 
         if (env('APP_DEBUG')) {
             Log::debug(
@@ -137,7 +146,6 @@ class Handler extends ExceptionHandler
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
                     'errorCode' => $code,
-                    'trace' => $e->getTraceAsString()
                 ];
             };
         }
@@ -148,17 +156,15 @@ class Handler extends ExceptionHandler
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
                     'errorCode' => $code,
-                    'trace' => $e->getTraceAsString()
                 ];
             };
         }
 
-        return /*$this->handlers[get_class($exception)] ??*/ function (Throwable $e) {
+        return $this->handlers[get_class($exception)] ?? function (Throwable $e) {
                 return [
                     'statusCode' => 200 > $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode(),
                     'error' => $e->getMessage(),
                     'errorCode' => $e->getCode(),
-                    'trace' => $e->getTraceAsString()
                 ];
             };
     }

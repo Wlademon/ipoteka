@@ -6,7 +6,7 @@ use Ajaxray\PHPWatermark\Watermark;
 use App\Models\Contracts;
 use App\Services\WatermarkService;
 use Barryvdh\DomPDF\Facade as PDF;
-use http\Exception\RuntimeException;
+use RuntimeException;
 use setasign\Fpdi\FpdfTpl;
 use setasign\Fpdi\Fpdi;
 
@@ -16,7 +16,6 @@ use setasign\Fpdi\Fpdi;
  */
 trait PrintPdfTrait
 {
-    use LoggerTrait;
 
     /**
      * @param $path
@@ -57,7 +56,7 @@ trait PrintPdfTrait
         $dir = substr($filename, 0, strrpos($filename, DIRECTORY_SEPARATOR) + 1);
         if (!file_exists($dir)) {
             if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created :' . $dir, $dir));
+                throw new RuntimeException(sprintf('Directory "%s" was not created :' . $dir, $dir));
             }
         }
         $pdf->save($filename);
@@ -75,7 +74,7 @@ trait PrintPdfTrait
         $dir = substr($path, 0, strrpos($path, DIRECTORY_SEPARATOR));
         if (!file_exists($dir)) {
             if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                throw new \RuntimeException(sprintf('Directory "%s" was not created', $dir));
+                throw new RuntimeException(sprintf('Directory "%s" was not created', $dir));
             }
         }
         return (bool)file_put_contents($path, $content);
@@ -95,10 +94,7 @@ trait PrintPdfTrait
         $pdf = $watermark->withImage($pathWatermark, $resultPath);
 
         if (!$pdf) {
-            self::abortLog(
-                'Not install imagic or not set rules for pdf',
-                RuntimeException::class
-            );
+            throw new RuntimeException('Not install imagic or not set rules for pdf');
         }
 
         return $pdf;

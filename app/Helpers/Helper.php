@@ -130,7 +130,7 @@ class Helper
      */
     public static function getPolicyNumber($params)
     {
-        if (env('APP_ENV') == 'local' || env('APP_ENV') == 'testing') {
+        if (config('app.env') === 'local' || config('app.env') === 'testing') {
             return json_decode(json_encode(['data' => ['bso_numbers' => ['Z6921/397/RU0000/20']]]));
         }
         $client = new Client();
@@ -184,7 +184,7 @@ class Helper
      */
     public static function acceptPolicyNumber($params)
     {
-        if (env('APP_ENV') == 'local' || env('APP_ENV') == 'testing') {
+        if (config('app.env') == 'local' || config('app.env') == 'testing') {
             return true;
         }
         $client = new Client();
@@ -235,7 +235,7 @@ class Helper
      */
     public static function getUwinContractId(Contracts $contract)
     {
-        if (env('APP_ENV') == 'local' || env('APP_ENV') == 'testing') {
+        if (config('app.env') == 'local' || config('app.env') == 'testing') {
             return json_decode(json_encode(['contractId' => '111111']));
         }
         $siteService = new SiteService();

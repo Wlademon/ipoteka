@@ -4,13 +4,11 @@
 namespace App\Drivers\Services;
 
 
-use App\Drivers\Traits\LoggerTrait;
 use App\Exceptions\Drivers\AlphaException;
 use Illuminate\Support\Collection;
 
 class MerchantServices
 {
-    use LoggerTrait;
 
     const PARTNERS_INTERACTION = '/cxf/partner/PartnersInteraction?wsdl';
 
@@ -70,7 +68,7 @@ class MerchantServices
 
             $resp = $soap->__getLastRequestHeaders();
         } catch (\Throwable $e) {
-            self::abortLog($e->getMessage(), AlphaException::class);
+            throw new AlphaException($e->getMessage());
         }
 
         return collect($result);
@@ -103,7 +101,7 @@ class MerchantServices
 
             $resp = $soap->__getLastRequestHeaders();
         } catch (\Throwable $e) {
-            self::abortLog($e->getMessage(), AlphaException::class);
+            throw new AlphaException($e->getMessage());
         }
 
         return collect($result);
@@ -123,7 +121,7 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new \SoapClient(env('SOAP_MS_GET_CONTRACT_SIGNED_WSDL'), $options);
+        $soap = new \SoapClient(config('mortgage.alfaMsk.merchant.contract_wsdl'), $options);
         $files = [];
         foreach ($contractId as $id) {
             try {
@@ -141,7 +139,7 @@ class MerchantServices
                 \Storage::put($filePath, $result->Content);
                 $files[$id] = $filePath;
             } catch (\Throwable $e) {
-                self::abortLog($e->getMessage(), AlphaException::class);
+                throw new AlphaException($e->getMessage());
             }
         }
 
@@ -161,7 +159,7 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new \SoapClient(env('SOAP_MERCHANT_SERVICE_WSDL'), $options);
+        $soap = new \SoapClient(config('mortgage.alfaMsk.merchant.wsdl'), $options);
 
         try {
             $result = $soap->__SoapCall('getOrderStatus', [
@@ -172,7 +170,7 @@ class MerchantServices
 
             $resp = $soap->__getLastRequestHeaders();
         } catch (\Throwable $e) {
-            self::abortLog($e->getMessage(), AlphaException::class);
+            throw new AlphaException($e->getMessage());
         }
 
         return collect($result);
@@ -190,7 +188,7 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new \SoapClient(env('SOAP_MERCHANT_SERVICE_WSDL'), $options);
+        $soap = new \SoapClient(config('mortgage.alfaMsk.merchant.wsdl'), $options);
 
         try {
             $result = $soap->__SoapCall('registerOrder', [
@@ -206,7 +204,7 @@ class MerchantServices
 
             $resp = $soap->__getLastRequestHeaders();
         } catch (\Throwable $e) {
-            self::abortLog($e->getMessage(), AlphaException::class);
+            throw new AlphaException($e->getMessage());
         }
 
         return collect($result);
@@ -225,7 +223,7 @@ class MerchantServices
 
         $packedNonce = pack('H*', $nonce);
         $packedTimestamp = pack('a*', $this->timestamp);
-        $packedPassword = pack('a*', env('SOAP_MERCHANT_SERVICE_PASSWORD'));
+        $packedPassword = pack('a*', config('mortgage.alfaMsk.merchant.password'));
 
         $hash = sha1($packedNonce . $packedTimestamp . $packedPassword);
         $packedHash = pack('H*', $hash);

@@ -5,7 +5,6 @@ namespace App\Services;
 use App;
 use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
-use App\Drivers\Traits\LoggerTrait;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
 use App\Models\Contracts;
@@ -19,6 +18,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
 /**
@@ -27,8 +27,6 @@ use Throwable;
  */
 class DriverService
 {
-    use LoggerTrait;
-
     /**
      * @var DriverInterface|null
      */
@@ -44,11 +42,7 @@ class DriverService
         $this->driver = App::make($driverCode);
 
         if (!$this->driver) {
-            self::abortLog(
-                "Driver {$driver} not found",
-                DriverServiceException::class,
-                Response::HTTP_NOT_FOUND
-            );
+            throw new DriverServiceException("Driver {$driver} not found", Response::HTTP_NOT_FOUND);
         }
     }
 
@@ -99,7 +93,7 @@ class DriverService
 
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
         } catch (Throwable $throwable) {
-            self::error($throwable->getMessage());
+            Log::error($throwable->getMessage());
             throw new DriverServiceException('При подсчете произошла ошибка.');
         }
     }
@@ -129,9 +123,8 @@ class DriverService
         }
         $activeFrom = Carbon::parse($data['activeFrom']);
         if ($activeFrom > $validActiveFromMax) {
-            self::abortLog(
+            throw new DriverServiceException(
                 "Дата начала полиса не может быть позже чем дата заключения (сегодня) + {$maxStartDateSelection}",
-                DriverServiceException::class,
                 Response::HTTP_UNPROCESSABLE_ENTITY
             );
         }
@@ -147,7 +140,6 @@ class DriverService
         try {
             DB::beginTransaction();
             $model = new Contracts();
-
             $model->fill($data);
             $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
@@ -174,7 +166,7 @@ class DriverService
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
-            self::error($throwable->getMessage());
+            Log::error($throwable->getMessage());
             throw new DriverServiceException('При создании полиса возникла ошибка.');
         }
         $result->setContractId($model->id);
@@ -216,16 +208,16 @@ class DriverService
     ) {
         $this->getStatus($contract);
         if (!$sample && $contract->status !== Contracts::STATUS_CONFIRMED) {
-            self::abortLog(
+            throw new DriverServiceException(
                 'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
-                DriverServiceException::class
+                HttpResponse::HTTP_NOT_ACCEPTABLE
             );
         }
         try {
             return $this->getDriverByCode($contract->program->company->code)
                         ->printPolicy($contract, $sample, $reset, $filePath);
         } catch (Throwable $throwable) {
-            self::error($throwable->getMessage());
+            Log::error($throwable->getMessage());
             throw new DriverServiceException('При получении бланка полиса произошла ошибка.');
         }
     }
@@ -243,16 +235,10 @@ class DriverService
                 return ['message' => 'Email was sent to ' . $contract->subject_value['email']];
             }
 
-            self::abortLog(
-               'Email was not sent to ' . $contract->subject_value['email'],
-                DriverServiceException::class
-            );
+            throw new DriverServiceException('Email was not sent to ' . $contract->subject_value['email'],);
         }
 
-        self::abortLog(
-           'Status of Contract is not Confirmed',
-            DriverServiceException::class
-        );
+        throw new DriverServiceException('Status of Contract is not Confirmed');
     }
 
     /**
@@ -264,7 +250,7 @@ class DriverService
         try {
             $this->getDriverByCode($contract->program->company->code)->payAccept($contract);
         } catch (Throwable $throwable) {
-            self::abortLog($throwable->getMessage(), DriverServiceException::class);
+            throw new DriverServiceException($throwable->getMessage());
         }
     }
 
@@ -276,9 +262,8 @@ class DriverService
     public function acceptPayment(Contracts $contract): array
     {
         if ($contract->status != Contracts::STATUS_DRAFT) {
-            self::abortLog(
+            throw new DriverServiceException(
                'Полис не в статусе "Ожидает оплаты"',
-                DriverServiceException::class,
                 Response::HTTP_PAYMENT_REQUIRED
             );
         }
@@ -296,7 +281,7 @@ class DriverService
         $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
         $contract->save();
         $this->statusConfirmed($contract);
-        self::log("Contract with ID {$contract->id} was saved.");
+        Log::info("Contract with ID {$contract->id} was saved.");
 
         return [
             'id' => $contract['id'],
@@ -316,7 +301,7 @@ class DriverService
         try {
             return $this->getDriverByCode($contract->program->company->code)->getStatus($contract);
         } catch (Throwable $throwable) {
-            self::abortLog($throwable->getMessage(), DriverServiceException::class);
+            throw new DriverServiceException($throwable->getMessage());
         }
     }
 }

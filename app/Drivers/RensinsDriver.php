@@ -19,6 +19,7 @@ use Arr;
 use File;
 use Illuminate\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
+use Log;
 use Storage;
 use Throwable;
 
@@ -194,7 +195,7 @@ class RensinsDriver implements DriverInterface
                     )
                 );
             } catch (Throwable $throwable) {
-                self::error($throwable->getMessage());
+                Log::error($throwable->getMessage());
                 $result = null;
             }
 

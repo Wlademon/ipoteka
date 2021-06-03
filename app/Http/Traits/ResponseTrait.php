@@ -35,7 +35,7 @@ trait ResponseTrait
             $response['error']['error_fields'] = $fields;
         }
 
-        Log::info('errorResponse. ', [$response]);
+        Log::error('errorResponse. ', [$response]);
 
         return response($response, Response::HTTP_BAD_REQUEST, $headers);
     }

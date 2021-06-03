@@ -115,7 +115,7 @@ class PaymentController extends BaseController
      * @OA\Put(
      *     path="/v1/payment/{id}",
      *     operationId="/v1/payment/{id}(PUT)",
-     *     summary="Обновить оплату",
+     *     summary="Изменить оплату",
      *     tags={"Платежи"},
      *     @OA\Parameter(
      *         name="id",

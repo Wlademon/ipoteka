@@ -75,4 +75,9 @@ class Companies extends BaseModel
     {
         return $this->attributes['is_active'];
     }
+
+    public function setIsActiveAttribute($val)
+    {
+        return $this->attributes['is_active'] = $val;
+    }
 }
