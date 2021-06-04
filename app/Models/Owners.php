@@ -3,7 +3,7 @@
 namespace App\Models;
 
 
-use Kyslik\LaravelFilterable\Filterable;
+use Strahovka\LaravelFilterable\Filterable;
 
 /**
  * App\Models\Payment

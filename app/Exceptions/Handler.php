@@ -100,7 +100,7 @@ class Handler extends ExceptionHandler
      * @param Exception $e
      * @return JsonResponse|Response|\Symfony\Component\HttpFoundation\Response
      */
-    public function render($request, Exception $e)
+    public function render($request, Throwable $e)
     {
         $response = [
             'success' => false

@@ -40,8 +40,6 @@ class BaseModel extends Model
         $totallyGuarded = $this->totallyGuarded();
 
         foreach ($attributes as $key => $value) {
-            $key = $this->removeTableFromKey($key);
-
             if ($this->isFillable($key)) {
                 $this->setAttribute($key, $value);
             } elseif ($this->isFillable(Str::snake($key))) {
