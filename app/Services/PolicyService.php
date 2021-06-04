@@ -2,15 +2,12 @@
 
 namespace App\Services;
 
-use App\Drivers\Traits\LoggerTrait;
 use App\Http\Requests\Request;
 use Exception;
 use App\Models\Contracts;
 
 class PolicyService extends Service
 {
-    use LoggerTrait;
-
     /**
      * @param Request $request
      * @param DriverService $driver

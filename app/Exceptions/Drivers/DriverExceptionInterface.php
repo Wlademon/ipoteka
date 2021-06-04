@@ -10,5 +10,4 @@ use Throwable;
  */
 interface DriverExceptionInterface extends Throwable
 {
-
 }

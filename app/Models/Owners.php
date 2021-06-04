@@ -70,4 +70,9 @@ class Owners extends BaseModel
     {
         return $this->attributes['uw_login'];
     }
+
+    public function setUwLoginAttribute($value)
+    {
+        $this->attributes['uw_login'] = $value;
+    }
 }

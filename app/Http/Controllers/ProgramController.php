@@ -129,7 +129,7 @@ class ProgramController extends BaseController
      * @OA\Put(
      *     path="/v1/program/{id}",
      *     operationId="/v1/program/{id}(PUT)",
-     *     summary="Обновить программу",
+     *     summary="Изменить программу",
      *     tags={"Программы"},
      *     @OA\Parameter(
      *         name="id",

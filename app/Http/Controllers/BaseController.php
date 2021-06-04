@@ -3,19 +3,17 @@
 namespace App\Http\Controllers;
 
 use App;
-use OpenApi\Annotations as OA;
 use App\Helpers\Helper;
 use App\Http\Traits\ResponseTrait;
 use App\Models\BaseModel;
 use App\Repositories\Repository;
-use Illuminate\Database\Eloquent\Model;
+use Eloquent;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\Request;
-use Mockery\CountValidator\Exception;
 
 /**
  * Class BaseController
@@ -28,10 +26,10 @@ abstract class BaseController extends Controller
     /** @var  Repository $repository */
     protected $repository;
 
-    /** @var  BaseModel|\Eloquent $model */
+    /** @var  BaseModel|Eloquent $model */
     protected $model;
 
-    protected $limit = 0;
+    protected $limit = 10;
 
     protected $offset = 0;
 
@@ -61,45 +59,11 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param Request $request
-     * @return BaseModel|Model
+     * @param array $list
+     * @param int $offset
+     * @param false $prepare
+     * @return array
      */
-    public function create(Request $request)
-    {
-        return $this->repository->create($request->all());
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param array $attributes
-     * @param int $id
-     * @return BaseModel
-     */
-    public function save(array $attributes, $id)
-    {
-        /** @var BaseModel $currentModel */
-        $currentModel = $this->model->find($id);
-        if (!$currentModel) {
-            return null;
-        }
-        if (count($attributes) == 0) {
-            $this->model = $currentModel;
-
-            return $currentModel;
-        }
-        $this->repository->setModel($currentModel);
-        $updatedParams = Helper::getUpdatesModelParams($currentModel->toArray(), $attributes);
-        if (count($updatedParams) > 0) {
-            $this->repository->update($attributes);
-        }
-        $this->model = $currentModel;
-
-        return $this->model;
-    }
-
     protected function getResponseForList(array $list, $offset = 0, $prepare = false)
     {
         return [
@@ -111,6 +75,10 @@ abstract class BaseController extends Controller
         ];
     }
 
+    /**
+     * @param array $list
+     * @return array
+     */
     protected function prepareItems(array $list)
     {
         $result = [];
@@ -159,6 +127,10 @@ abstract class BaseController extends Controller
         return $result;
     }
 
+    /**
+     * @param $count
+     * @return $this
+     */
     protected function setTotalCount($count)
     {
         $this->totalCount = $count;
@@ -166,23 +138,28 @@ abstract class BaseController extends Controller
         return $this;
     }
 
+    /**
+     * @param Request $request
+     */
     protected function initRequest(Request $request)
     {
-        $this->limit = (int)$request->input('limit') ?: 100;
+        $this->limit = (int)$request->input('limit', 100);
         if ($this->limit > $this->maxLimit) {
-            throw new Exception('Limit over');
+            $this->limit = $this->maxLimit;
         }
-        $this->offset = (int)$request->input('offset') ?: 0;
-        $this->search = $request->input('search') ?: '';
+        $this->offset = (int)$request->input('offset', 0);
+        $this->search = $request->input('search', '');
         $this->locale = App::getLocale() ?: 'ru';
     }
 
+    /**
+     * @param $id
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|Response
+     * @throws \Exception
+     */
     public function destroy($id)
     {
-        $model = $this->model::find($id);
-        if (!$model) {
-            return $this->errorResponse(403);
-        }
+        $model = $this->model::findOrFail($id);
         $model->delete();
 
         return $this->successResponse(["Запись {$id} успешно удалена"]);

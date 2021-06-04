@@ -15,7 +15,6 @@ use Illuminate\Foundation\Http\FormRequest;
  *     @OA\Property(property="product", type="string", example="property", description="Тип объекта страхования"),
  *     @OA\Property(property="number", type="string", example="123", description="Номер"),
  *     @OA\Property(property="external_id", type="string", example="123", description="Внешний идентификатор"),
- *     @OA\Property(property="uw_contract_id", type="string", example="123", description="Тип объекта"),
  *     @OA\Property(property="premium", type="string", example="123", description="Тип объекта"),
  *     @OA\Property(property="value", type="object", description="Данные объекта страхования",
  *          required={"city", "state", "house", "buildYear", "cityKladr"},

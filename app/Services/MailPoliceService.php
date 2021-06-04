@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Drivers\DriverInterface;
-use App\Drivers\Traits\LoggerTrait;
 use App\Mail\Email;
 use App\Models\Contracts;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\Mail;
  */
 class MailPoliceService
 {
-    use LoggerTrait;
-
     /**
      * @var Contracts
      */
@@ -44,9 +42,9 @@ class MailPoliceService
 
             Mail::to('wladoseid@gmail.com')->send($this->buildMessage($filePath));
 
-            self::log("Mail sent to userEmail={$contract->subject_value['email']} contractId={$contract->id}");
+            Log::info("Mail sent to userEmail={$contract->subject_value['email']} contractId={$contract->id}");
         } catch (\Exception $e) {
-            self::warning(
+            Log::warning(
                 "Cant send email to userEmail={$contract->subject_value['email']} contractId={$contract->id}",
                 [$e->getMessage()]
             );

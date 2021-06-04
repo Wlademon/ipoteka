@@ -84,9 +84,9 @@ class OwnerController extends BaseController
      * @param Request $request
      * @return \App\Models\BaseModel|\Illuminate\Database\Eloquent\Model
      */
-    public function create(Request $request)
+    public function create(CreateOwnerRequest $request)
     {
-        return parent::create($request);
+        return $this->model::create($request->validated());
     }
 
     /**
@@ -125,7 +125,7 @@ class OwnerController extends BaseController
      * @OA\Put(
      *     path="/v1/owner/{id}",
      *     operationId="/v1/owner/{id}(PUT)",
-     *     summary="Обновить источник",
+     *     summary="Изменить источник",
      *     tags={"Владельцы"},
      *     @OA\Parameter(
      *         name="id",

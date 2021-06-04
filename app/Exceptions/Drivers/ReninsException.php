@@ -2,8 +2,9 @@
 
 namespace App\Exceptions\Drivers;
 
-use Throwable;
+use Symfony\Component\HttpFoundation\Response;
 
 class ReninsException extends \Exception implements DriverExceptionInterface
 {
+    protected $code = Response::HTTP_NOT_ACCEPTABLE;
 }

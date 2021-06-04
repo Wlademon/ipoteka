@@ -81,12 +81,12 @@ class CompanyController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param Request $request
+     * @param CreateCompanyRequest $request
      * @return \App\Models\BaseModel|\Illuminate\Database\Eloquent\Model
      */
-    public function create(Request $request)
+    public function create(CreateCompanyRequest $request)
     {
-        return parent::create($request);
+        return $this->model::create($request->validated());
     }
 
     /**
@@ -125,7 +125,7 @@ class CompanyController extends BaseController
      * @OA\Put(
      *     path="/v1/company/{id}",
      *     operationId="/v1/company/{id}(PUT)",
-     *     summary="Обновить компанию",
+     *     summary="Изменить компанию",
      *     tags={"Компании"},
      *     @OA\Parameter(
      *         name="id",

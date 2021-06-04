@@ -31,7 +31,7 @@ class DriverServiceProvider extends ServiceProvider
         }
 
         $this->app->bind(PayService::class, function ($app) {
-            if (in_array(env('APP_ENV'), ['local', 'testing'])) {
+            if (in_array(config('app.env'), ['local', 'testing'])) {
                 return new class (new SoapWrapper()) extends PayService {
                     public function __construct(SoapWrapper $soapWrapper) {
                         parent::__construct($soapWrapper);

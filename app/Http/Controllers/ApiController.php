@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Drivers\Traits\LoggerTrait;
 use App\Http\Requests\CalculateRequest;
 use App\Http\Requests\CreatePolicyRequest;
 use App\Http\Resources\ContractResource;
@@ -10,14 +9,11 @@ use App\Models\Contracts;
 use App\Models\Payments;
 use App\Services\DriverService;
 use App\Services\PayService\PayLinks;
-use Carbon\Carbon;
-use CodeDredd\Soap\Facades\Soap;
-use CodeDredd\Soap\SoapClient;
 use Exception;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Ramsey\Uuid\Generator\RandomBytesGenerator;
+use Log;
 use RuntimeException;
 use Strahovka\Payment\PayService;
 
@@ -27,7 +23,6 @@ use Strahovka\Payment\PayService;
  */
 class ApiController extends BaseController
 {
-    use LoggerTrait;
 
     protected PayService $payService;
     protected DriverService $driverService;
@@ -135,8 +130,7 @@ class ApiController extends BaseController
      */
     public function getPolicy(Request $request, $contractId): Response
     {
-
-        self::log("Find Contract with ID: {$contractId}");
+        Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
 
         return $this->successResponse(new ContractResource($contract));
@@ -173,7 +167,7 @@ class ApiController extends BaseController
      */
     public function getPolicyStatus(Request $request, $contractId): Response
     {
-        self::log("Find Contract with ID: {$contractId}");
+        Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
 
         return $this->successResponse($this->driverService->getStatus($contract));
@@ -211,17 +205,17 @@ class ApiController extends BaseController
      */
     public function postPolicyAccept(Payments $payment, $orderId): Response
     {
-        self::log("Find Payment with OrderID: {$orderId}");
+        Log::info("Find Payment with OrderID: {$orderId}");
         $res = $payment->whereOrderId($orderId)->firstOrFail();
 
-        self::log("Find Contract with ID: {$res->contract_id}");
+        Log::info("Find Contract with ID: {$res->contract_id}");
         $contract = Contracts::with('company')->whereId($res->contract_id)->whereStatus(
             Contracts::STATUS_DRAFT
         )->firstOrFail();
 
-        self::log("Start check payment status with OrderID: {$orderId}");
+        Log::info("Start check payment status with OrderID: {$orderId}");
         $status = $this->payService->getOrderStatus($orderId);
-        self::log("Status: {$status['status']}");
+        Log::info("Status: {$status['status']}");
 
         if (isset($status['isPayed']) && $status['isPayed']) {
             return $this->successResponse($this->driverService->acceptPayment($contract));
@@ -260,11 +254,11 @@ class ApiController extends BaseController
      */
     public function postPolicySend(Request $request, $contractId): Response
     {
-        self::log("Find Contract with ID: {$contractId}");
+        Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
 
         $result = $this->driverService->sendMail($contract);
-        self::log("Response", [$result]);
+        Log::info("Response", [$result]);
 
         return $this->successResponse($result);
     }
@@ -309,20 +303,20 @@ class ApiController extends BaseController
      */
     public function getPolicyPayLink(Request $request, $contractId): Response
     {
-        self::log("Find Contract with ID: {$contractId}");
+        Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
         if (Payments::whereContractId($contract->id)->first()) {
-            self::abortLog('Данный заказ уже обработан (code: ' . Response::HTTP_BAD_REQUEST . ')', RuntimeException::class);
+            throw new RuntimeException('Данный заказ уже обработан (code: ' . Response::HTTP_BAD_REQUEST . ')');
         }
         try {
             $links = new PayLinks($request->query('successUrl'), $request->query('failUrl'));
             $linkResult = $this->driverService->getPayLink($contract, $links);
             Payments::createPayment($linkResult, $contract);
         } catch (Exception $e) {
-            self::abortLog($e->getMessage() . ' (code: ' . $e->getCode() . ')', RuntimeException::class);
+            throw new RuntimeException($e->getMessage() . ' (code: ' . $e->getCode() . ')');
         }
         $result = ['url' => $linkResult->getUrl(), 'orderId' => $linkResult->getOrderId()];
-        self::log('Response', [$result]);
+        Log::info('Response', [$result]);
 
         return $this->successResponse($result);
     }
@@ -366,14 +360,14 @@ class ApiController extends BaseController
      */
     public function getPolicyPdf(Request $request, $contractId): Response
     {
-        self::log("Find Contract with ID: {$contractId}");
+        Log::info("Find Contract with ID: {$contractId}");
         $isSample = filter_var($request->get('sample', false), FILTER_VALIDATE_BOOLEAN);
 
         $contract = Contracts::findOrFail($contractId);
-        self::log('Params', [$contract]);
+        Log::info('Params', [$contract]);
 
         $response = $this->driverService->printPdf($contract, $isSample);
-        self::log('Policy generated!');
+        Log::info('Policy generated!');
 
         return $this->successResponse(['url' => $response]);
     }
