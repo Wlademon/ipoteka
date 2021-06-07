@@ -2,7 +2,7 @@
 
 namespace App\Filters;
 
-use Kyslik\LaravelFilterable\Filter;
+use Strahovka\LaravelFilterable\Filter;
 
 class DateFilter extends Filter
 {

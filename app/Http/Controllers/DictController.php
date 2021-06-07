@@ -4,8 +4,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\ProgramResource;
+use Illuminate\Http\JsonResponse;
 use OpenApi\Annotations as OA;
-use App\Models\Programs;
+use App\Models\Program;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -32,10 +33,15 @@ class DictController extends BaseController
      * Справочник программ.
      *
      */
-    public function getDictPrograms()
+    public function getDictPrograms(): JsonResponse
     {
-        $result = ProgramResource::collection(Programs::active()->get());
+        $result = ProgramResource::collection(Program::active()->get());
 
-        return $this->successResponse($result);
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $result
+            ]
+        );
     }
 }

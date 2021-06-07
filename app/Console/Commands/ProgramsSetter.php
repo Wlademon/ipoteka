@@ -5,9 +5,9 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use App\Models\Companies;
-use App\Models\Programs;
-use App\Models\Owners;
+use App\Models\Companie;
+use App\Models\Program;
+use App\Models\Owner;
 
 class ProgramsSetter extends Command
 {
@@ -64,7 +64,7 @@ class ProgramsSetter extends Command
         $json = file_get_contents(storage_path($this->option('path')));
         $programs = json_decode($json);
 
-        $owner = Owners::updateOrCreate([
+        $owner = Owner::updateOrCreate([
             'code' => 'STRAHOVKA',
         ], [
             'code' => 'STRAHOVKA',
@@ -75,13 +75,13 @@ class ProgramsSetter extends Command
         foreach ($programs as $p) {
 
             if (!empty($p->matrix)) {
-                $company = Companies::updateOrCreate([
+                $company = Companie::updateOrCreate([
                     'code' => $p->companyCode,
                 ], [
                     'name' => $p->companyName,
                 ]);
 
-                $program = Programs::updateOrCreate([
+                $program = Program::updateOrCreate([
                     'company_id' => $company->id,
                     'program_code' => $p->programCode,
                     'program_name' => $p->programName,
@@ -100,13 +100,13 @@ class ProgramsSetter extends Command
                 ]);
             }
 
-            $company = Companies::updateOrCreate([
+            $company = Companie::updateOrCreate([
                 'code' => $p->companyCode,
             ], [
                 'name' => $p->companyName,
             ]);
 
-            $program = Programs::updateOrCreate([
+            $program = Program::updateOrCreate([
                 'company_id' => $company->id,
                 'program_code' => $p->programCode,
                 'program_name' => $p->programName,

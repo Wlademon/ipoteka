@@ -30,32 +30,13 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property \Illuminate\Support\Carbon|null $createdAt
  * @property \Illuminate\Support\Carbon|null $updatedAt
  * @property \Illuminate\Support\Carbon|null $deletedAt
- * @property-read \App\Models\Companies|null $company
+ * @property-read \App\Models\Companie|null $company
  * @property-read string $companyCode
  * @property-read string $companyName
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs ofCompany($companyId)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs query()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereCompanyId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereDeletedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereDescription($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereInsuredSum($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereIsActive($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereIsSport($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereIsChild($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereIssues($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereRisks($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereConditions($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereProgramCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereProgramName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Programs whereUpdatedAt($value)
  * @mixin \Eloquent
  */
 
-class Programs extends BaseModel
+class Program extends BaseModel
 {
     use Filterable;
 
@@ -105,7 +86,7 @@ class Programs extends BaseModel
      */
     public function company()
     {
-        return $this->belongsTo(Companies::class);
+        return $this->belongsTo(Companie::class);
     }
 
     public function contracts()
@@ -115,7 +96,7 @@ class Programs extends BaseModel
 
     public function owners()
     {
-        return $this->belongsToMany(Owners::class, 'owners_programs');
+        return $this->belongsToMany(Owner::class, 'owners_programs');
     }
 
     public function scopeActive($query)

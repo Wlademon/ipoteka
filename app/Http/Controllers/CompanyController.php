@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Filters\CompanyFilter;
 use App\Http\Requests\CreateCompanyRequest;
-use App\Models\Companies;
+use App\Models\Companie;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
@@ -15,10 +16,10 @@ class CompanyController extends BaseController
 {
     /**
      * CompanyController constructor.
-     * @param Companies $model
+     * @param Companie $model
      * @param CompanyFilter $filter
      */
-    public function __construct(Companies $model, CompanyFilter $filter)
+    public function __construct(Companie $model, CompanyFilter $filter)
     {
         $this->model = $model;
         $this->filter = $filter;
@@ -65,14 +66,14 @@ class CompanyController extends BaseController
      *
      * Возвращает список компаний с возможностью фильтрацию.
      * @param Request $request
-     * @return array|\Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $this->initRequest($request);
-        $this->setTotalCount(Companies::query()->count());
+        $this->setTotalCount(Companie::query()->count());
 
-        $this->model = Companies::query()->orderBy('id');
+        $this->model = Companie::query()->orderBy('id');
         $this->model->filter($this->filter);
 
         return parent::index($request);
@@ -82,11 +83,16 @@ class CompanyController extends BaseController
      * Show the form for creating a new resource.
      *
      * @param CreateCompanyRequest $request
-     * @return \App\Models\BaseModel|\Illuminate\Database\Eloquent\Model
+     * @return JsonResponse
      */
-    public function create(CreateCompanyRequest $request)
+    public function create(CreateCompanyRequest $request): JsonResponse
     {
-        return $this->model::create($request->validated());
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $this->model::create($request->validated()),
+            ]
+        );
     }
 
     /**
@@ -109,14 +115,19 @@ class CompanyController extends BaseController
      * )
      *
      * @param CreateCompanyRequest $request
-     * @return Companies
+     * @return JsonResponse
      */
-    public function store(CreateCompanyRequest $request)
+    public function store(CreateCompanyRequest $request): JsonResponse
     {
         $company = $this->model->fill($request->all());
         $company->save();
 
-        return $company;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $company,
+            ]
+        );
     }
 
     /**
@@ -146,14 +157,11 @@ class CompanyController extends BaseController
      * )
      * @param CreateCompanyRequest $request
      * @param int $id
-     * @return \App\Models\BaseModel
+     * @return JsonResponse
      */
-    public function update(CreateCompanyRequest $request, $id)
+    public function update(CreateCompanyRequest $request, $id): JsonResponse
     {
         $currentModel = $this->model->findOrFail($id);
-        if (!$currentModel) {
-            return null;
-        }
         $attributes = $request->all();
         if (count($attributes) == 0) {
             $company = $currentModel;
@@ -162,7 +170,12 @@ class CompanyController extends BaseController
             $company->save();
         }
 
-        return $company;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $company,
+            ]
+        );
     }
 
     /**
@@ -187,9 +200,9 @@ class CompanyController extends BaseController
      *     )
      * )
      * @param int $id
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         return parent::destroy($id);
     }

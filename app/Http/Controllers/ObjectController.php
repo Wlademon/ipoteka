@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ObjectRequest;
 use App\Models\Objects;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
@@ -38,14 +39,19 @@ class ObjectController extends BaseController
      * )
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \App\Models\BaseModel
+     * @return JsonResponse
      */
-    public function store(ObjectRequest $request)
+    public function store(ObjectRequest $request): JsonResponse
     {
         $model = $this->model->fill($request->validated());
         $model->saveOrFail();
 
-        return $model;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $model,
+            ]
+        );
     }
 
     /**
@@ -63,9 +69,9 @@ class ObjectController extends BaseController
      *     )
      * )
      *
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         return parent::index($request);
     }
@@ -98,14 +104,19 @@ class ObjectController extends BaseController
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \App\Models\BaseModel
+     * @return JsonResponse
      */
-    public function update(ObjectRequest $request, $id)
+    public function update(ObjectRequest $request, int $id): JsonResponse
     {
         $model = $this->model::query()->where(['id' => $id])->firstOrFail();
         $model->fill($request->validated())->saveOrFail();
 
-        return $model;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $model,
+            ]
+        );
     }
 
     /**
@@ -131,9 +142,9 @@ class ObjectController extends BaseController
      * )
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         return parent::destroy($id);
     }

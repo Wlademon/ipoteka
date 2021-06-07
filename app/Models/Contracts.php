@@ -30,29 +30,14 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property-read string $subjectFullname
  * @property-read string $objectFullname
  * @property-read string $subjectPassport
- * @property-read \App\Models\Programs|null $program
- * @property-read \App\Models\Companies|null $company
- * @property-read \App\Models\Owners|null $owner
+ * @property-read \App\Models\Program|null $program
+ * @property-read \App\Models\Companie|null $company
+ * @property-read \App\Models\Owner|null $owner
  * @property-read \App\Models\Objects[]|array|Collection $objects
- * @property-read \App\Models\Subjects|null $subject
+ * @property-read \App\Models\Subject|null $subject
  * @property-read mixed $ownerCode
  * @property-read mixed $ownerUwLogin
  * @property int|null $uwContractId
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts query()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereActiveFrom($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereActiveTo($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereNumber($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereObject($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereOptions($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereProgramId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereStatus($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereSubject($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereType($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Contracts whereUpdatedAt($value)
  * @mixin Eloquent
  */
 class Contracts extends BaseModel
@@ -153,7 +138,7 @@ class Contracts extends BaseModel
      */
     public function program()
     {
-        return $this->belongsTo(Programs::class);
+        return $this->belongsTo(Program::class);
     }
 
     /**
@@ -161,7 +146,7 @@ class Contracts extends BaseModel
      */
     public function company()
     {
-        return $this->belongsTo(Companies::class);
+        return $this->belongsTo(Companie::class);
     }
 
     /**
@@ -169,7 +154,7 @@ class Contracts extends BaseModel
      */
     public function payment()
     {
-        return $this->hasMany(Payments::class, 'contract_id', 'id');
+        return $this->hasMany(Payment::class, 'contract_id', 'id');
     }
 
     /**
@@ -177,7 +162,7 @@ class Contracts extends BaseModel
      */
     public function owner()
     {
-        return $this->belongsTo(Owners::class);
+        return $this->belongsTo(Owner::class);
     }
 
     /**
@@ -193,7 +178,7 @@ class Contracts extends BaseModel
      */
     public function subject()
     {
-        return $this->hasOne(Subjects::class, 'contract_id');
+        return $this->hasOne(Subject::class, 'contract_id');
     }
 
     /**
@@ -317,9 +302,9 @@ class Contracts extends BaseModel
     public function setProgramCodeAttribute($value)
     {
         if ($value) {
-            $program = Programs::query()
-                    ->where('program_code', '=', $value)
-                    ->firstOrFail();
+            $program = Program::query()
+                              ->where('program_code', '=', $value)
+                              ->firstOrFail();
             $this->program_id = $program->id;
             $this->company_id = $program->companyId;
         }
