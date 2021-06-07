@@ -4,7 +4,7 @@ namespace App\Models;
 
 
 use App\Drivers\DriverResults\PayLinkInterface;
-use Kyslik\LaravelFilterable\Filterable;
+use Strahovka\LaravelFilterable\Filterable;
 
 /**
  * App\Models\Payment

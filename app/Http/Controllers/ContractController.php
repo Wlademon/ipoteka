@@ -9,6 +9,10 @@ use App\Services\DriverService;
 use App\Services\PolicyService;
 use Illuminate\Http\Request;
 
+/**
+ * Class ContractController
+ * @package App\Http\Controllers
+ */
 class ContractController extends BaseController
 {
     public function __construct(Contracts $model, ContractFilter $filter)
@@ -25,14 +29,6 @@ class ContractController extends BaseController
      *     operationId="/v1/contract(GET)",
      *     summary="Список договоров",
      *     tags={"Сделки"},
-     *     @OA\Parameter(
-     *         name="filter-number",
-     *         in="query",
-     *         description="Выборка по номеру",
-     *         required=false,
-     *         example="23432verg",
-     *         @OA\Schema(type="string")
-     *     ),
      *     @OA\Parameter(
      *         name="filter-premium",
      *         in="query",
@@ -58,14 +54,6 @@ class ContractController extends BaseController
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
-     *         name="filter-owner_id",
-     *         in="query",
-     *         description="Выборка по источнику",
-     *         required=false,
-     *         example="1",
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\Parameter(
      *         name="filter-company_id",
      *         in="query",
      *         description="Выборка по компании",
@@ -73,14 +61,7 @@ class ContractController extends BaseController
      *         example="1",
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\Parameter(
-     *         name="filter-uw_contract_id",
-     *         in="query",
-     *         description="Выборка по номеру UW",
-     *         required=false,
-     *         example="123",
-     *         @OA\Schema(type="integer")
-     *     ),
+
      *     @OA\Parameter(
      *         name="filter-signed_at",
      *         in="query",
@@ -165,7 +146,7 @@ class ContractController extends BaseController
      * @OA\Put(
      *     path="/v1/contract/{id}",
      *     operationId="/v1/contract/{id}(PUT)",
-     *     summary="Обновить договор",
+     *     summary="Изменить договор",
      *     tags={"Сделки"},
      *     @OA\Parameter(
      *         name="id",

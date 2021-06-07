@@ -3,7 +3,7 @@
 namespace App\Models;
 
 
-use Kyslik\LaravelFilterable\Filterable;
+use Strahovka\LaravelFilterable\Filterable;
 
 /**
  * App\Models\Payment
@@ -69,5 +69,10 @@ class Owners extends BaseModel
     public function getUwLoginAttribute()
     {
         return $this->attributes['uw_login'];
+    }
+
+    public function setUwLoginAttribute($value)
+    {
+        $this->attributes['uw_login'] = $value;
     }
 }

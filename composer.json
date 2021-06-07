@@ -9,38 +9,28 @@
     "license": "MIT",
     "require": {
         "php": "^7.4|^8.0",
-        "ext-curl": "*",
-        "ext-http": "*",
-        "ext-json": "*",
         "ajaxray/php-watermark": "^0.1.1",
-        "artisaninweb/laravel-soap": "0.3.0.9",
-        "barryvdh/laravel-dompdf": "^0.8.5",
-        "codedredd/laravel-soap": "^1.5",
-        "darkaonline/l5-swagger": "^5.8",
-        "doctrine/dbal": "^2",
-        "fideloper/proxy": "^4.0",
-        "guzzlehttp/guzzle": "^6.3",
+        "barryvdh/laravel-debugbar": "^3.6",
+        "barryvdh/laravel-dompdf": "^0.9.0",
+        "barryvdh/laravel-ide-helper": "^2.10",
+        "codedredd/laravel-soap": "*",
+        "darkaonline/l5-swagger": "^8.0",
+        "doctrine/dbal": "^3.1",
+        "facade/ignition": "^2.10",
+        "fideloper/proxy": "^4.4",
+        "fzaninotto/faker": "^1.5",
+        "guzzlehttp/guzzle": "^7.3",
         "jenssegers/agent": "^2.6",
-        "kyslik/laravel-filterable": "^2.0",
-        "laravel/framework": "^5.8",
-        "laravel/tinker": "^1.0",
-        "laravelcollective/annotations": "^5",
+        "laravel/framework": "^8",
+        "laravel/tinker": "^2.6",
+        "laravelcollective/annotations": "^8.0",
+        "mockery/mockery": "^1.4",
+        "nunomaduro/collision": "^5.4",
+        "phpunit/phpunit": "^9.5",
         "setasign/fpdi": "^2.3",
-        "strahovka/payment": "1.*",
-        "swagger-api/swagger-ui": "3.31.1",
-	    "ext-mbstring": "*",
-        "ext-zip": "*",
-        "zanysoft/laravel-zip": "^1.0",
-        "ext-soap": "*"
-    },
-    "require-dev": {
-        "barryvdh/laravel-debugbar": "^3.2",
-        "barryvdh/laravel-ide-helper": "^2.6",
-        "facade/ignition": "^1.4",
-        "fzaninotto/faker": "^1.4",
-        "mockery/mockery": "^1.0",
-        "nunomaduro/collision": "^3.0",
-        "phpunit/phpunit": "^7.5"
+        "strahovka/laravel-filterable": "dev-master",
+        "strahovka/payment": "^1.2",
+        "swagger-api/swagger-ui": "^3.50"
     },
     "config": {
         "optimize-autoloader": true,
@@ -91,14 +81,18 @@
             "@php artisan ide-helper:meta"
         ]
     },
-    "repositories": {
-        "hooks": {
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://gitlab.com/strahovkaru-dev/pkg/laravel-filterable"
+        },
+        {
             "type": "composer",
             "url": "https://larapack.io"
         },
-        "local": {
+        {
             "type": "vcs",
             "url": "git@gitlab.com:strahovkaru-dev/pkg/str-laravel-payment.git"
         }
-    }
+    ]
 }

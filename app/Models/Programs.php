@@ -3,7 +3,7 @@
 namespace App\Models;
 use App\Filters\ProgramFilter;
 use Illuminate\Database\Eloquent\Builder;
-use Kyslik\LaravelFilterable\Filterable;
+use Strahovka\LaravelFilterable\Filterable;
 
 
 /**

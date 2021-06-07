@@ -61,5 +61,5 @@ interface CreatedPolicyInterface extends Arrayable
      * Идентификатор во внешней системе
      * @return string
      */
-    public function getLifePolicyId(): string;
+    public function getLifePolicyId(): ?string;
 }

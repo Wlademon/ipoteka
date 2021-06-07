@@ -55,6 +55,7 @@ class Handler extends ExceptionHandler
     protected function setHandlers(): void
     {
         $this->handlers = [
+
             AuthenticationException::class => function (AuthenticationException $e) {
                 return [
                     'statusCode' => Response::HTTP_UNAUTHORIZED,
@@ -65,7 +66,7 @@ class Handler extends ExceptionHandler
             AuthorizationException::class => function (AuthorizationException $e) {
                 return [
                     'statusCode' => Response::HTTP_FORBIDDEN,
-                    'error' => sprintf("Access denied %s", URL::current()),
+                    'error' => 'Access denied ' . URL::current(),
                     'errorCode' => Response::HTTP_FORBIDDEN,
                 ];
             },
@@ -73,20 +74,21 @@ class Handler extends ExceptionHandler
                 return [
                     'statusCode' => Response::HTTP_UNPROCESSABLE_ENTITY,
                     'error' => 'Rules validation error',
+                    'errors' => $e->errors(),
                     'errorCode' => Response::HTTP_UNPROCESSABLE_ENTITY,
                 ];
             },
             NotFoundHttpException::class => function (NotFoundHttpException $e) {
                 return [
                     'statusCode' => Response::HTTP_NOT_FOUND,
-                    'error' => sprintf("Resource %s not found", URL::current()),
+                    'error' => 'Resource ' . URL::current() . ' not found',
                     'errorCode' => Response::HTTP_NOT_FOUND,
                 ];
             },
             ModelNotFoundException::class => function (ModelNotFoundException $e) {
                 return [
                     'statusCode' => Response::HTTP_NOT_FOUND,
-                    'error' => sprintf("Model not found. %s", URL::current()),
+                    'error' => "Model not found. " . URL::current(),
                     'errorCode' => Response::HTTP_NOT_FOUND,
                 ];
             }
@@ -98,13 +100,20 @@ class Handler extends ExceptionHandler
      * @param Exception $e
      * @return JsonResponse|Response|\Symfony\Component\HttpFoundation\Response
      */
-    public function render($request, Exception $e)
+    public function render($request, Throwable $e)
     {
         $response = [
             'success' => false
         ];
         $error = $this->resolveHandler($e)($e);
-        $response = array_merge($response, ['error' => $error['error'], 'errorCode' => $error['errorCode']]);
+        $response = array_merge($response, [
+            'error' => $error['error'],
+            'errorCode' => $error['errorCode'],
+        ]);
+
+        if (\Arr::get($error, 'errors')) {
+            $response['errors'] = \Arr::get($error, 'errors');
+        }
 
         if (env('APP_DEBUG')) {
             Log::debug(
@@ -137,7 +146,6 @@ class Handler extends ExceptionHandler
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
                     'errorCode' => $code,
-                    'trace' => $e->getTraceAsString()
                 ];
             };
         }
@@ -148,17 +156,15 @@ class Handler extends ExceptionHandler
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
                     'errorCode' => $code,
-                    'trace' => $e->getTraceAsString()
                 ];
             };
         }
 
-        return /*$this->handlers[get_class($exception)] ??*/ function (Throwable $e) {
+        return $this->handlers[get_class($exception)] ?? function (Throwable $e) {
                 return [
                     'statusCode' => 200 > $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode(),
                     'error' => $e->getMessage(),
                     'errorCode' => $e->getCode(),
-                    'trace' => $e->getTraceAsString()
                 ];
             };
     }

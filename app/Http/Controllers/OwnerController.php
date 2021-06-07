@@ -7,8 +7,17 @@ use App\Http\Requests\CreateOwnerRequest;
 use App\Models\Owners;
 use Illuminate\Http\Request;
 
+/**
+ * Class OwnerController
+ * @package App\Http\Controllers
+ */
 class OwnerController extends BaseController
 {
+    /**
+     * OwnerController constructor.
+     * @param Owners $model
+     * @param OwnerFilter $filter
+     */
     public function __construct(Owners $model, OwnerFilter $filter)
     {
         $this->model = $model;
@@ -75,9 +84,9 @@ class OwnerController extends BaseController
      * @param Request $request
      * @return \App\Models\BaseModel|\Illuminate\Database\Eloquent\Model
      */
-    public function create(Request $request)
+    public function create(CreateOwnerRequest $request)
     {
-        return parent::create($request);
+        return $this->model::create($request->validated());
     }
 
     /**
@@ -116,7 +125,7 @@ class OwnerController extends BaseController
      * @OA\Put(
      *     path="/v1/owner/{id}",
      *     operationId="/v1/owner/{id}(PUT)",
-     *     summary="Обновить источник",
+     *     summary="Изменить источник",
      *     tags={"Владельцы"},
      *     @OA\Parameter(
      *         name="id",

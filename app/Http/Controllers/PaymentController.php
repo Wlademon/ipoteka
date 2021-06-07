@@ -8,8 +8,17 @@ use App\Http\Requests\CreatePaymentRequest;
 use App\Models\Payments;
 use Illuminate\Http\Request;
 
+/**
+ * Class PaymentController
+ * @package App\Http\Controllers
+ */
 class PaymentController extends BaseController
 {
+    /**
+     * PaymentController constructor.
+     * @param Payments $model
+     * @param PaymentFilter $filter
+     */
     public function __construct(Payments $model, PaymentFilter $filter)
     {
         $this->model = $model;
@@ -106,7 +115,7 @@ class PaymentController extends BaseController
      * @OA\Put(
      *     path="/v1/payment/{id}",
      *     operationId="/v1/payment/{id}(PUT)",
-     *     summary="Обновить оплату",
+     *     summary="Изменить оплату",
      *     tags={"Платежи"},
      *     @OA\Parameter(
      *         name="id",

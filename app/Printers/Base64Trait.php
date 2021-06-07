@@ -2,6 +2,8 @@
 
 namespace App\Printers;
 
+use RuntimeException;
+
 trait Base64Trait
 {
     /**
@@ -42,7 +44,7 @@ trait Base64Trait
     public function encodeFileBase64(string $filename) : string
     {
         if (! file_exists($filename) || ! is_readable($filename) || is_dir($filename)) {
-            throw new \RuntimeException(sprintf('file \'%s\' not exists or not readable!', $filename));
+            throw new RuntimeException("file '{$filename}' not exists or not readable!");
         }
         return $this->isImage($filename)
             ? $this->encodeImageBase64($filename)
@@ -56,7 +58,7 @@ trait Base64Trait
     public function encodeImageBase64(string $filename): string
     {
         if (! file_exists($filename) || ! is_readable($filename) || is_dir($filename)) {
-            throw new \RuntimeException(sprintf('file \'%s\' not exists or not readable!', $filename));
+            throw new RuntimeException("file '{$filename}' not exists or not readable!");
         }
         return sprintf(
             'data:%s;base64, %s',
@@ -72,7 +74,7 @@ trait Base64Trait
     public function encodeWithRFC2045(string $filename): string
     {
         if (! file_exists($filename) || ! is_readable($filename) || is_dir($filename)) {
-            throw new \RuntimeException(sprintf('file \'%s\' not exists or not readable!', $filename));
+            throw new RuntimeException("file '{$filename}' not exists or not readable!");
         }
         return base64_encode(fread(fopen($filename, 'rb'), filesize($filename)));
     }

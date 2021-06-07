@@ -5,7 +5,7 @@ namespace App\Models;
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
-use Kyslik\LaravelFilterable\Filterable;
+use Strahovka\LaravelFilterable\Filterable;
 
 /**
  * App\Models\Contracts

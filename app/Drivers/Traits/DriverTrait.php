@@ -132,15 +132,21 @@ trait DriverTrait
      */
     public function getPayLink(Contracts $contract, PayLinks $links): PayLink
     {
-        $invoiceNum = sprintf("%s%03d%06d/%s", 'NS', $contract->company_id, $contract->id, Carbon::now()->format('His'));
+        $invoiceNum = sprintf(
+            '%s%03d%06d/%s',
+            'NS',
+            $contract->company_id,
+            $contract->id,
+            Carbon::now()->format('His')
+        );
 
-        if (in_array(env('APP_ENV'), ['local', 'testing'])) {
+        if (in_array(config('app.env'), ['local', 'testing'])) {
             $invoiceNum = time() % 100 . $invoiceNum;
         }
 
         $data = [
-            'successUrl' => env('STR_HOST', 'https://strahovka.ru') . $links->getSuccessUrl(),
-            'failUrl' => env('STR_HOST', 'https://strahovka.ru') . $links->getFailUrl(),
+            'successUrl' => config('mortgage.str_host') . $links->getSuccessUrl(),
+            'failUrl' => config('mortgage.str_host') . $links->getFailUrl(),
             'phone' => str_replace([' ', '-'], '', $contract['subject']['phone']),
             'fullName' => $contract['subject_fullname'],
             'passport' => $contract['subject_passport'],
@@ -153,7 +159,10 @@ trait DriverTrait
         $response = app()->make(PayService::class)->getPayLink($data);
 
         if (isset($response->errorCode) && $response->errorCode !== 0) {
-            throw new \Exception($response->errorMessage . ' (code: ' . $response->errorCode . ')', 500);
+            throw new Exception(
+                $response->errorMessage . ' (code: ' . $response->errorCode . ')',
+                400
+            );
         }
 
         return new PayLink($response->orderId, $response->formUrl, $invoiceNum);

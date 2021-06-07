@@ -40,17 +40,15 @@ class BaseModel extends Model
         $totallyGuarded = $this->totallyGuarded();
 
         foreach ($attributes as $key => $value) {
-            $key = $this->removeTableFromKey($key);
-
             if ($this->isFillable($key)) {
                 $this->setAttribute($key, $value);
             } elseif ($this->isFillable(Str::snake($key))) {
                 $this->setAttribute(Str::snake($key), $value);
             } elseif ($totallyGuarded) {
-                throw new MassAssignmentException(sprintf(
-                    'Add [%s] to fillable property to allow mass assignment on [%s].',
-                    $key, get_class($this)
-                ));
+                $class = get_class($this);
+                throw new MassAssignmentException(
+                    "Add [{$key}] to fillable property to allow mass assignment on [{$class}].",
+                );
             }
         }
 

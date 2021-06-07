@@ -12,15 +12,17 @@ use App\Drivers\Services\MerchantServices;
 use App\Drivers\Source\Alpha\AlfaAuth;
 use App\Drivers\Source\Alpha\AlphaCalculator;
 use App\Drivers\Traits\DriverTrait;
-use App\Drivers\Traits\LoggerTrait;
 use App\Drivers\Traits\PrintPdfTrait;
 use App\Exceptions\Drivers\AlphaException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
+use File;
 use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Class AbsolutDriver
@@ -31,7 +33,6 @@ class AlfaMskDriver implements DriverInterface
     use DriverTrait {
         DriverTrait::getStatus as getTStatus;
     }
-    use LoggerTrait;
     use PrintPdfTrait;
 
     const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
@@ -50,7 +51,7 @@ class AlfaMskDriver implements DriverInterface
      * AlfaMskDriver constructor.
      * @param Repository $repository
      * @param string $prefix
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function __construct(Repository $repository, string $prefix = '')
     {
@@ -85,18 +86,14 @@ class AlfaMskDriver implements DriverInterface
 
         $calculator = $this->collectData($data);
 
-        try {
-            $result = $this->client->post(
-                $this->host . self::POST_POLICY_URL, [
-                    'headers' => [
-                        'Authorization' => "Bearer {$authToken}"
-                    ],
-                    'json' => $calculator->getData()
-                ]
-            );
-        } catch (\Throwable $e) {
-            dd($e->getResponse()->getBody()->getContents());
-        }
+        $result = $this->client->post(
+            $this->host . self::POST_POLICY_URL, [
+                'headers' => [
+                    'Authorization' => "Bearer {$authToken}"
+                ],
+                'json' => $calculator->getData()
+            ]
+        );
 
         if ($result->getStatusCode() !== 200) {
             throw new AlphaException('Error calc');
@@ -113,7 +110,7 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @param array $data
      * @return AlphaCalculator
-     * @throws \Throwable
+     * @throws Throwable
      */
     protected function collectData(array $data): AlphaCalculator
     {
@@ -156,7 +153,7 @@ class AlfaMskDriver implements DriverInterface
      * @param $authToken
      * @param $contractList
      * @return array
-     * @throws \Throwable
+     * @throws Throwable
      */
     protected function createSingleAccount($authToken, $contractList): array
     {
@@ -171,8 +168,8 @@ class AlfaMskDriver implements DriverInterface
                     ]
                 ]
             );
-        } catch (\Throwable $e) {
-            self::abortLog($e->getMessage(), AlphaException::class);
+        } catch (Throwable $e) {
+            throw new AlphaException($e->getMessage());
         }
 
         throw_if(
@@ -180,7 +177,7 @@ class AlfaMskDriver implements DriverInterface
             new AlphaException('Error create payment')
         );
         $decodeResult = json_decode($result->getBody()->getContents(), true);
-        $text = ' Оплата страхового полиса ';
+
         return [
             Arr::get($decodeResult, 'id', 0),
             Arr::get($decodeResult, 'number', 0),
@@ -200,7 +197,7 @@ class AlfaMskDriver implements DriverInterface
      * @param PayLinks $payLinks
      * @return PayLinkInterface
      * @throws AlphaException
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
     {
@@ -315,8 +312,8 @@ class AlfaMskDriver implements DriverInterface
                     'json' => $policy->getData()
                 ]
             );
-        } catch (\Throwable $e) {
-            throw new AlphaException($e->getMessage(), 400, $e);
+        } catch (Throwable $e) {
+            throw new AlphaException($e->getMessage(), 0, $e);
         }
 
         if ($postResult->getStatusCode() !== 200) {
@@ -358,8 +355,8 @@ class AlfaMskDriver implements DriverInterface
                 if ($getResult->getStatusCode() !== 200) {
                     throw new AlphaException($message);
                 }
-            } catch (\Throwable $e) {
-                throw new AlphaException($e->getMessage(), 400, $e);
+            } catch (Throwable $e) {
+                throw new AlphaException($e->getMessage(), 0, $e);
             }
             $response = json_decode($getResult->getBody()->getContents(), true);
             $contracts = Arr::only($response, ['lifeContract', 'propertyContract']);
@@ -405,7 +402,7 @@ class AlfaMskDriver implements DriverInterface
             if ($response) {
                 foreach ($response as $extId => $item) {
                     $filePath = self::createFilePath($contract, $objectIds->flip()->get($extId));
-                    \File::move(storage_path('app/' . $item), public_path($filePath));
+                    File::move(storage_path('app/' . $item), public_path($filePath));
                     $files[] = self::generateBase64($filePath);
                 }
             }
@@ -417,7 +414,7 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @param Contracts $contract
      * @return array
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function getStatus(Contracts $contract): array
     {
@@ -429,8 +426,8 @@ class AlfaMskDriver implements DriverInterface
                         $contract->getOptionsAttribute()['orderId']
                     );
 
-                } catch (\Throwable $throwable) {
-                    self::error($throwable->getMessage());
+                } catch (Throwable $throwable) {
+                    Log::error($throwable->getMessage());
                 }
 
                 if ($statusOrder->get('orderStatus') === Contracts::STATUS_CONFIRMED) {

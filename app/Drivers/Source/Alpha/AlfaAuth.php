@@ -37,15 +37,13 @@ class AlfaAuth
      */
     public function getToken(Client $client)
     {
-        $result = $client->post(
-            $this->url, [
-                'form_params' => [
-                    'username' => $this->username,
-                    'password' => $this->pass,
-                    'grant_type' => self::GRANT_TYPE
-                ]
+        $result = $client->post($this->url, [
+            'form_params' => [
+                'username' => $this->username,
+                'password' => $this->pass,
+                'grant_type' => self::GRANT_TYPE,
             ]
-        );
+        ]);
         if ($result->getStatusCode() !== 200) {
             throw new AlphaException('Error auth');
         }

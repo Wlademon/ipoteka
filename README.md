@@ -1,4 +1,4 @@
-# adt_osago
+# adt-mortgage
 This project was generated with [Laravel](https://laravel.com/docs/5.8) version 5.8
 
 ## Dependencies
@@ -56,5 +56,5 @@ php artisan migrate:fresh --seed
 ####  Данные в БД (если используются)
 * выполнить, чтобы создать записи в таблицах:
 ```
-php artisan companies:set // Обновление компаний в БД.
+php artisan programs:set // Обновление программ в БД.
 ```

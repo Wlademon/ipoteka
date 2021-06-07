@@ -4,7 +4,7 @@ namespace App\Models;
 
 
 use Illuminate\Database\Eloquent;
-use Kyslik\LaravelFilterable\Filterable;
+use Strahovka\LaravelFilterable\Filterable;
 
 
 /**
@@ -74,5 +74,10 @@ class Companies extends BaseModel
     public function getIsActiveAttribute()
     {
         return $this->attributes['is_active'];
+    }
+
+    public function setIsActiveAttribute($val)
+    {
+        return $this->attributes['is_active'] = $val;
     }
 }

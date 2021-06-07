@@ -18,11 +18,11 @@ class SiteService extends Service
      */
     public function getUserData($params)
     {
-        if (env('APP_ENV') === 'local' || env('APP_ENV') === 'testing') {
+        if (config('app.env') === 'local' || config('app.env') === 'testing') {
             return  ['login' => 'TestUser', 'subjectId' => 1, 'trafficSource' => ['test']];
         }
         $client = new Client();
-        $url = env('STR_HOST', 'https://strahovka.ru');
+        $url = config('mortgage.str_host');
 
         Log::info('UW. getUserData. Params - ', [$url, $params]);
 
