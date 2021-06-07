@@ -21,7 +21,7 @@ return [
         'login' => env('SC_RENISANS_LOGIN', '8NDN04d5A7SBhjsYMcYZ07rRljoa'),
         'pass' => env('SC_RENISANS_PASS', 'w8dmTvVPHKSJAlC1h0NxQSyfzUga'),
     ],
-    'alfaMsk' => [
+    'alfa_msk' => [
         'auth' => [
             'username' => env('SC_ALFA_AUTH_USERNAME', 'E_PARTNER'),
             'pass' => env('SC_ALFA_AUTH_PASS', 'ALFAE313'),

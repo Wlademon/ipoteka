@@ -28,17 +28,17 @@ class AlphaCalculator
     public function __construct()
     {
         throw_if(
-            empty(config('mortgage.alfaMsk.agentContractId')),
+            empty(config('mortgage.alfa_msk.agentContractId')),
             new AlphaException('Not set agentContractId property')
         );
         throw_if(
-            empty(config('mortgage.alfaMsk.managerId')),
+            empty(config('mortgage.alfa_msk.managerId')),
             new AlphaException('Not set managerId property')
         );
 
         $this->data['agent'] = [
-            'agentContractId' => ((int)config('mortgage.alfaMsk.agentContractId')),
-            'managerId' => ((int)config('mortgage.alfaMsk.managerId'))
+            'agentContractId' => ((int)config('mortgage.alfa_msk.agentContractId')),
+            'managerId' => ((int)config('mortgage.alfa_msk.managerId'))
         ];
     }
 

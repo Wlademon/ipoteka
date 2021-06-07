@@ -23,7 +23,7 @@ class Objects extends BaseModel
     const TYPE_PROPERTY = 'property';
     const TYPE_LIFE = 'life';
 
-    const PROPERY_TYPE_FIAT = 'fiat';
+    const PROPERY_TYPE_FIAT = 'flat';
 
     protected $fillable = [
         'contract_id',

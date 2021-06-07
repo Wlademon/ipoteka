@@ -24,7 +24,7 @@ class CreateCompanyRequest extends Request
     public function rules()
     {
         return [
-            "code" => "required",
+            "code" => "required|unique:companies",
             "name" => 'required',
             "isActive" => 'required|in:0,1'
         ];

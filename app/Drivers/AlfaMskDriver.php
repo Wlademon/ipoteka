@@ -132,8 +132,8 @@ class AlfaMskDriver implements DriverInterface
                 Arr::get($life, 'birthDate')
             );
             $calculator->setLifeRisk(
-                $life->get('professions', []),
-                $life->get('sports', [])
+                Arr::get($life, 'professions', []),
+                Arr::get($life, 'sports', [])
             );
         }
         if ($objects->has('property')) {
@@ -212,7 +212,7 @@ class AlfaMskDriver implements DriverInterface
             $authToken,
             $contract->getOptionsAttribute()['contractList']);
         $contractOptions['singleAccount'] = $singleAcc[0];
-        $registerOrder->setDescription($singleAcc);
+        $registerOrder->setDescription($singleAcc[0]);
         $registerOrder->setMerchantOrderNumber($singleAcc[0]);
 
         $registerOrder->setExpirationDate(

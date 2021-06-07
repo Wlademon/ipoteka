@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use stdClass;
 use Strahovka\Payment\PayService;
+use Symfony\Component\HttpFoundation\Response;
 
 trait DriverTrait
 {
@@ -161,7 +162,7 @@ trait DriverTrait
         if (isset($response->errorCode) && $response->errorCode !== 0) {
             throw new Exception(
                 $response->errorMessage . ' (code: ' . $response->errorCode . ')',
-                400
+                Response::HTTP_NOT_ACCEPTABLE
             );
         }
 

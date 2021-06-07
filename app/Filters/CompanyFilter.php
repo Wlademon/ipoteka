@@ -2,7 +2,7 @@
 
 namespace App\Filters;
 
-use Kyslik\LaravelFilterable\Generic\Filter;
+use Strahovka\LaravelFilterable\Generic\Filter;
 
 class CompanyFilter extends Filter
 {
