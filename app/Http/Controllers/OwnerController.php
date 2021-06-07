@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Filters\OwnerFilter;
 use App\Http\Requests\CreateOwnerRequest;
-use App\Models\Owners;
+use App\Models\Owner;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
@@ -15,10 +16,10 @@ class OwnerController extends BaseController
 {
     /**
      * OwnerController constructor.
-     * @param Owners $model
+     * @param Owner $model
      * @param OwnerFilter $filter
      */
-    public function __construct(Owners $model, OwnerFilter $filter)
+    public function __construct(Owner $model, OwnerFilter $filter)
     {
         $this->model = $model;
         $this->filter = $filter;
@@ -65,9 +66,9 @@ class OwnerController extends BaseController
      *
      * Возвращает список источников с возможностью фильтрацию.
      * @param Request $request
-     * @return array|\Illuminate\Http\Response
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $this->initRequest($request);
         $this->setTotalCount($this->model::count());
@@ -81,12 +82,17 @@ class OwnerController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param Request $request
-     * @return \App\Models\BaseModel|\Illuminate\Database\Eloquent\Model
+     * @param  CreateOwnerRequest  $request
+     * @return JsonResponse
      */
-    public function create(CreateOwnerRequest $request)
+    public function create(CreateOwnerRequest $request): JsonResponse
     {
-        return $this->model::create($request->validated());
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $this->model::create($request->validated()),
+            ]
+        );
     }
 
     /**
@@ -109,14 +115,19 @@ class OwnerController extends BaseController
      * )
      *
      * @param CreateOwnerRequest $request
-     * @return Owners
+     * @return JsonResponse
      */
-    public function store(CreateOwnerRequest $request)
+    public function store(CreateOwnerRequest $request): JsonResponse
     {
         $model = $this->model->fill($request->all());
         $model->save();
 
-        return $model;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $model,
+            ]
+        );
     }
 
     /**
@@ -146,22 +157,25 @@ class OwnerController extends BaseController
      * )
      * @param CreateOwnerRequest $request
      * @param int $id
-     * @return \App\Models\BaseModel
+     * @return JsonResponse
      */
-    public function update(CreateOwnerRequest $request, $id)
+    public function update(CreateOwnerRequest $request, int $id): JsonResponse
     {
-        if (!($currentModel = $this->model::findOrFail($id))) {
-            return null;
-        }
+        $currentModel = $this->model::findOrFail($id);
         $attributes = $request->all();
-        if (count($attributes) == 0) {
+        if (count($attributes) === 0) {
             $owner = $currentModel;
         } else {
             $owner = $currentModel->fill($attributes);
             $owner->save();
         }
 
-        return $owner;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $owner,
+            ]
+        );
     }
 
     /**
@@ -186,9 +200,10 @@ class OwnerController extends BaseController
      *     )
      * )
      * @param int $id
-     * @return \Illuminate\Http\Response
+     * @return JsonResponse
+     * @throws \Exception
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         return parent::destroy($id);
     }

@@ -6,11 +6,11 @@ use App\Http\Requests\CalculateRequest;
 use App\Http\Requests\CreatePolicyRequest;
 use App\Http\Resources\ContractResource;
 use App\Models\Contracts;
-use App\Models\Payments;
+use App\Models\Payment;
 use App\Services\DriverService;
 use App\Services\PayService\PayLinks;
 use Exception;
-use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Log;
@@ -23,14 +23,13 @@ use Strahovka\Payment\PayService;
  */
 class ApiController extends BaseController
 {
-
     protected PayService $payService;
     protected DriverService $driverService;
 
     /**
      * Create a new controller instance.
-     * @param PayService $payService
-     * @param DriverService $driver
+     * @param  PayService  $payService
+     * @param  DriverService  $driver
      */
     public function __construct(PayService $payService, DriverService $driver)
     {
@@ -52,7 +51,8 @@ class ApiController extends BaseController
      *   ),
      *     @OA\Response(
      *         response="200",
-     *         description="Сохраняет договор в системе в статусе Проект и возвращает его contract_id",
+     *         description="Сохраняет договор в системе в статусе Проект и возвращает его
+     *     contract_id",
      *         @OA\JsonContent(
      *              ref="#/components/schemas/CreatePolice"
      *          )
@@ -61,14 +61,18 @@ class ApiController extends BaseController
      *
      * Сохраняет договор в системе в статусе Проект и возвращает его contract_id.
      *
-     * @param CreatePolicyRequest $request
-     * @param DriverService $driver
-     * @return ResponseFactory|Response
+     * @param  CreatePolicyRequest  $request
+     * @return JsonResponse
      * @throws Exception
      */
-    public function postPolicyCreate(CreatePolicyRequest $request): Response
+    public function postPolicyCreate(CreatePolicyRequest $request): JsonResponse
     {
-        return $this->successResponse($this->driverService->savePolicy($request->validated()));
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $this->driverService->savePolicy($request->validated()),
+            ]
+        );
     }
 
     /**
@@ -83,20 +87,26 @@ class ApiController extends BaseController
      *   ),
      *     @OA\Response(
      *         response="200",
-     *         description="Метод позволяет рассчитать (предварительную) премию по входящим пораметра",
+     *         description="Метод позволяет рассчитать (предварительную) премию по входящим
+     *     пораметра",
      *         @OA\JsonContent(
      *              ref="#/components/schemas/CalculatedPolice"
      *          )
      *     )
      * )
      *
-     * @param CalculateRequest $request
-     * @return \Illuminate\Contracts\Foundation\Application|ResponseFactory|Response
+     * @param  CalculateRequest  $request
+     * @return JsonResponse
      * @throws Exception
      */
-    public function postPolicyCalculate(CalculateRequest $request): Response
+    public function postPolicyCalculate(CalculateRequest $request): JsonResponse
     {
-        return $this->successResponse($this->driverService->calculate($request->validated()));
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $this->driverService->calculate($request->validated()),
+            ]
+        );
     }
 
     /**
@@ -123,17 +133,22 @@ class ApiController extends BaseController
      *
      * Возвращает объект полиса по его ID.
      *
-     * @param Request $request
-     * @param $contractId
-     * @return ResponseFactory|Response
+     * @param  Request  $request
+     * @param  int  $contractId
+     * @return JsonResponse
      * @throws Exception
      */
-    public function getPolicy(Request $request, $contractId): Response
+    public function getPolicy(Request $request, int $contractId): JsonResponse
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
 
-        return $this->successResponse(new ContractResource($contract));
+        return response()->json(
+            [
+                'success' => true,
+                'data' => new ContractResource($contract),
+            ]
+        );
     }
 
     /**
@@ -151,7 +166,8 @@ class ApiController extends BaseController
      *     ),
      *     @OA\Response(
      *         response="200",
-     *         description="Возвращает статус договора по ID полиса, полученного в ответе от /policy/save",
+     *         description="Возвращает статус договора по ID полиса, полученного в ответе от
+     *     /policy/save",
      *         @OA\JsonContent(
      *             ref="#/components/schemas/StatusPolice"
      *         )
@@ -160,17 +176,23 @@ class ApiController extends BaseController
      *
      * Возвращает статус договора по ID полиса, полученного в ответе от /policy/save
      *
-     * @param Request $request
+     * @param  Request  $request
      * @param $contractId
-     * @return ResponseFactory|Response
+     * @return JsonResponse
+     * @throws \Throwable
      * @internal param Contracts $contract
      */
-    public function getPolicyStatus(Request $request, $contractId): Response
+    public function getPolicyStatus(Request $request, $contractId): JsonResponse
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
 
-        return $this->successResponse($this->driverService->getStatus($contract));
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $this->driverService->getStatus($contract),
+            ]
+        );
     }
 
     /**
@@ -188,28 +210,33 @@ class ApiController extends BaseController
      *     ),
      *     @OA\Response(
      *         response="200",
-     *         description="Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод необходимо вызывать для подтверждения факта оплаты полиса клиентом. Полис должен быть в статусе Проект (Draft). После вызова этого метода полис переводится в статус Действующий (Confirmed).",
-     *         @OA\JsonContent(ref="#/components/schemas/AcceptPayment")
+     *         description="Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод
+     *     необходимо вызывать для подтверждения факта оплаты полиса клиентом. Полис должен быть в
+     *     статусе Проект (Draft). После вызова этого метода полис переводится в статус Действующий
+     *     (Confirmed).",
+     * @OA\JsonContent(ref="#/components/schemas/AcceptPayment")
      *     )
      * )
      *
-     * Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод необходимо вызывать для подтверждения
-     * факта оплаты полиса клиентом. Полис должен быть в статусе Проект (Draft). После вызова этого метода полис
-     * переводится в статус Действующий (Confirmed).
-     * @param Payments $payment
+     * Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод необходимо вызывать
+     *     для подтверждения факта оплаты полиса клиентом. Полис должен быть в статусе Проект
+     *     (Draft). После вызова этого метода полис переводится в статус Действующий (Confirmed).
+     * @param  Payment  $payment
      * @param $orderId
-     * @return ResponseFactory|Response
+     * @return JsonResponse
      * @throws Exception
      * @internal param Contracts $contract
      * @internal param $contractId
      */
-    public function postPolicyAccept(Payments $payment, $orderId): Response
+    public function postPolicyAccept(Payment $payment, $orderId): JsonResponse
     {
         Log::info("Find Payment with OrderID: {$orderId}");
-        $res = $payment->whereOrderId($orderId)->firstOrFail();
+        $res = $payment->where('order_id', $orderId)->firstOrFail();
 
         Log::info("Find Contract with ID: {$res->contract_id}");
-        $contract = Contracts::with('company')->whereId($res->contract_id)->whereStatus(
+        /** @var Contracts $contract */
+        $contract = Contracts::with('company')->where(['id', $res->contract_id])->where(
+            'status',
             Contracts::STATUS_DRAFT
         )->firstOrFail();
 
@@ -218,10 +245,15 @@ class ApiController extends BaseController
         Log::info("Status: {$status['status']}");
 
         if (isset($status['isPayed']) && $status['isPayed']) {
-            return $this->successResponse($this->driverService->acceptPayment($contract));
+            return response()->json(
+                [
+                    'success' => true,
+                    'data' => $this->driverService->acceptPayment($contract),
+                ]
+            );
         }
 
-        return $this->errorResponse(500, [], [], 'Оплата заказа не обработана. Статус: ' . $status["status"]);
+        throw new RuntimeException('Оплата заказа не обработана. Статус: '.$status["status"]);
     }
 
     /**
@@ -244,15 +276,15 @@ class ApiController extends BaseController
      * )
      *
      * Метод отправляет письмо с полисом на почту клиенту
-     * @param Request $request
+     * @param  Request  $request
      * @param $contractId
-     * @return ResponseFactory|Response
+     * @return JsonResponse
      * @throws Exception
      * @internal param Payment $payment
      * @internal param $orderId
      * @internal param Contracts $contract
      */
-    public function postPolicySend(Request $request, $contractId): Response
+    public function postPolicySend(Request $request, $contractId): JsonResponse
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
@@ -260,7 +292,7 @@ class ApiController extends BaseController
         $result = $this->driverService->sendMail($contract);
         Log::info("Response", [$result]);
 
-        return $this->successResponse($result);
+        return response()->json(['success' => true, 'data' => $result]);
     }
 
     /**
@@ -289,36 +321,41 @@ class ApiController extends BaseController
      *         required=true,
      *         @OA\Schema(type="string", example="/pay/fail")
      *     ),
-     *     @OA\Response(response="200", description="Результат", @OA\JsonContent(ref="#/components/schemas/PolicyPayLink"))
+     *     @OA\Response(response="200", description="Результат",
+     *     @OA\JsonContent(ref="#/components/schemas/PolicyPayLink"))
      * )
      *
      * Возвращает url эквайринга.
      *
-     * @param Request $request
+     * @param  Request  $request
      *
      * @param $contractId
-     * @return ResponseFactory|Response|void
+     * @return JsonResponse
      * @throws Exception
      * @internal param Contracts $contract
      */
-    public function getPolicyPayLink(Request $request, $contractId): Response
+    public function getPolicyPayLink(Request $request, $contractId): JsonResponse
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
-        if (Payments::whereContractId($contract->id)->first()) {
-            throw new RuntimeException('Данный заказ уже обработан (code: ' . Response::HTTP_BAD_REQUEST . ')');
+        if (Payment::where('contract_id', $contract->id)->first()) {
+            throw new RuntimeException(
+                'Данный заказ уже обработан.', Response::HTTP_NOT_ACCEPTABLE
+            );
         }
         try {
             $links = new PayLinks($request->query('successUrl'), $request->query('failUrl'));
             $linkResult = $this->driverService->getPayLink($contract, $links);
-            Payments::createPayment($linkResult, $contract);
+            Payment::createPayment($linkResult, $contract);
         } catch (Exception $e) {
-            throw new RuntimeException($e->getMessage() . ' (code: ' . $e->getCode() . ')');
+            throw new RuntimeException(
+                $e->getMessage().' (code: '.$e->getCode().')', Response::HTTP_NOT_ACCEPTABLE
+            );
         }
         $result = ['url' => $linkResult->getUrl(), 'orderId' => $linkResult->getOrderId()];
         Log::info('Response', [$result]);
 
-        return $this->successResponse($result);
+        return response()->json(['success' => true, 'data' => $result]);
     }
 
     /**
@@ -352,13 +389,14 @@ class ApiController extends BaseController
      *
      * Возвращает url эквайринга.
      *
-     * @param Request $request
+     * @param  Request  $request
      *
      * @param $contractId
-     * @return ResponseFactory|Response
+     * @return JsonResponse
+     * @throws \Throwable
      * @internal param Contracts $contract
      */
-    public function getPolicyPdf(Request $request, $contractId): Response
+    public function getPolicyPdf(Request $request, $contractId): JsonResponse
     {
         Log::info("Find Contract with ID: {$contractId}");
         $isSample = filter_var($request->get('sample', false), FILTER_VALIDATE_BOOLEAN);
@@ -369,6 +407,6 @@ class ApiController extends BaseController
         $response = $this->driverService->printPdf($contract, $isSample);
         Log::info('Policy generated!');
 
-        return $this->successResponse(['url' => $response]);
+        return response()->json(['success' => true, 'data' => $response]);
     }
 }

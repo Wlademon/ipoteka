@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Programs;
+use App\Models\Program;
 use Illuminate\Validation\Rule;
 use OpenApi\Annotations as OA;
 /**
@@ -46,7 +46,7 @@ class CalculateRequest extends Request
     public function rules()
     {
         return [
-            'programCode' => ['required', Rule::exists(Programs::getTableName(), 'program_code')],
+            'programCode' => ['required', Rule::exists(Program::getTableName(), 'program_code')],
             'activeFrom' => ['required', 'date', 'after:now'],
             'activeTo' => ['required', 'date', 'after:activeFrom'],
             'remainingDebt' => ['required', 'numeric', 'min:0'],

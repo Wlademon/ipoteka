@@ -17,19 +17,9 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property \Illuminate\Support\Carbon|null $updatedAt
  * @property \Illuminate\Support\Carbon|null $deletedAt
  * @property-read Contracts $contracts
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments query()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereContractId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereDeletedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereInvoiceNum($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereOrderId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereUpdatedAt($value)
  * @mixin \Eloquent
  */
-class Payments extends BaseModel
+class Payment extends BaseModel
 {
     use Filterable;
 

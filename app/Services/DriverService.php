@@ -9,8 +9,8 @@ use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
 use App\Models\Contracts;
 use App\Models\Objects;
-use App\Models\Programs;
-use App\Models\Subjects;
+use App\Models\Program;
+use App\Models\Subject;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use DB;
@@ -88,7 +88,7 @@ class DriverService
     public function calculate($data): array
     {
         try {
-            $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+            $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
             $this->minStartValidator($program, $data);
 
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
@@ -99,11 +99,11 @@ class DriverService
     }
 
     /**
-     * @param Programs $program
+     * @param Program $program
      * @param array $data
      * @throws Exception
      */
-    protected function minStartValidator(Programs $program, array $data): void
+    protected function minStartValidator(Program $program, array $data): void
     {
         $maxStartDateSelection = $program->conditions->maxStartDateSelection ?? '3m';
         preg_match("/([0-9]+)([dmy]+)/", $maxStartDateSelection, $maxSds);
@@ -141,13 +141,13 @@ class DriverService
             DB::beginTransaction();
             $model = new Contracts();
             $model->fill($data);
-            $program = Programs::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+            $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
             $policeData = collect($data);
             $objects = collect($policeData->only(['objects'])->get('objects'));
             $model->premium = $result->getPremiumSum();
             $model->saveOrFail();
-            $subject = (new Subjects())->fill(['value' => $policeData->get('subject')]);
+            $subject = (new Subject())->fill(['value' => $policeData->get('subject')]);
             $subject->contract()->associate($model);
             $subject->saveOrFail();
             $objectLife = $this->getObjectModel($objects, 'life');

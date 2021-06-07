@@ -11,7 +11,7 @@ use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\PrintPdfTrait;
 use App\Helpers\Helper;
 use App\Models\Contracts;
-use App\Models\Programs;
+use App\Models\Program;
 use Arr;
 
 /**
@@ -114,7 +114,7 @@ class SberinsDriver implements DriverInterface
      */
     public function getInsurancePremium(string $programCode, int $remainingDebt, bool $isWooden): int
     {
-        $matrix = Programs::query()->where('program_code', $programCode)->first('matrix')->matrix;
+        $matrix = Program::query()->where('program_code', $programCode)->first('matrix')->matrix;
         $woodenRate = Arr::get($matrix, 'tariff.wooden.percent', 1);
         $stoneRate = Arr::get($matrix, 'tariff.stone.percent', 1);
 
