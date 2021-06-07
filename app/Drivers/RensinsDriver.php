@@ -14,7 +14,7 @@ use App\Drivers\Traits\PrintPdfTrait;
 use App\Drivers\Traits\ZipTrait;
 use App\Exceptions\Drivers\ReninsException;
 use App\Models\Contracts;
-use App\Models\Programs;
+use App\Models\Program;
 use Arr;
 use File;
 use Illuminate\Config\Repository;
@@ -153,11 +153,11 @@ class RensinsDriver implements DriverInterface
 
     /**
      * @param $programCode
-     * @return Programs
+     * @return Program
      */
-    public function getProgram(string $programCode): Programs
+    public function getProgram(string $programCode): Program
     {
-        return Programs::whereProgramCode($programCode)->firstOrFail();
+        return Program::where('program_code', $programCode)->firstOrFail();
     }
 
     /**

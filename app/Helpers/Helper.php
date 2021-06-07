@@ -6,7 +6,7 @@ namespace App\Helpers;
 use App\Exceptions\Services\PolicyServiceException;
 use App\Models\BaseModel;
 use App\Models\Contracts;
-use App\Models\Payments;
+use App\Models\Payment;
 use App\Services\SiteService;
 use Exception;
 use GuzzleHttp\Client;
@@ -294,7 +294,7 @@ class Helper
             "insuredSum" => $contract->insured_sum,
             "object" => $contract->objects_value,
             "subject" => $contract->subject_value,
-            'sberMerchantOrderNumber' => Payments::whereContractId($contract->id)->first()->invoiceNum,
+            'sberMerchantOrderNumber' => Payment::where('contract_id', $contract->id)->first()->invoiceNum,
 
         ];
 

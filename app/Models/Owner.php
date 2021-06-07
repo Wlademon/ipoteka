@@ -16,19 +16,9 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read Contracts $contracts
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments newModelQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments newQuery()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments query()
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereDeletedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereCode($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereName($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereUwLogin($value)
- * @method static \Illuminate\Database\Eloquent\Builder|\App\Models\Payments whereUpdatedAt($value)
  * @mixin \Eloquent
  */
-class Owners extends BaseModel
+class Owner extends BaseModel
 {
     use Filterable;
 
@@ -53,7 +43,7 @@ class Owners extends BaseModel
 
     public function programs()
     {
-        return $this->belongsToMany(Programs::class, 'owners_programs');
+        return $this->belongsToMany(Program::class, 'owners_programs');
     }
 
     public function getCodeAttribute()

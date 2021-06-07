@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use OpenApi\Annotations as OA;
 use App\Filters\PaymentFilter;
 use App\Http\Requests\CreatePaymentRequest;
-use App\Models\Payments;
+use App\Models\Payment;
 use Illuminate\Http\Request;
 
 /**
@@ -16,10 +17,10 @@ class PaymentController extends BaseController
 {
     /**
      * PaymentController constructor.
-     * @param Payments $model
-     * @param PaymentFilter $filter
+     * @param  Payment  $model
+     * @param  PaymentFilter  $filter
      */
-    public function __construct(Payments $model, PaymentFilter $filter)
+    public function __construct(Payment $model, PaymentFilter $filter)
     {
         $this->model = $model;
         $this->filter = $filter;
@@ -65,13 +66,13 @@ class PaymentController extends BaseController
      * )
      *
      * Возвращает список оплат с возможностью фильтрацию.
-     * @param Request $request
-     * @return array|\Illuminate\Http\Response
+     * @param  Request  $request
+     * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         $this->initRequest($request);
-        $this->setTotalCount(Payments::count());
+        $this->setTotalCount(Payment::count());
 
         $this->model = $this->model->orderBy('id');
         $this->model->filter($this->filter);
@@ -98,15 +99,20 @@ class PaymentController extends BaseController
      *     )
      * )
      *
-     * @param CreatePaymentRequest $request
-     * @return Payments
+     * @param  CreatePaymentRequest  $request
+     * @return JsonResponse
      */
-    public function store(CreatePaymentRequest $request)
+    public function store(CreatePaymentRequest $request): JsonResponse
     {
         $payment = $this->model->fill($request->all());
         $payment->save();
 
-        return $payment;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $payment,
+            ]
+        );
     }
 
     /**
@@ -134,16 +140,13 @@ class PaymentController extends BaseController
      *         @OA\JsonContent(example="")
      *     )
      * )
-     * @param CreatePaymentRequest $request
-     * @param int $id
-     * @return \App\Models\BaseModel
+     * @param  CreatePaymentRequest  $request
+     * @param  int  $id
+     * @return JsonResponse
      */
-    public function update(CreatePaymentRequest $request, $id)
+    public function update(CreatePaymentRequest $request, int $id): JsonResponse
     {
-        $currentModel = $this->model::find($id);
-        if (!$currentModel) {
-            return null;
-        }
+        $currentModel = $this->model::findOrFail($id);
         $attributes = $request->all();
         if (count($attributes) == 0) {
             $payment = $currentModel;
@@ -152,7 +155,12 @@ class PaymentController extends BaseController
             $payment->save();
         }
 
-        return $payment;
+        return response()->json(
+            [
+                'success' => true,
+                'data' => $payment,
+            ]
+        );
     }
 
     /**
@@ -176,10 +184,10 @@ class PaymentController extends BaseController
      *         @OA\JsonContent(ref="#/components/schemas/Delete")
      *     )
      * )
-     * @param int $id
-     * @return \Illuminate\Http\Response
+     * @param  int  $id
+     * @return JsonResponse
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResponse
     {
         return parent::destroy($id);
     }
