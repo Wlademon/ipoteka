@@ -162,7 +162,7 @@ class ProgramController extends BaseController
     {
         $currentModel = Program::findOrFail($id);
         $attributes = $request->all();
-        if (count($attributes) == 0) {
+        if (count($attributes) === 0) {
             $program = $currentModel;
         } else {
             $program = $currentModel->fill($attributes);
@@ -200,6 +200,8 @@ class ProgramController extends BaseController
      * )
      * @param int $id
      * @return JsonResponse
+     *
+     * @throws \Exception
      */
     public function destroy(int $id): JsonResponse
     {

@@ -62,7 +62,6 @@ class ApiController extends BaseController
      * Сохраняет договор в системе в статусе Проект и возвращает его contract_id.
      *
      * @param  CreatePolicyRequest  $request
-     * @param  DriverService  $driver
      * @return JsonResponse
      * @throws Exception
      */
@@ -135,11 +134,11 @@ class ApiController extends BaseController
      * Возвращает объект полиса по его ID.
      *
      * @param  Request  $request
-     * @param $contractId
+     * @param  int  $contractId
      * @return JsonResponse
      * @throws Exception
      */
-    public function getPolicy(Request $request, $contractId): JsonResponse
+    public function getPolicy(Request $request, int $contractId): JsonResponse
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
@@ -180,6 +179,7 @@ class ApiController extends BaseController
      * @param  Request  $request
      * @param $contractId
      * @return JsonResponse
+     * @throws \Throwable
      * @internal param Contracts $contract
      */
     public function getPolicyStatus(Request $request, $contractId): JsonResponse
@@ -234,7 +234,8 @@ class ApiController extends BaseController
         $res = $payment->where('order_id', $orderId)->firstOrFail();
 
         Log::info("Find Contract with ID: {$res->contract_id}");
-        $contract = Contracts::with('company')->whereId($res->contract_id)->where(
+        /** @var Contracts $contract */
+        $contract = Contracts::with('company')->where(['id', $res->contract_id])->where(
             'status',
             Contracts::STATUS_DRAFT
         )->firstOrFail();
@@ -392,6 +393,7 @@ class ApiController extends BaseController
      *
      * @param $contractId
      * @return JsonResponse
+     * @throws \Throwable
      * @internal param Contracts $contract
      */
     public function getPolicyPdf(Request $request, $contractId): JsonResponse

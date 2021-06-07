@@ -132,7 +132,7 @@ class ContractController extends BaseController
      * @param PolicyService $service
      * @param DriverService $driver
      * @return JsonResponse
-     * @throws \Exception
+     * @throws \Throwable
      */
     public function store(
         CreatePolicyRequest $request,
@@ -189,7 +189,7 @@ class ContractController extends BaseController
     ): JsonResponse {
         $currentModel = $this->model::findOrFail($id);
         $attributes = $request->all();
-        if (count($attributes) == 0) {
+        if (count($attributes) === 0) {
             $contract = $currentModel;
         } else {
             $request['id'] = $id;
@@ -228,6 +228,7 @@ class ContractController extends BaseController
      * )
      * @param int $id
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function destroy(int $id): JsonResponse
     {

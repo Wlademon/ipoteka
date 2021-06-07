@@ -38,8 +38,9 @@ class ObjectController extends BaseController
      *     )
      * )
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  ObjectRequest  $request
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function store(ObjectRequest $request): JsonResponse
     {
@@ -68,6 +69,7 @@ class ObjectController extends BaseController
      *         @OA\JsonContent(example="")
      *     )
      * )
+     * @param Request $request
      *
      * @return JsonResponse
      */
@@ -102,9 +104,10 @@ class ObjectController extends BaseController
      *     )
      * )
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  ObjectRequest  $request
      * @param  int  $id
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function update(ObjectRequest $request, int $id): JsonResponse
     {
@@ -143,6 +146,7 @@ class ObjectController extends BaseController
      *
      * @param  int  $id
      * @return JsonResponse
+     * @throws \Throwable
      */
     public function destroy(int $id): JsonResponse
     {

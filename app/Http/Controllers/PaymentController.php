@@ -17,8 +17,8 @@ class PaymentController extends BaseController
 {
     /**
      * PaymentController constructor.
-     * @param Payment $model
-     * @param PaymentFilter $filter
+     * @param  Payment  $model
+     * @param  PaymentFilter  $filter
      */
     public function __construct(Payment $model, PaymentFilter $filter)
     {
@@ -66,7 +66,7 @@ class PaymentController extends BaseController
      * )
      *
      * Возвращает список оплат с возможностью фильтрацию.
-     * @param Request $request
+     * @param  Request  $request
      * @return JsonResponse
      */
     public function index(Request $request): JsonResponse
@@ -99,7 +99,7 @@ class PaymentController extends BaseController
      *     )
      * )
      *
-     * @param CreatePaymentRequest $request
+     * @param  CreatePaymentRequest  $request
      * @return JsonResponse
      */
     public function store(CreatePaymentRequest $request): JsonResponse
@@ -140,8 +140,8 @@ class PaymentController extends BaseController
      *         @OA\JsonContent(example="")
      *     )
      * )
-     * @param CreatePaymentRequest $request
-     * @param int $id
+     * @param  CreatePaymentRequest  $request
+     * @param  int  $id
      * @return JsonResponse
      */
     public function update(CreatePaymentRequest $request, int $id): JsonResponse
@@ -184,7 +184,7 @@ class PaymentController extends BaseController
      *         @OA\JsonContent(ref="#/components/schemas/Delete")
      *     )
      * )
-     * @param int $id
+     * @param  int  $id
      * @return JsonResponse
      */
     public function destroy(int $id): JsonResponse

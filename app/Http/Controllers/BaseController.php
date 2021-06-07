@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App;
-use App\Http\Traits\ResponseTrait;
 use App\Models\BaseModel;
-use App\Repositories\Repository;
 use Eloquent;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -20,11 +19,11 @@ use Illuminate\Http\Request;
  */
 abstract class BaseController extends Controller
 {
-    use AuthorizesRequests, DispatchesJobs, ValidatesRequests, ResponseTrait;
+    use AuthorizesRequests;
+    use DispatchesJobs;
+    use ValidatesRequests;
 
-    /** @var  Repository $repository */
-    protected $repository;
-    /** @var  BaseModel|Eloquent $model */
+    /** @var  BaseModel|Eloquent|Builder $model */
     protected $model;
     protected $limit = 10;
     protected $offset = 0;
@@ -44,7 +43,9 @@ abstract class BaseController extends Controller
     {
         $model = $this->model;
 
-        $items = $model->limit($this->limit)->offset($this->offset)->get()->all();
+        $items = $model->limit($this->limit)->offset(
+            $request->get('offset', $this->offset)
+        )->get()->all();
 
         return response()->json(
             [
@@ -83,7 +84,7 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * @param $id
+     * @param int $id
      * @return JsonResponse
      * @throws \Exception
      */

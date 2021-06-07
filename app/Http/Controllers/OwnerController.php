@@ -82,7 +82,7 @@ class OwnerController extends BaseController
     /**
      * Show the form for creating a new resource.
      *
-     * @param Request $request
+     * @param  CreateOwnerRequest  $request
      * @return JsonResponse
      */
     public function create(CreateOwnerRequest $request): JsonResponse
@@ -163,7 +163,7 @@ class OwnerController extends BaseController
     {
         $currentModel = $this->model::findOrFail($id);
         $attributes = $request->all();
-        if (count($attributes) == 0) {
+        if (count($attributes) === 0) {
             $owner = $currentModel;
         } else {
             $owner = $currentModel->fill($attributes);
@@ -201,6 +201,7 @@ class OwnerController extends BaseController
      * )
      * @param int $id
      * @return JsonResponse
+     * @throws \Exception
      */
     public function destroy(int $id): JsonResponse
     {

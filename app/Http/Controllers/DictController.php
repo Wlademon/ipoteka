@@ -7,7 +7,6 @@ use App\Http\Resources\ProgramResource;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Annotations as OA;
 use App\Models\Program;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Class DictController
