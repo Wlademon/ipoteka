@@ -153,7 +153,7 @@ class DriverService
                               ->with('company')
                               ->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
-            //dd($result);
+
             $policeData = collect($data);
             $objects = collect($policeData->only(['objects'])->get('objects'));
             $model->premium = $result->getPremiumSum();
