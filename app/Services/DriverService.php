@@ -5,6 +5,7 @@ namespace App\Services;
 use App;
 use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
+use App\Exceptions\Drivers\DriverExceptionInterface;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
 use App\Models\Contracts;
@@ -33,7 +34,7 @@ class DriverService
     private ?DriverInterface $driver = null;
 
     /**
-     * @param string|null $driver
+     * @param  string|null  $driver
      * @throws Exception
      */
     protected function setDriver(string $driver = null): void
@@ -42,13 +43,15 @@ class DriverService
         $this->driver = App::make($driverCode);
 
         if (!$this->driver) {
-            throw new DriverServiceException("Driver {$driver} not found", Response::HTTP_NOT_FOUND);
+            throw new DriverServiceException(
+                "Driver {$driver} not found", Response::HTTP_NOT_FOUND
+            );
         }
     }
 
     /**
-     * @param string $code
-     * @param bool $reset
+     * @param  string  $code
+     * @param  bool  $reset
      * @return DriverInterface
      * @throws Exception
      */
@@ -71,13 +74,16 @@ class DriverService
     }
 
     /**
-     * @param Contracts $contract
-     * @param PayLinks $links
+     * @param  Contracts  $contract
+     * @param  PayLinks  $links
      * @return PayLinkInterface
      */
     public function getPayLink(Contracts $contract, PayLinks $links): PayLinkInterface
     {
-        return $this->getDriverByCode($contract->program->company->code)->getPayLink($contract, $links);
+        return $this->getDriverByCode($contract->program->company->code)->getPayLink(
+            $contract,
+            $links
+        );
     }
 
     /**
@@ -88,7 +94,9 @@ class DriverService
     public function calculate($data): array
     {
         try {
-            $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+            $program = Program::whereProgramCode($data['programCode'])
+                              ->with('company')
+                              ->firstOrFail();
             $this->minStartValidator($program, $data);
 
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
@@ -99,8 +107,8 @@ class DriverService
     }
 
     /**
-     * @param Program $program
-     * @param array $data
+     * @param  Program  $program
+     * @param  array  $data
      * @throws Exception
      */
     protected function minStartValidator(Program $program, array $data): void
@@ -131,7 +139,7 @@ class DriverService
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
      * @return array
      * @throws DriverServiceException
      */
@@ -141,8 +149,11 @@ class DriverService
             DB::beginTransaction();
             $model = new Contracts();
             $model->fill($data);
-            $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
+            $program = Program::whereProgramCode($data['programCode'])
+                              ->with('company')
+                              ->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
+
             $policeData = collect($data);
             $objects = collect($policeData->only(['objects'])->get('objects'));
             $model->premium = $result->getPremiumSum();
@@ -151,13 +162,13 @@ class DriverService
             $subject->contract()->associate($model);
             $subject->saveOrFail();
             $objectLife = $this->getObjectModel($objects, 'life');
-            if ($objectLife) {
+            if ($objectLife && $result->getLifePremium()) {
                 $objectLife->contract()->associate($model);
                 $objectLife->loadFromDriverResult($result);
                 $objectLife->saveOrFail();
             }
             $objectProp = $this->getObjectModel($objects, 'property');
-            if ($objectProp) {
+            if ($objectProp && $result->getPropertyPremium()) {
                 $objectProp->contract()->associate($model);
                 $objectProp->loadFromDriverResult($result);
                 $objectProp->saveOrFail();
@@ -167,7 +178,13 @@ class DriverService
         } catch (Throwable $throwable) {
             DB::rollBack();
             Log::error($throwable->getMessage());
-            throw new DriverServiceException('При создании полиса возникла ошибка.');
+            if ($throwable instanceof DriverExceptionInterface) {
+                throw new $throwable;
+            }
+
+            throw new DriverServiceException(
+                'При создании полиса возникла ошибка.', Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
         $result->setContractId($model->id);
 
@@ -175,8 +192,8 @@ class DriverService
     }
 
     /**
-     * @param Collection $collection
-     * @param string $type
+     * @param  Collection  $collection
+     * @param  string  $type
      * @return Objects|null
      */
     protected function getObjectModel(Collection $collection, string $type): ?Objects
@@ -193,10 +210,10 @@ class DriverService
     }
 
     /**
-     * @param Contracts $contract
-     * @param bool $sample
-     * @param bool $reset
-     * @param string|null $filePath
+     * @param  Contracts  $contract
+     * @param  bool  $sample
+     * @param  bool  $reset
+     * @param  string|null  $filePath
      * @return string|array
      * @throws DriverServiceException
      */
@@ -214,8 +231,12 @@ class DriverService
             );
         }
         try {
-            return $this->getDriverByCode($contract->program->company->code)
-                        ->printPolicy($contract, $sample, $reset, $filePath);
+            return $this->getDriverByCode($contract->program->company->code)->printPolicy(
+                $contract,
+                $sample,
+                $reset,
+                $filePath
+            );
         } catch (Throwable $throwable) {
             Log::error($throwable->getMessage());
             throw new DriverServiceException('При получении бланка полиса произошла ошибка.');
@@ -223,7 +244,7 @@ class DriverService
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
      * @return array
      * @throws DriverServiceException
      */
@@ -232,17 +253,19 @@ class DriverService
         if ($contract->status == Contracts::STATUS_CONFIRMED) {
             $driver = $this->getDriverByCode($contract->program->company->code);
             if ($driver->sendPolice($contract)) {
-                return ['message' => 'Email was sent to ' . $contract->subject_value['email']];
+                return ['message' => 'Email was sent to '.$contract->subject_value['email']];
             }
 
-            throw new DriverServiceException('Email was not sent to ' . $contract->subject_value['email'],);
+            throw new DriverServiceException(
+                'Email was not sent to '.$contract->subject_value['email'],
+            );
         }
 
         throw new DriverServiceException('Status of Contract is not Confirmed');
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
      * @throws DriverServiceException
      */
     public function statusConfirmed(Contracts $contract): void
@@ -255,7 +278,7 @@ class DriverService
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
      * @return array
      * @internal param Contracts $contract
      */
@@ -263,8 +286,7 @@ class DriverService
     {
         if ($contract->status != Contracts::STATUS_DRAFT) {
             throw new DriverServiceException(
-               'Полис не в статусе "Ожидает оплаты"',
-                Response::HTTP_PAYMENT_REQUIRED
+                'Полис не в статусе "Ожидает оплаты"', Response::HTTP_PAYMENT_REQUIRED
             );
         }
         $company = $contract->company;
@@ -276,7 +298,7 @@ class DriverService
             'bso_receiver_code' => 'STRAHOVKA',
             'count' => 1,
         ];
-        Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
+        Log::info(__METHOD__.". getPolicyNumber with params:", [$params]);
         $res = Helper::getPolicyNumber($params);
         $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
         $contract->save();
@@ -292,7 +314,7 @@ class DriverService
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
      * @return array
      * @throws DriverServiceException
      */

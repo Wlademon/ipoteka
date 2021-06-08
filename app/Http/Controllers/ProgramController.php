@@ -6,8 +6,8 @@ use App\Filters\ProgramFilter;
 use App\Http\Requests\CreateProgramRequest;
 use App\Models\Program;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProgramController extends BaseController
 {
@@ -70,14 +70,13 @@ class ProgramController extends BaseController
      *
      * Возвращает список программ с возможностью фильтрации.
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResource
     {
         /** @var Builder $query */
         $query = Program::query();
         $this->initRequest($request);
-        $this->setTotalCount(Program::count());
         if ($insuredSum = $request->get('insuredSum')) {
             $query->where('insured_sum', '>', $insuredSum);
         }
@@ -113,19 +112,14 @@ class ProgramController extends BaseController
      * )
      *
      * @param CreateProgramRequest $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function store(CreateProgramRequest $request): JsonResponse
+    public function store(CreateProgramRequest $request): JsonResource
     {
         $program = (new Program())->fill($request->all());
         $program->save();
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $program,
-            ]
-        );
+        return self::successResponse($program);
     }
 
 
@@ -156,9 +150,9 @@ class ProgramController extends BaseController
      * )
      * @param CreateProgramRequest $request
      * @param int $id
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function update(CreateProgramRequest $request, int $id): JsonResponse
+    public function update(CreateProgramRequest $request, int $id): JsonResource
     {
         $currentModel = Program::findOrFail($id);
         $attributes = $request->all();
@@ -169,12 +163,7 @@ class ProgramController extends BaseController
             $program->save();
         }
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $program,
-            ]
-        );
+        return self::successResponse($program);
     }
 
     /**
@@ -199,11 +188,11 @@ class ProgramController extends BaseController
      *     )
      * )
      * @param int $id
-     * @return JsonResponse
+     * @return JsonResource
      *
      * @throws \Exception
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): JsonResource
     {
         return parent::destroy($id);
     }

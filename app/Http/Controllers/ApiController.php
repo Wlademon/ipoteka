@@ -10,8 +10,8 @@ use App\Models\Payment;
 use App\Services\DriverService;
 use App\Services\PayService\PayLinks;
 use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
 use Log;
 use RuntimeException;
@@ -62,17 +62,12 @@ class ApiController extends BaseController
      * Сохраняет договор в системе в статусе Проект и возвращает его contract_id.
      *
      * @param  CreatePolicyRequest  $request
-     * @return JsonResponse
+     * @return JsonResource
      * @throws Exception
      */
-    public function postPolicyCreate(CreatePolicyRequest $request): JsonResponse
+    public function postPolicyCreate(CreatePolicyRequest $request): JsonResource
     {
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $this->driverService->savePolicy($request->validated()),
-            ]
-        );
+        return self::successResponse($this->driverService->savePolicy($request->validated()));
     }
 
     /**
@@ -96,17 +91,12 @@ class ApiController extends BaseController
      * )
      *
      * @param  CalculateRequest  $request
-     * @return JsonResponse
+     * @return JsonResource
      * @throws Exception
      */
-    public function postPolicyCalculate(CalculateRequest $request): JsonResponse
+    public function postPolicyCalculate(CalculateRequest $request): JsonResource
     {
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $this->driverService->calculate($request->validated()),
-            ]
-        );
+        return self::successResponse($this->driverService->calculate($request->validated()));
     }
 
     /**
@@ -135,20 +125,15 @@ class ApiController extends BaseController
      *
      * @param  Request  $request
      * @param  int  $contractId
-     * @return JsonResponse
+     * @return JsonResource
      * @throws Exception
      */
-    public function getPolicy(Request $request, int $contractId): JsonResponse
+    public function getPolicy(Request $request, int $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => new ContractResource($contract),
-            ]
-        );
+        return self::successResponse(new ContractResource($contract));
     }
 
     /**
@@ -178,21 +163,16 @@ class ApiController extends BaseController
      *
      * @param  Request  $request
      * @param $contractId
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      * @internal param Contracts $contract
      */
-    public function getPolicyStatus(Request $request, $contractId): JsonResponse
+    public function getPolicyStatus(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $this->driverService->getStatus($contract),
-            ]
-        );
+        return self::successResponse($this->driverService->getStatus($contract));
     }
 
     /**
@@ -223,12 +203,12 @@ class ApiController extends BaseController
      *     (Draft). После вызова этого метода полис переводится в статус Действующий (Confirmed).
      * @param  Payment  $payment
      * @param $orderId
-     * @return JsonResponse
+     * @return JsonResource
      * @throws Exception
      * @internal param Contracts $contract
      * @internal param $contractId
      */
-    public function postPolicyAccept(Payment $payment, $orderId): JsonResponse
+    public function postPolicyAccept(Payment $payment, $orderId): JsonResource
     {
         Log::info("Find Payment with OrderID: {$orderId}");
         $res = $payment->where('order_id', $orderId)->firstOrFail();
@@ -245,12 +225,7 @@ class ApiController extends BaseController
         Log::info("Status: {$status['status']}");
 
         if (isset($status['isPayed']) && $status['isPayed']) {
-            return response()->json(
-                [
-                    'success' => true,
-                    'data' => $this->driverService->acceptPayment($contract),
-                ]
-            );
+            return self::successResponse($this->driverService->acceptPayment($contract));
         }
 
         throw new RuntimeException('Оплата заказа не обработана. Статус: '.$status["status"]);
@@ -278,13 +253,13 @@ class ApiController extends BaseController
      * Метод отправляет письмо с полисом на почту клиенту
      * @param  Request  $request
      * @param $contractId
-     * @return JsonResponse
+     * @return JsonResource
      * @throws Exception
      * @internal param Payment $payment
      * @internal param $orderId
      * @internal param Contracts $contract
      */
-    public function postPolicySend(Request $request, $contractId): JsonResponse
+    public function postPolicySend(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
@@ -292,7 +267,7 @@ class ApiController extends BaseController
         $result = $this->driverService->sendMail($contract);
         Log::info("Response", [$result]);
 
-        return response()->json(['success' => true, 'data' => $result]);
+        return self::successResponse($result);
     }
 
     /**
@@ -330,11 +305,11 @@ class ApiController extends BaseController
      * @param  Request  $request
      *
      * @param $contractId
-     * @return JsonResponse
+     * @return JsonResource
      * @throws Exception
      * @internal param Contracts $contract
      */
-    public function getPolicyPayLink(Request $request, $contractId): JsonResponse
+    public function getPolicyPayLink(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
@@ -355,7 +330,7 @@ class ApiController extends BaseController
         $result = ['url' => $linkResult->getUrl(), 'orderId' => $linkResult->getOrderId()];
         Log::info('Response', [$result]);
 
-        return response()->json(['success' => true, 'data' => $result]);
+        return self::successResponse($result);
     }
 
     /**
@@ -392,11 +367,11 @@ class ApiController extends BaseController
      * @param  Request  $request
      *
      * @param $contractId
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      * @internal param Contracts $contract
      */
-    public function getPolicyPdf(Request $request, $contractId): JsonResponse
+    public function getPolicyPdf(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
         $isSample = filter_var($request->get('sample', false), FILTER_VALIDATE_BOOLEAN);
@@ -407,6 +382,6 @@ class ApiController extends BaseController
         $response = $this->driverService->printPdf($contract, $isSample);
         Log::info('Policy generated!');
 
-        return response()->json(['success' => true, 'data' => $response]);
+        return self::successResponse($response);
     }
 }

@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ObjectRequest;
 use App\Models\Objects;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Class ObjectController
@@ -39,20 +39,15 @@ class ObjectController extends BaseController
      * )
      *
      * @param  ObjectRequest  $request
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      */
-    public function store(ObjectRequest $request): JsonResponse
+    public function store(ObjectRequest $request): JsonResource
     {
         $model = $this->model->fill($request->validated());
         $model->saveOrFail();
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $model,
-            ]
-        );
+        return self::successResponse($model);
     }
 
     /**
@@ -71,9 +66,9 @@ class ObjectController extends BaseController
      * )
      * @param Request $request
      *
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResource
     {
         return parent::index($request);
     }
@@ -106,20 +101,15 @@ class ObjectController extends BaseController
      *
      * @param  ObjectRequest  $request
      * @param  int  $id
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      */
-    public function update(ObjectRequest $request, int $id): JsonResponse
+    public function update(ObjectRequest $request, int $id): JsonResource
     {
         $model = $this->model::query()->where(['id' => $id])->firstOrFail();
         $model->fill($request->validated())->saveOrFail();
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $model,
-            ]
-        );
+        return self::successResponse($model);
     }
 
     /**
@@ -145,10 +135,10 @@ class ObjectController extends BaseController
      * )
      *
      * @param  int  $id
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): JsonResource
     {
         return parent::destroy($id);
     }
