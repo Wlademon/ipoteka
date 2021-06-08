@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\JsonResource;
 use OpenApi\Annotations as OA;
 use App\Filters\PaymentFilter;
 use App\Http\Requests\CreatePaymentRequest;
@@ -67,12 +67,11 @@ class PaymentController extends BaseController
      *
      * Возвращает список оплат с возможностью фильтрацию.
      * @param  Request  $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResource
     {
         $this->initRequest($request);
-        $this->setTotalCount(Payment::count());
 
         $this->model = $this->model->orderBy('id');
         $this->model->filter($this->filter);
@@ -100,19 +99,14 @@ class PaymentController extends BaseController
      * )
      *
      * @param  CreatePaymentRequest  $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function store(CreatePaymentRequest $request): JsonResponse
+    public function store(CreatePaymentRequest $request): JsonResource
     {
         $payment = $this->model->fill($request->all());
         $payment->save();
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $payment,
-            ]
-        );
+        return self::successResponse($payment);
     }
 
     /**
@@ -142,25 +136,20 @@ class PaymentController extends BaseController
      * )
      * @param  CreatePaymentRequest  $request
      * @param  int  $id
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function update(CreatePaymentRequest $request, int $id): JsonResponse
+    public function update(CreatePaymentRequest $request, int $id): JsonResource
     {
         $currentModel = $this->model::findOrFail($id);
         $attributes = $request->all();
-        if (count($attributes) == 0) {
+        if (count($attributes) === 0) {
             $payment = $currentModel;
         } else {
             $payment = $currentModel->fill($attributes);
             $payment->save();
         }
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $payment,
-            ]
-        );
+        return self::successResponse($payment);
     }
 
     /**
@@ -185,9 +174,9 @@ class PaymentController extends BaseController
      *     )
      * )
      * @param  int  $id
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): JsonResource
     {
         return parent::destroy($id);
     }

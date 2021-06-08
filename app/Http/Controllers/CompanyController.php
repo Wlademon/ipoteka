@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Filters\CompanyFilter;
 use App\Http\Requests\CreateCompanyRequest;
 use App\Models\Companie;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Class CompanyController
@@ -66,12 +66,11 @@ class CompanyController extends BaseController
      *
      * Возвращает список компаний с возможностью фильтрацию.
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResource
     {
         $this->initRequest($request);
-        $this->setTotalCount(Companie::query()->count());
 
         $this->model = Companie::query()->orderBy('id');
         $this->model->filter($this->filter);
@@ -83,16 +82,11 @@ class CompanyController extends BaseController
      * Show the form for creating a new resource.
      *
      * @param CreateCompanyRequest $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function create(CreateCompanyRequest $request): JsonResponse
+    public function create(CreateCompanyRequest $request): JsonResource
     {
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $this->model::create($request->validated()),
-            ]
-        );
+        return self::successResponse($this->model::create($request->validated()));
     }
 
     /**
@@ -115,19 +109,14 @@ class CompanyController extends BaseController
      * )
      *
      * @param CreateCompanyRequest $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function store(CreateCompanyRequest $request): JsonResponse
+    public function store(CreateCompanyRequest $request): JsonResource
     {
         $company = $this->model->fill($request->all());
         $company->save();
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $company,
-            ]
-        );
+        return self::successResponse($company);
     }
 
     /**
@@ -157,9 +146,9 @@ class CompanyController extends BaseController
      * )
      * @param CreateCompanyRequest $request
      * @param int $id
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function update(CreateCompanyRequest $request, int $id): JsonResponse
+    public function update(CreateCompanyRequest $request, int $id): JsonResource
     {
         $currentModel = $this->model->findOrFail($id);
         $attributes = $request->all();
@@ -170,12 +159,7 @@ class CompanyController extends BaseController
             $company->save();
         }
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $company,
-            ]
-        );
+        return self::successResponse($company);
     }
 
     /**
@@ -200,10 +184,10 @@ class CompanyController extends BaseController
      *     )
      * )
      * @param int $id
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): JsonResource
     {
         return parent::destroy($id);
     }

@@ -45,6 +45,8 @@ class RensinsDriver implements DriverInterface
     /** @var ReninsClientService */
     protected ReninsClientService $httpClient;
 
+    protected ?Program $program = null;
+
     /**
      * RensinsDriver constructor.
      * @param Repository $repository
@@ -157,7 +159,11 @@ class RensinsDriver implements DriverInterface
      */
     public function getProgram(string $programCode): Program
     {
-        return Program::where('program_code', $programCode)->firstOrFail();
+        if (!$this->program) {
+            $this->program = Program::where('program_code', $programCode)->firstOrFail();
+        }
+
+        return $this->program;
     }
 
     /**
@@ -166,7 +172,12 @@ class RensinsDriver implements DriverInterface
      */
     protected function isLive(array $data): bool
     {
-        return !empty($data['objects']['life']);
+        $is = $this->getProgram($data['programCode'])->is_life;
+        throw_if(
+            $is && empty($data['objects']['life']),
+            new ReninsException('Не заполнены данные для страхования жизни.')
+        );
+        return $is;
     }
 
     /**
@@ -175,8 +186,14 @@ class RensinsDriver implements DriverInterface
      */
     protected function isProperty(array $data): bool
     {
-        return !empty($data['objects']['property']);
+        $is = $this->getProgram($data['programCode'])->is_property;
+        throw_if(
+            $is && empty($data['objects']['property']),
+            new ReninsException('Не заполнены данные для страхования имущества.')
+        );
+        return $is;
     }
+
 
     /**
      * @param Contracts $contract

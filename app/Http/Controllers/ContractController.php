@@ -7,8 +7,8 @@ use App\Http\Requests\CreatePolicyRequest;
 use App\Models\Contracts;
 use App\Services\DriverService;
 use App\Services\PolicyService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Class ContractController
@@ -96,12 +96,11 @@ class ContractController extends BaseController
      *
      * Возвращает список договоров с возможностью фильтрацию.
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResource
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request): JsonResource
     {
         $this->initRequest($request);
-        $this->setTotalCount($this->model::count());
 
         $this->model = $this->model->orderBy('id');
         $this->model->filter($this->filter);
@@ -131,22 +130,17 @@ class ContractController extends BaseController
      * @param CreatePolicyRequest $request
      * @param PolicyService $service
      * @param DriverService $driver
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      */
     public function store(
         CreatePolicyRequest $request,
         PolicyService $service,
         DriverService $driver
-    ): JsonResponse {
+    ): JsonResource {
         $result = $service->savePolicy($request, $driver);
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $this->model::findOrFail($result['contractId']),
-            ]
-        );
+        return self::successResponse($this->model::findOrFail($result['contractId']));
     }
 
     /**
@@ -178,7 +172,7 @@ class ContractController extends BaseController
      * @param PolicyService $service
      * @param DriverService $driver
      * @param int $id
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Exception
      */
     public function update(
@@ -186,7 +180,7 @@ class ContractController extends BaseController
         PolicyService $service,
         DriverService $driver,
         int $id
-    ): JsonResponse {
+    ): JsonResource {
         $currentModel = $this->model::findOrFail($id);
         $attributes = $request->all();
         if (count($attributes) === 0) {
@@ -197,12 +191,7 @@ class ContractController extends BaseController
             $contract = $this->model::findOrFail($result['contractId']);
         }
 
-        return response()->json(
-            [
-                'success' => true,
-                'data' => $contract,
-            ]
-        );
+        return self::successResponse($contract);
     }
 
     /**
@@ -227,10 +216,10 @@ class ContractController extends BaseController
      *     )
      * )
      * @param int $id
-     * @return JsonResponse
+     * @return JsonResource
      * @throws \Throwable
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): JsonResource
     {
         return parent::destroy($id);
     }
