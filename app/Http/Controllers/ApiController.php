@@ -215,7 +215,7 @@ class ApiController extends BaseController
 
         Log::info("Find Contract with ID: {$res->contract_id}");
         /** @var Contracts $contract */
-        $contract = Contracts::with('company')->where(['id', $res->contract_id])->where(
+        $contract = Contracts::with('company')->where('id', $res->contract_id)->where(
             'status',
             Contracts::STATUS_DRAFT
         )->firstOrFail();

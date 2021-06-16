@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Throwable;
-use App\Models\Companie;
+use App\Models\Company;
 use App\Models\Program;
 use App\Models\Owner;
 
@@ -75,7 +75,7 @@ class ProgramsSetter extends Command
         foreach ($programs as $p) {
 
             if (!empty($p->matrix)) {
-                $company = Companie::updateOrCreate([
+                $company = Company::updateOrCreate([
                     'code' => $p->companyCode,
                 ], [
                     'name' => $p->companyName,
@@ -100,7 +100,7 @@ class ProgramsSetter extends Command
                 ]);
             }
 
-            $company = Companie::updateOrCreate([
+            $company = Company::updateOrCreate([
                 'code' => $p->companyCode,
             ], [
                 'name' => $p->companyName,

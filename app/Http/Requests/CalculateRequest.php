@@ -20,7 +20,7 @@ use OpenApi\Annotations as OA;
  *            required={"buildYear"},
  *            @OA\Property(property="type", type="string", example="flat", description="Тип недвижимого имущества."),
  *            @OA\Property(property="buildYear", type="integer", example=2000, description="Минимальный год постройки дома"),
- *            @OA\Property(property="isWooden", type="boolean", example=true, description="Признак Деревянные перекрытия (true - Деревянные перекрытия). Если не указан, то false")
+ *            @OA\Property(property="isWooden", type="boolean", example=0, description="Признак Деревянные перекрытия (true - Деревянные перекрытия). Если не указан, то false")
  *        ),
  *        @OA\Property(property="life", type="object", description="Тип объекта страхования - Жизнь и здоровье",
  *            required={"birthDate", "gender"},
