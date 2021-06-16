@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Filters\CompanyFilter;
 use App\Http\Requests\CreateCompanyRequest;
-use App\Models\Companie;
+use App\Models\Company;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -16,10 +16,10 @@ class CompanyController extends BaseController
 {
     /**
      * CompanyController constructor.
-     * @param Companie $model
+     * @param Company $model
      * @param CompanyFilter $filter
      */
-    public function __construct(Companie $model, CompanyFilter $filter)
+    public function __construct(Company $model, CompanyFilter $filter)
     {
         $this->model = $model;
         $this->filter = $filter;
@@ -72,7 +72,7 @@ class CompanyController extends BaseController
     {
         $this->initRequest($request);
 
-        $this->model = Companie::query()->orderBy('id');
+        $this->model = Company::query()->orderBy('id');
         $this->model->filter($this->filter);
 
         return parent::index($request);

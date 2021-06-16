@@ -187,22 +187,13 @@ class ReninsClientService
                     'verify' => false,
                 ]))->get($url);
             $content = $response->getBody()->getContents();
-            throw_if(
-                $response->getStatusCode() !== 200,
-                ReninsException::class,
-                [$content]
-            );
+            throw_if($response->getStatusCode() !== 200, ReninsException::class, [$content]);
             $path = self::TEMP_PATH . uniqid(date('Y_m_d_H_i_s'), false) . '.zip';
             Storage::put(
                 $path,
                 $content
             );
-            throw_if(
-                !file_exists(storage_path('app/' . $path)),
-                ReninsException::class,
-                ['File not saved.']
-            );
-
+            throw_if(!file_exists(storage_path('app/' . $path)), new ReninsException('File not saved.'));
         } catch (Throwable $throwable) {
             throw new ReninsException($throwable->getMessage());
         }

@@ -30,7 +30,7 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property \Illuminate\Support\Carbon|null $createdAt
  * @property \Illuminate\Support\Carbon|null $updatedAt
  * @property \Illuminate\Support\Carbon|null $deletedAt
- * @property-read \App\Models\Companie|null $company
+ * @property-read \App\Models\Company|null $company
  * @property-read string $companyCode
  * @property-read string $companyName
  * @mixin \Eloquent
@@ -86,7 +86,7 @@ class Program extends BaseModel
      */
     public function company()
     {
-        return $this->belongsTo(Companie::class);
+        return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
     public function contracts()

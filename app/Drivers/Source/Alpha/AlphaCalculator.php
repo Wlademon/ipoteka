@@ -27,14 +27,12 @@ class AlphaCalculator
      */
     public function __construct()
     {
-        throw_if(
-            empty(config('mortgage.alfa_msk.agentContractId')),
-            new AlphaException('Not set agentContractId property')
-        );
-        throw_if(
-            empty(config('mortgage.alfa_msk.managerId')),
-            new AlphaException('Not set managerId property')
-        );
+        if (empty(config('mortgage.alfa_msk.agentContractId'))) {
+            throw new AlphaException('Not set agentContractId property');
+        }
+        if (empty(config('mortgage.alfa_msk.managerId'))) {
+            throw new AlphaException('Not set managerId property');
+        }
 
         $this->data['agent'] = [
             'agentContractId' => ((int)config('mortgage.alfa_msk.agentContractId')),
@@ -117,10 +115,10 @@ class AlphaCalculator
      */
     public function setPropertyRisk(?string $address, bool $goruch, ?int $year): void
     {
-        throw_if(
-            $year && ($year < 1950 || $year > 2100),
-            new AlphaException('Год постройки больше максимального или меньше минимального порога')
-        );
+        if ($year && ($year < 1950 || $year > 2100)) {
+            throw new AlphaException('Год постройки больше максимального или меньше минимального порога');
+        }
+
         $this->data['propertyRisk'] = [
             'address' => $address,
             'goruch' => $goruch,

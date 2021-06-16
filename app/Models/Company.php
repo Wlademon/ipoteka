@@ -21,7 +21,7 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property-read int|null $policies_count
  * @mixin Eloquent
  */
-class Companie extends BaseModel
+class Company extends BaseModel
 {
     use Filterable;
 
@@ -49,6 +49,11 @@ class Companie extends BaseModel
     public function contracts()
     {
         return $this->hasMany(Contracts::class);
+    }
+
+    public function programs()
+    {
+        return $this->hasMany(Program::class);
     }
 
     public function getCodeAttribute()

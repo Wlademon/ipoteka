@@ -31,7 +31,7 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property-read string $objectFullname
  * @property-read string $subjectPassport
  * @property-read \App\Models\Program|null $program
- * @property-read \App\Models\Companie|null $company
+ * @property-read \App\Models\Company|null $company
  * @property-read \App\Models\Owner|null $owner
  * @property-read \App\Models\Objects[]|array|Collection $objects
  * @property-read \App\Models\Subject|null $subject
@@ -146,7 +146,7 @@ class Contracts extends BaseModel
      */
     public function company()
     {
-        return $this->belongsTo(Companie::class);
+        return $this->belongsTo(Company::class);
     }
 
     /**

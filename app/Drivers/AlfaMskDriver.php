@@ -56,16 +56,15 @@ class AlfaMskDriver implements DriverInterface
     public function __construct(Repository $repository, string $prefix = '')
     {
         $this->client = new Client();
-        throw_if(
-            !$repository->get($prefix . 'host', false),
-            new AlphaException('Not set host property')
-        );
-        throw_if(
-            !($repository->get($prefix . 'auth.username') &&
-            $repository->get($prefix . 'auth.pass') &&
-            $repository->get($prefix . 'auth.auth_url')),
-            new AlphaException('Not set auth data')
-        );
+        if (!$repository->get($prefix.'host', false)) {
+            throw new AlphaException('Not set host property');
+        }
+        if (
+        !($repository->get($prefix.'auth.username') && $repository->get($prefix.'auth.pass') &&
+          $repository->get($prefix.'auth.auth_url'))
+        ) {
+            throw new AlphaException('Not set auth data');
+        }
         $this->numberIterations = $repository->get($prefix . 'numberIterations', 5);
         $this->auth = new AlfaAuth(
             $repository->get($prefix . 'auth.username'),
@@ -172,10 +171,7 @@ class AlfaMskDriver implements DriverInterface
             throw new AlphaException($e->getMessage());
         }
 
-        throw_if(
-            $result->getStatusCode() !== 200,
-            new AlphaException('Error create payment')
-        );
+        throw_if($result->getStatusCode() !== 200, new AlphaException('Error create payment'));
         $decodeResult = json_decode($result->getBody()->getContents(), true);
 
         return [
@@ -224,10 +220,7 @@ class AlfaMskDriver implements DriverInterface
 
         $response = $registerOrder->registerOrder();
 
-        throw_if(
-            empty($response->get('orderId')),
-            new AlphaException('Missing orderId')
-        );
+        throw_if(empty($response->get('orderId')), new AlphaException('Missing orderId'));
 
         $contractOptions['orderId'] = $response->get('orderId');
         $contract->setOptionsAttribute($contractOptions);
