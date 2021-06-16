@@ -20,7 +20,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *          required={"city", "state", "house", "buildYear", "cityKladr"},
  *          @OA\Property(property="type", type="string", example="flat", description="Тип строения"),
  *          @OA\Property(property="buildYear", type="integer", example=1999, description="Год постройки"),
- *          @OA\Property(property="isWooden", type="boolean", example=true, description="Наличие деревянных перекрытий"),
+ *          @OA\Property(property="isWooden", type="boolean", example=0, description="Наличие деревянных перекрытий"),
  *          @OA\Property(property="area", type="number", example=99, description="Площадь"),
  *          @OA\Property(property="cityKladr", type="string", example="999999999999", description="Кладр"),
  *          @OA\Property(property="state", type="string", example="Москва", description="Регион"),

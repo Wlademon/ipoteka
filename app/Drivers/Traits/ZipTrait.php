@@ -22,11 +22,9 @@ trait ZipTrait
     public static function unpackZip(string $file): string
     {
         $zip = new ZipArchive();
-        throw_if(
-            $zip->open(storage_path($file), ZipArchive::CHECKCONS) !== true,
-            ReninsException::class,
-            'Can\'t open ZIP-file!'
-        );
+        if ($zip->open(storage_path($file), ZipArchive::CHECKCONS) !== true) {
+            throw new ReninsException('Can\'t open ZIP-file!');
+        }
         $dirFile = static::$tempPathZip . uniqid(date('Y_m_d_H_i_s'), false) . '/';
         Storage::makeDirectory($dirFile);
         $zip->extractTo(

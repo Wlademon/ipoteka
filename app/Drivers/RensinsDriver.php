@@ -172,12 +172,13 @@ class RensinsDriver implements DriverInterface
      */
     protected function isLive(array $data): bool
     {
-        $is = $this->getProgram($data['programCode'])->is_life;
-        throw_if(
-            $is && empty($data['objects']['life']),
-            new ReninsException('Не заполнены данные для страхования жизни.')
-        );
-        return $is;
+        $isLife = $this->getProgram($data['programCode'])->is_life;
+
+        if ($isLife && empty($data['objects']['life'])) {
+            throw new ReninsException('Не заполнены данные для страхования жизни.');
+        }
+
+        return $isLife;
     }
 
     /**
@@ -186,12 +187,12 @@ class RensinsDriver implements DriverInterface
      */
     protected function isProperty(array $data): bool
     {
-        $is = $this->getProgram($data['programCode'])->is_property;
-        throw_if(
-            $is && empty($data['objects']['property']),
-            new ReninsException('Не заполнены данные для страхования имущества.')
-        );
-        return $is;
+        $isProperty = $this->getProgram($data['programCode'])->is_property;
+        if ($isProperty && empty($data['objects']['property'])) {
+            throw new ReninsException('Не заполнены данные для страхования имущества.');
+        }
+
+        return $isProperty;
     }
 
 

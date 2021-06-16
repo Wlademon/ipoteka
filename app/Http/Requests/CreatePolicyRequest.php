@@ -37,7 +37,7 @@ use Illuminate\Validation\Rule;
  *     description="Страхование имущества",
  *     @OA\Property(property="type",  type="string", example="flat", description="Тип помещения"),
  *     @OA\Property(property="buildYear",  type="integer", example="2000", description="Год постройки"),
- *     @OA\Property(property="isWooden",  type="boolean", example=1, description="Наличие деревянных перекрытий"),
+ *     @OA\Property(property="isWooden",  type="boolean", example=0, description="Наличие деревянных перекрытий"),
  *     @OA\Property(property="area",  type="float", example="55.3", description="Площадь"),
  *     @OA\Property(property="state",  type="string", example="Московская область", description="Регион"),
  *     @OA\Property(property="city",  type="string", example="Москва", description="Город"),
