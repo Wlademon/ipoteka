@@ -9,10 +9,12 @@ use App\Drivers\DriverResults\CreatedPolicy;
 use App\Drivers\DriverResults\CreatedPolicyInterface;
 use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\PrintPdfTrait;
+use App\Exceptions\Drivers\SberinsException;
 use App\Helpers\Helper;
 use App\Models\Contracts;
 use App\Models\Program;
 use Arr;
+use Throwable;
 
 /**
  * Class SberinsDriver
@@ -56,7 +58,12 @@ class SberinsDriver implements DriverInterface
         $propertyPremium = $this->calculate($data)->getPropertyPremium();
         $contract->premium = $propertyPremium;
 
-        $res = Helper::getPolicyNumber($this->getDataForPolicyNumber($contract));
+        try {
+            $res = Helper::getPolicyNumber($this->getDataForPolicyNumber($contract));
+        } catch (Throwable $throwable) {
+            throw new SberinsException($throwable->getMessage(), 0, $throwable);
+        }
+
         $propertyPolicyNumber = $res->data->bso_numbers[0];
 
         return new CreatedPolicy(

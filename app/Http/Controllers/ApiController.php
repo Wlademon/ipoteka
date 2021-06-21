@@ -49,8 +49,7 @@ class ApiController extends BaseController
      *   ),
      *     @OA\Response(
      *         response="200",
-     *         description="Метод позволяет рассчитать (предварительную) премию по входящим
-     *     пораметра",
+     *         description="Метод позволяет рассчитать (предварительную) премию по входящим параметрам",
      *         @OA\JsonContent(
      *              ref="#/components/schemas/CalculatedPolice"
      *          )

@@ -43,9 +43,10 @@ class DriverService
         $this->driver = App::make($driverCode);
 
         if (!$this->driver) {
-            throw new DriverServiceException(
-                "Driver {$driver} not found", Response::HTTP_NOT_FOUND
-            );
+            $message = "Driver {$driver} not found";
+            $code = Response::HTTP_NOT_FOUND;
+            Log::error(self::class.'::'.__METHOD__.' '.$message."(code: $code)");
+            throw new DriverServiceException($message, $code);
         }
     }
 
@@ -101,8 +102,10 @@ class DriverService
 
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
         } catch (Throwable $throwable) {
-            Log::error($throwable->getMessage());
-            throw new DriverServiceException('При подсчете произошла ошибка.');
+            $message = $throwable->getMessage();
+            $code = Response::HTTP_NOT_ACCEPTABLE;
+            Log::error(self::class.'::'.__METHOD__.' '.$message."(code: $code)");
+            throw new DriverServiceException('При подсчете произошла ошибка.', $code);
         }
     }
 
@@ -131,10 +134,10 @@ class DriverService
         }
         $activeFrom = Carbon::parse($data['activeFrom']);
         if ($activeFrom > $validActiveFromMax) {
-            throw new DriverServiceException(
-                "Дата начала полиса не может быть позже чем дата заключения (сегодня) + {$maxStartDateSelection}",
-                Response::HTTP_UNPROCESSABLE_ENTITY
-            );
+            $message = "Дата начала полиса не может быть позже чем дата заключения (сегодня) + {$maxStartDateSelection}";
+            $code = Response::HTTP_UNPROCESSABLE_ENTITY;
+            Log::error(self::class.'::'.__METHOD__.' '.$message."(code: $code)");
+            throw new DriverServiceException($message, $code);
         }
     }
 
@@ -177,14 +180,16 @@ class DriverService
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
-            Log::error($throwable->getMessage());
-            if ($throwable instanceof DriverExceptionInterface) {
-                throw new $throwable;
-            }
 
-            throw new DriverServiceException(
-                'При создании полиса возникла ошибка.', Response::HTTP_INTERNAL_SERVER_ERROR
+            if ($throwable instanceof DriverExceptionInterface) {
+                $codeError = Response::HTTP_NOT_ACCEPTABLE;
+            } else {
+                $codeError = Response::HTTP_INTERNAL_SERVER_ERROR;
+            }
+            Log::error(
+                self::class.'::'.__METHOD__.' '.$throwable->getMessage()." (code: $codeError)"
             );
+            throw new DriverServiceException('При создании полиса возникла ошибка.', $codeError);
         }
         $result->setContractId($model->id);
 
@@ -225,10 +230,12 @@ class DriverService
     ) {
         $this->getStatus($contract);
         if (!$sample && $contract->status !== Contracts::STATUS_CONFIRMED) {
-            throw new DriverServiceException(
-                'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
-                HttpResponse::HTTP_NOT_ACCEPTABLE
+            $code = HttpResponse::HTTP_UNPROCESSABLE_ENTITY;
+            $message = 'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"';
+            Log::error(
+                self::class.'::'.__METHOD__. ' ' . $message . "(code: $code)"
             );
+            throw new DriverServiceException($message, $code);
         }
         try {
             return $this->getDriverByCode($contract->program->company->code)->printPolicy(
@@ -238,8 +245,16 @@ class DriverService
                 $filePath
             );
         } catch (Throwable $throwable) {
-            Log::error($throwable->getMessage());
-            throw new DriverServiceException('При получении бланка полиса произошла ошибка.');
+            $code = $throwable->getCode();
+            Log::error(self::class.'::'.__METHOD__.' '.$throwable->getMessage()."(code: $code)");
+            if ($throwable instanceof DriverExceptionInterface) {
+                $code = HttpResponse::HTTP_NOT_ACCEPTABLE;
+            } else {
+                $code = HttpResponse::HTTP_INTERNAL_SERVER_ERROR;
+            }
+            throw new DriverServiceException(
+                'При получении бланка полиса произошла ошибка.', $code
+            );
         }
     }
 
@@ -251,17 +266,36 @@ class DriverService
     public function sendMail(Contracts $contract): array
     {
         if ($contract->status == Contracts::STATUS_CONFIRMED) {
-            $driver = $this->getDriverByCode($contract->program->company->code);
-            if ($driver->sendPolice($contract)) {
-                return ['message' => 'Email was sent to '.$contract->subject_value['email']];
+            $code = HttpResponse::HTTP_INTERNAL_SERVER_ERROR;
+            try {
+                $driver = $this->getDriverByCode($contract->program->company->code);
+                if ($driver->sendPolice($contract)) {
+                    return ['message' => 'Email was sent to '.$contract->subject_value['email']];
+                }
+            } catch (Throwable $t) {
+                Log::error(
+                    self::class.'::'.__METHOD__." {$t->getMessage()}",
+                    [$t->getTraceAsString()]
+                );
+                if ($t instanceof DriverExceptionInterface) {
+                    $code = HttpResponse::HTTP_NOT_ACCEPTABLE;
+                }
             }
-
+            Log::error(
+                self::class.'::'.__METHOD__.' Email was not sent to '.
+                $contract->subject_value['email']
+            );
             throw new DriverServiceException(
-                'Email was not sent to '.$contract->subject_value['email'],
+                'Email was not sent to '.$contract->subject_value['email'], $code
             );
         }
 
-        throw new DriverServiceException('Status of Contract is not Confirmed');
+        $code = HttpResponse::HTTP_UNPROCESSABLE_ENTITY;
+        $message = 'Status of Contract is not Confirmed';
+        Log::error(
+            self::class.'::'.__METHOD__ . " $message (code: {$code})"
+        );
+        throw new DriverServiceException($message, $code);
     }
 
     /**
@@ -273,7 +307,14 @@ class DriverService
         try {
             $this->getDriverByCode($contract->program->company->code)->payAccept($contract);
         } catch (Throwable $throwable) {
-            throw new DriverServiceException($throwable->getMessage());
+            $code = HttpResponse::HTTP_INTERNAL_SERVER_ERROR;
+            if ($throwable instanceof DriverExceptionInterface) {
+                $code = HttpResponse::HTTP_NOT_ACCEPTABLE;
+            }
+            Log::error(
+                self::class.'::'.__METHOD__.' '.$throwable->getMessage()." (code: $code.)"
+            );
+            throw new DriverServiceException('Ошибка при подтверждении платежа.', $code);
         }
     }
 
@@ -299,7 +340,18 @@ class DriverService
             'count' => 1,
         ];
         Log::info(__METHOD__.". getPolicyNumber with params:", [$params]);
-        $res = Helper::getPolicyNumber($params);
+        try {
+            $res = Helper::getPolicyNumber($params);
+        } catch (Throwable $throwable) {
+            Log::error(
+                self::class.'::'.__METHOD__.$throwable->getMessage().
+                " (code: {$throwable->getCode()})"
+            );
+            throw new DriverServiceException(
+                'Ошибка при получении номера полиса.', HttpResponse::HTTP_BAD_REQUEST
+            );
+        }
+
         $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
         $contract->save();
         $this->statusConfirmed($contract);
@@ -323,7 +375,16 @@ class DriverService
         try {
             return $this->getDriverByCode($contract->program->company->code)->getStatus($contract);
         } catch (Throwable $throwable) {
-            throw new DriverServiceException($throwable->getMessage());
+            $code = HttpResponse::HTTP_INTERNAL_SERVER_ERROR;
+            if ($throwable instanceof DriverExceptionInterface) {
+                $code = HttpResponse::HTTP_NOT_ACCEPTABLE;
+            }
+            Log::error(
+                self::class.'::'.__METHOD__.' '.$throwable->getMessage().
+                " (code: {$throwable->getCode()})"
+            );
+
+            throw new DriverServiceException('Ошибка при получении статуса.', $code);
         }
     }
 }
