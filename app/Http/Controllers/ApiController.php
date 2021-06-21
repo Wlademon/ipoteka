@@ -38,6 +38,35 @@ class ApiController extends BaseController
     }
 
     /**
+     * @OA\Post(
+     *     path="/v1/policies/calculate",
+     *     operationId="/v1/policies/calculate",
+     *     summary="Расчет полиса",
+     *     tags={"Полисы"},
+     *     @OA\RequestBody(
+     *       required=true,
+     *       @OA\JsonContent(ref="#/components/schemas/CalculateRequest")
+     *   ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Метод позволяет рассчитать (предварительную) премию по входящим
+     *     пораметра",
+     *         @OA\JsonContent(
+     *              ref="#/components/schemas/CalculatedPolice"
+     *          )
+     *     )
+     * )
+     *
+     * @param  CalculateRequest  $request
+     * @return JsonResource
+     * @throws Exception
+     */
+    public function postPolicyCalculate(CalculateRequest $request): JsonResource
+    {
+        return self::successResponse($this->driverService->calculate($request->validated()));
+    }
+
+    /**
      * Store a newly created resource in storage.
      *
      * @OA\Post(
@@ -68,35 +97,6 @@ class ApiController extends BaseController
     public function postPolicyCreate(CreatePolicyRequest $request): JsonResource
     {
         return self::successResponse($this->driverService->savePolicy($request->validated()));
-    }
-
-    /**
-     * @OA\Post(
-     *     path="/v1/policies/calculate",
-     *     operationId="/v1/policies/calculate",
-     *     summary="Расчет полиса",
-     *     tags={"Полисы"},
-     *     @OA\RequestBody(
-     *       required=true,
-     *       @OA\JsonContent(ref="#/components/schemas/CalculateRequest")
-     *   ),
-     *     @OA\Response(
-     *         response="200",
-     *         description="Метод позволяет рассчитать (предварительную) премию по входящим
-     *     пораметра",
-     *         @OA\JsonContent(
-     *              ref="#/components/schemas/CalculatedPolice"
-     *          )
-     *     )
-     * )
-     *
-     * @param  CalculateRequest  $request
-     * @return JsonResource
-     * @throws Exception
-     */
-    public function postPolicyCalculate(CalculateRequest $request): JsonResource
-    {
-        return self::successResponse($this->driverService->calculate($request->validated()));
     }
 
     /**
@@ -176,101 +176,6 @@ class ApiController extends BaseController
     }
 
     /**
-     * @OA\Post(
-     *     path="/v1/policies/{orderId}/accept",
-     *     operationId="/v1/policies/{orderId}/accept",
-     *     summary="Подтверждение оплаты",
-     *     tags={"Полисы"},
-     *     @OA\Parameter(
-     *         name="orderId",
-     *         in="path",
-     *         description="Id заказа",
-     *         required=true,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Response(
-     *         response="200",
-     *         description="Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод
-     *     необходимо вызывать для подтверждения факта оплаты полиса клиентом. Полис должен быть в
-     *     статусе Проект (Draft). После вызова этого метода полис переводится в статус Действующий
-     *     (Confirmed).",
-     * @OA\JsonContent(ref="#/components/schemas/AcceptPayment")
-     *     )
-     * )
-     *
-     * Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод необходимо вызывать
-     *     для подтверждения факта оплаты полиса клиентом. Полис должен быть в статусе Проект
-     *     (Draft). После вызова этого метода полис переводится в статус Действующий (Confirmed).
-     * @param  Payment  $payment
-     * @param $orderId
-     * @return JsonResource
-     * @throws Exception
-     * @internal param Contracts $contract
-     * @internal param $contractId
-     */
-    public function postPolicyAccept(Payment $payment, $orderId): JsonResource
-    {
-        Log::info("Find Payment with OrderID: {$orderId}");
-        $res = $payment->where('order_id', $orderId)->firstOrFail();
-
-        Log::info("Find Contract with ID: {$res->contract_id}");
-        /** @var Contracts $contract */
-        $contract = Contracts::with('company')->where('id', $res->contract_id)->where(
-            'status',
-            Contracts::STATUS_DRAFT
-        )->firstOrFail();
-
-        Log::info("Start check payment status with OrderID: {$orderId}");
-        $status = $this->payService->getOrderStatus($orderId);
-        Log::info("Status: {$status['status']}");
-
-        if (isset($status['isPayed']) && $status['isPayed']) {
-            return self::successResponse($this->driverService->acceptPayment($contract));
-        }
-
-        throw new RuntimeException('Оплата заказа не обработана. Статус: '.$status["status"]);
-    }
-
-    /**
-     * @OA\Post(
-     *     path="/v1/policies/{contractId}/send",
-     *     summary="Отправка полиса",
-     *     tags={"Полисы"},
-     *     @OA\Parameter(
-     *         name="contractId",
-     *         in="path",
-     *         description="Id контракта",
-     *         required=true,
-     *         @OA\Schema(type="string")
-     *     ),
-     *     @OA\Response(
-     *          response="200",
-     *          description="Результат",
-     *          @OA\JsonContent(ref="#/components/schemas/SendMail")
-     *     )
-     * )
-     *
-     * Метод отправляет письмо с полисом на почту клиенту
-     * @param  Request  $request
-     * @param $contractId
-     * @return JsonResource
-     * @throws Exception
-     * @internal param Payment $payment
-     * @internal param $orderId
-     * @internal param Contracts $contract
-     */
-    public function postPolicySend(Request $request, $contractId): JsonResource
-    {
-        Log::info("Find Contract with ID: {$contractId}");
-        $contract = Contracts::findOrFail($contractId);
-
-        $result = $this->driverService->sendMail($contract);
-        Log::info("Response", [$result]);
-
-        return self::successResponse($result);
-    }
-
-    /**
      * @OA\Get(
      *     path="/v1/policies/{contractId}/payLink",
      *     summary="Получение ссылки на эквайринг",
@@ -334,6 +239,62 @@ class ApiController extends BaseController
     }
 
     /**
+     * @OA\Post(
+     *     path="/v1/policies/{orderId}/accept",
+     *     operationId="/v1/policies/{orderId}/accept",
+     *     summary="Подтверждение оплаты",
+     *     tags={"Полисы"},
+     *     @OA\Parameter(
+     *         name="orderId",
+     *         in="path",
+     *         description="Id заказа",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response="200",
+     *         description="Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод
+     *     необходимо вызывать для подтверждения факта оплаты полиса клиентом. Полис должен быть в
+     *     статусе Проект (Draft). После вызова этого метода полис переводится в статус Действующий
+     *     (Confirmed).",
+     * @OA\JsonContent(ref="#/components/schemas/AcceptPayment")
+     *     )
+     * )
+     *
+     * Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод необходимо вызывать
+     *     для подтверждения факта оплаты полиса клиентом. Полис должен быть в статусе Проект
+     *     (Draft). После вызова этого метода полис переводится в статус Действующий (Confirmed).
+     * @param  Payment  $payment
+     * @param $orderId
+     * @return JsonResource
+     * @throws Exception
+     * @internal param Contracts $contract
+     * @internal param $contractId
+     */
+    public function postPolicyAccept(Payment $payment, $orderId): JsonResource
+    {
+        Log::info("Find Payment with OrderID: {$orderId}");
+        $res = $payment->where('order_id', $orderId)->firstOrFail();
+
+        Log::info("Find Contract with ID: {$res->contract_id}");
+        /** @var Contracts $contract */
+        $contract = Contracts::with('company')->where('id', $res->contract_id)->where(
+            'status',
+            Contracts::STATUS_DRAFT
+        )->firstOrFail();
+
+        Log::info("Start check payment status with OrderID: {$orderId}");
+        $status = $this->payService->getOrderStatus($orderId);
+        Log::info("Status: {$status['status']}");
+
+        if (isset($status['isPayed']) && $status['isPayed']) {
+            return self::successResponse($this->driverService->acceptPayment($contract));
+        }
+
+        throw new RuntimeException('Оплата заказа не обработана. Статус: '.$status["status"]);
+    }
+
+    /**
      * @OA\Get(
      *     path="/v1/policies/{contractId}/print",
      *     operationId="/v1/policies/{contractId}/print",
@@ -383,5 +344,44 @@ class ApiController extends BaseController
         Log::info('Policy generated!');
 
         return self::successResponse($response);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/v1/policies/{contractId}/send",
+     *     summary="Отправка полиса",
+     *     tags={"Полисы"},
+     *     @OA\Parameter(
+     *         name="contractId",
+     *         in="path",
+     *         description="Id контракта",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *          response="200",
+     *          description="Результат",
+     *          @OA\JsonContent(ref="#/components/schemas/SendMail")
+     *     )
+     * )
+     *
+     * Метод отправляет письмо с полисом на почту клиенту
+     * @param  Request  $request
+     * @param $contractId
+     * @return JsonResource
+     * @throws Exception
+     * @internal param Payment $payment
+     * @internal param $orderId
+     * @internal param Contracts $contract
+     */
+    public function postPolicySend(Request $request, $contractId): JsonResource
+    {
+        Log::info("Find Contract with ID: {$contractId}");
+        $contract = Contracts::findOrFail($contractId);
+
+        $result = $this->driverService->sendMail($contract);
+        Log::info("Response", [$result]);
+
+        return self::successResponse($result);
     }
 }
