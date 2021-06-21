@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Exceptions\Drivers\DriverExceptionInterface;
+use App\Exceptions\Services\LogExceptionInterface;
 use App\Exceptions\Services\ServiceExceptionInterface;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -142,6 +143,17 @@ class Handler extends ExceptionHandler
         if ($exception instanceof DriverExceptionInterface) {
             return function (DriverExceptionInterface $e) {
                 $code = (400 < $e->getCode() ? Response::HTTP_NOT_ACCEPTABLE : $e->getCode());
+                return [
+                    'statusCode' => $code,
+                    'error' => $e->getMessage(),
+                    'errorCode' => $code,
+                ];
+            };
+        }
+        if ($exception instanceof LogExceptionInterface) {
+            return function (LogExceptionInterface $e) {
+                $e->log();
+                $code = $e->getCode();
                 return [
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
