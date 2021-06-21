@@ -14,6 +14,7 @@ use App\Drivers\Source\Alpha\AlphaCalculator;
 use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\PrintPdfTrait;
 use App\Exceptions\Drivers\AlphaException;
+use App\Exceptions\Drivers\ReninsException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
@@ -319,6 +320,26 @@ class AlfaMskDriver implements DriverInterface
         }
 
         return $decodePostResult;
+    }
+
+    /**
+     * @param Contracts $contract
+     * @return array
+     * @throws ReninsException
+     */
+    protected function getFilePolice(Contracts $contract): array
+    {
+        $objects = $contract->objects;
+        $files = [];
+        foreach ($objects as $object) {
+            $filePathObject = self::createFilePath($contract, $object->id);
+            if (!$this->isFilePoliceExitst($contract, $filePathObject)) {
+                $this->printPolicy($contract, false, true);
+            }
+            $files[] = public_path($filePathObject);
+        }
+
+        return $files;
     }
 
     /**

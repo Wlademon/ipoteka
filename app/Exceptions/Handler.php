@@ -151,7 +151,7 @@ class Handler extends ExceptionHandler
         }
         if ($exception instanceof ServiceExceptionInterface) {
             return function (ServiceExceptionInterface $e) {
-                $code = Response::HTTP_BAD_REQUEST;
+                $code = Response::HTTP_INTERNAL_SERVER_ERROR;
                 return [
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
@@ -162,7 +162,7 @@ class Handler extends ExceptionHandler
 
         return $this->handlers[get_class($exception)] ?? function (Throwable $e) {
                 return [
-                    'statusCode' => (200 > $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode()),
+                    'statusCode' => Response::HTTP_INTERNAL_SERVER_ERROR,
                     'error' => $e->getMessage(),
                     'errorCode' => $e->getCode(),
                 ];
