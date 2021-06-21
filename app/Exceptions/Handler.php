@@ -141,7 +141,7 @@ class Handler extends ExceptionHandler
     {
         if ($exception instanceof DriverExceptionInterface) {
             return function (DriverExceptionInterface $e) {
-                $code = (200 > $e->getCode() ? Response::HTTP_NOT_ACCEPTABLE : $e->getCode());
+                $code = (400 < $e->getCode() ? Response::HTTP_NOT_ACCEPTABLE : $e->getCode());
                 return [
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
@@ -151,7 +151,7 @@ class Handler extends ExceptionHandler
         }
         if ($exception instanceof ServiceExceptionInterface) {
             return function (ServiceExceptionInterface $e) {
-                $code = Response::HTTP_INTERNAL_SERVER_ERROR;
+                $code = $e->getCode();
                 return [
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
@@ -162,7 +162,7 @@ class Handler extends ExceptionHandler
 
         return $this->handlers[get_class($exception)] ?? function (Throwable $e) {
                 return [
-                    'statusCode' => Response::HTTP_INTERNAL_SERVER_ERROR,
+                    'statusCode' => (400 < $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode()),
                     'error' => $e->getMessage(),
                     'errorCode' => $e->getCode(),
                 ];
