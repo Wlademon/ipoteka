@@ -133,7 +133,7 @@ class CreatedPolicy implements CreatedPolicyInterface
         $this->propertyPolicyNumber = $propertyPolicyNumber;
     }
 
-    public function getPropertyPolicyId(): string
+    public function getPropertyPolicyId(): ?string
     {
         return $this->propertyPolicyId;
     }
