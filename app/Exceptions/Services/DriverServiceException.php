@@ -1,4 +1,5 @@
-<?php declare(strict_types=1);
+<?php
+declare(strict_types = 1);
 
 namespace App\Exceptions\Services;
 
@@ -7,6 +8,7 @@ use Throwable;
 
 /**
  * Class DriverServiceException
+ *
  * @package App\Exceptions\Services
  */
 class DriverServiceException extends \Exception implements ServiceExceptionInterface, LogExceptionInterface

@@ -15,7 +15,7 @@ class CreateSubjectsTable extends Migration
         Schema::create('subjects', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('contract_id', false, true);
-            $table->longText('value');
+            $table->jsonb('value');
             $table->timestamps();
             $table->softDeletes();
 

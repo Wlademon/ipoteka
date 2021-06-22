@@ -16,7 +16,7 @@ class CreateProgramsTable extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('company_id')->unsigned();
             $table->foreign('company_id')->references('id')->on('companies')
-                ->onDelete('cascade');
+                ->onDelete('cascade')->onUpdate('cascade');
             $table->string('program_code',64);
             $table->string('program_name',255);
             $table->string('program_uw_code',200);
