@@ -14,7 +14,7 @@ use Illuminate\Foundation\Http\FormRequest;
  *     @OA\Property(property="contract_id", type="integer", example=1, description="Идентификатор сделки"),
  *     @OA\Property(property="product", type="string", example="property", description="Тип объекта страхования"),
  *     @OA\Property(property="number", type="string", example="123", description="Номер"),
- *     @OA\Property(property="external_id", type="string", example="123", description="Внешний идентификатор"),
+ *     @OA\Property(property="integration_id", type="string", example="123", description="Внешний идентификатор"),
  *     @OA\Property(property="premium", type="string", example="123", description="Тип объекта"),
  *     @OA\Property(property="value", type="object", description="Данные объекта страхования",
  *          required={"city", "state", "house", "buildYear", "cityKladr"},
@@ -58,7 +58,7 @@ class ObjectRequest extends FormRequest
             'product' => ['required', 'string', 'in:' . Objects::types(true)],
             'value' => ['required', 'array'],
             'number' => ['nullable', 'string', 'max:255'],
-            'external_id' => ['nullable', 'string', 'max:255'],
+            'integration_id' => ['nullable', 'string', 'max:255'],
             'uw_contract_id' => ['nullable', 'integer', 'min:0'],
             'premium' => ['numeric', 'min:0'],
             // all
