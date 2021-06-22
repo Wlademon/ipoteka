@@ -16,7 +16,7 @@ class CreateCompaniesTable extends Migration
             $table->bigIncrements('id');
             $table->string('code', 64);
             $table->string('name', 255);
-            $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true)->index();
             $table->timestamps();
             $table->softDeletes();
         });
