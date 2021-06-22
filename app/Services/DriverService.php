@@ -24,6 +24,7 @@ use Throwable;
 
 /**
  * Class DriverService
+ *
  * @package App\Services
  */
 class DriverService
@@ -35,6 +36,7 @@ class DriverService
 
     /**
      * @param  string|null  $driver
+     *
      * @throws Exception
      */
     protected function setDriver(string $driver = null): void
@@ -53,7 +55,8 @@ class DriverService
 
     /**
      * @param  string  $code
-     * @param  bool  $reset
+     * @param  bool    $reset
+     *
      * @return DriverInterface
      * @throws Exception
      */
@@ -77,7 +80,8 @@ class DriverService
 
     /**
      * @param  Contracts  $contract
-     * @param  PayLinks  $links
+     * @param  PayLinks   $links
+     *
      * @return PayLinkInterface
      */
     public function getPayLink(Contracts $contract, PayLinks $links): PayLinkInterface
@@ -90,6 +94,7 @@ class DriverService
 
     /**
      * @param $data
+     *
      * @return array
      * @throws Exception
      */
@@ -97,15 +102,14 @@ class DriverService
     {
         try {
             $program = Program::whereProgramCode($data['programCode'])
-                              ->with('company')
-                              ->firstOrFail();
+                ->with('company')
+                ->firstOrFail();
             $this->minStartValidator($program, $data);
 
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
-                'При подсчете произошла ошибка.',
-                Response::HTTP_NOT_ACCEPTABLE
+                'При подсчете произошла ошибка.', Response::HTTP_NOT_ACCEPTABLE
             ))->addLogData(
                 __METHOD__,
                 $throwable->getMessage()
@@ -115,7 +119,8 @@ class DriverService
 
     /**
      * @param  Program  $program
-     * @param  array  $data
+     * @param  array    $data
+     *
      * @throws Exception
      */
     protected function minStartValidator(Program $program, array $data): void
@@ -149,20 +154,28 @@ class DriverService
 
     /**
      * @param  array  $data
+     *
      * @return array
      * @throws DriverServiceException
      */
     public function savePolicy(array $data): array
     {
+        DB::beginTransaction();
+        $model = new Contracts();
+        $model->fill($data);
+        $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
         try {
-            DB::beginTransaction();
-            $model = new Contracts();
-            $model->fill($data);
-            $program = Program::whereProgramCode($data['programCode'])
-                              ->with('company')
-                              ->firstOrFail();
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
-
+        } catch (Throwable $throwable) {
+            throw (new DriverServiceException(
+                'При получении полиса возникла ошибка.', Response::HTTP_NOT_ACCEPTABLE
+            ))->addLogData(
+                __METHOD__,
+                $throwable->getMessage(),
+                $throwable->getCode()
+            );
+        }
+        try {
             $policeData = collect($data);
             $objects = collect($policeData->only(['objects'])->get('objects'));
             $model->premium = $result->getPremiumSum();
@@ -186,14 +199,8 @@ class DriverService
             DB::commit();
         } catch (Throwable $throwable) {
             DB::rollBack();
-
-            if ($throwable instanceof DriverExceptionInterface) {
-                $codeError = Response::HTTP_NOT_ACCEPTABLE;
-            } else {
-                $codeError = Response::HTTP_INTERNAL_SERVER_ERROR;
-            }
             throw (new DriverServiceException(
-                'При создании полиса возникла ошибка.', $codeError
+                'При создании полиса возникла ошибка.', Response::HTTP_INTERNAL_SERVER_ERROR
             ))->addLogData(
                 __METHOD__,
                 $throwable->getMessage(),
@@ -207,7 +214,8 @@ class DriverService
 
     /**
      * @param  Collection  $collection
-     * @param  string  $type
+     * @param  string      $type
+     *
      * @return Objects|null
      */
     protected function getObjectModel(Collection $collection, string $type): ?Objects
@@ -224,10 +232,11 @@ class DriverService
     }
 
     /**
-     * @param  Contracts  $contract
-     * @param  bool  $sample
-     * @param  bool  $reset
+     * @param  Contracts    $contract
+     * @param  bool         $sample
+     * @param  bool         $reset
      * @param  string|null  $filePath
+     *
      * @return string|array
      * @throws DriverServiceException
      */
@@ -271,6 +280,7 @@ class DriverService
 
     /**
      * @param  Contracts  $contract
+     *
      * @return array
      * @throws DriverServiceException
      */
@@ -281,26 +291,26 @@ class DriverService
             try {
                 $driver = $this->getDriverByCode($contract->program->company->code);
                 if ($driver->sendPolice($contract)) {
-                    return ['message' => 'Email was sent to '.$contract->subject_value['email']];
+                    return ['message' => 'Email was sent to ' . $contract->subject_value['email']];
                 }
             } catch (Throwable $t) {
                 if ($t instanceof DriverExceptionInterface) {
                     $code = HttpResponse::HTTP_NOT_ACCEPTABLE;
                 }
                 throw (new DriverServiceException(
-                    'Email was not sent to '.$contract->subject_value['email'], $code
+                    'Email was not sent to ' . $contract->subject_value['email'], $code
                 ))->addLogData(__METHOD__, $t->getMessage(), $t->getCode());
             }
-
         }
 
         $code = HttpResponse::HTTP_UNPROCESSABLE_ENTITY;
-        $message = 'Status of Contract is not Confirmed';
+        $message = 'Невозможно сгенерировать полис, т.к. полис в статусе \"ожидание оплаты\"';
         throw (new DriverServiceException($message, $code))->addLogData(__METHOD__);
     }
 
     /**
      * @param  Contracts  $contract
+     *
      * @throws DriverServiceException
      */
     public function statusConfirmed(Contracts $contract): void
@@ -324,6 +334,7 @@ class DriverService
 
     /**
      * @param  Contracts  $contract
+     *
      * @return array
      * @internal param Contracts $contract
      */
@@ -343,7 +354,7 @@ class DriverService
             'bso_receiver_code' => 'STRAHOVKA',
             'count' => 1,
         ];
-        Log::info(__METHOD__.". getPolicyNumber with params:", [$params]);
+        Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
         try {
             $res = Helper::getPolicyNumber($params);
         } catch (Throwable $throwable) {
@@ -371,6 +382,7 @@ class DriverService
 
     /**
      * @param  Contracts  $contract
+     *
      * @return array
      * @throws DriverServiceException
      */

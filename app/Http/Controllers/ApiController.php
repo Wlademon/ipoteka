@@ -19,6 +19,7 @@ use Strahovka\Payment\PayService;
 
 /**
  * Class ApiController
+ *
  * @package App\Http\Controllers
  */
 class ApiController extends BaseController
@@ -28,7 +29,8 @@ class ApiController extends BaseController
 
     /**
      * Create a new controller instance.
-     * @param  PayService  $payService
+     *
+     * @param  PayService     $payService
      * @param  DriverService  $driver
      */
     public function __construct(PayService $payService, DriverService $driver)
@@ -49,7 +51,8 @@ class ApiController extends BaseController
      *   ),
      *     @OA\Response(
      *         response="200",
-     *         description="Метод позволяет рассчитать (предварительную) премию по входящим параметрам",
+     *         description="Метод позволяет рассчитать (предварительную) премию по входящим
+     *         параметрам",
      *         @OA\JsonContent(
      *              ref="#/components/schemas/CalculatedPolice"
      *          )
@@ -57,6 +60,7 @@ class ApiController extends BaseController
      * )
      *
      * @param  CalculateRequest  $request
+     *
      * @return JsonResource
      * @throws Exception
      */
@@ -90,6 +94,7 @@ class ApiController extends BaseController
      * Сохраняет договор в системе в статусе Проект и возвращает его contract_id.
      *
      * @param  CreatePolicyRequest  $request
+     *
      * @return JsonResource
      * @throws Exception
      */
@@ -123,7 +128,8 @@ class ApiController extends BaseController
      * Возвращает объект полиса по его ID.
      *
      * @param  Request  $request
-     * @param  int  $contractId
+     * @param  int      $contractId
+     *
      * @return JsonResource
      * @throws Exception
      */
@@ -161,7 +167,8 @@ class ApiController extends BaseController
      * Возвращает статус договора по ID полиса, полученного в ответе от /policy/save
      *
      * @param  Request  $request
-     * @param $contractId
+     * @param           $contractId
+     *
      * @return JsonResource
      * @throws \Throwable
      * @internal param Contracts $contract
@@ -208,7 +215,8 @@ class ApiController extends BaseController
      *
      * @param  Request  $request
      *
-     * @param $contractId
+     * @param           $contractId
+     *
      * @return JsonResource
      * @throws Exception
      * @internal param Contracts $contract
@@ -217,18 +225,13 @@ class ApiController extends BaseController
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::findOrFail($contractId);
-        if (Payment::where('contract_id', $contract->id)->first()) {
-            throw new RuntimeException(
-                'Данный заказ уже обработан.', Response::HTTP_NOT_ACCEPTABLE
-            );
-        }
         try {
             $links = new PayLinks($request->query('successUrl'), $request->query('failUrl'));
             $linkResult = $this->driverService->getPayLink($contract, $links);
-            Payment::createPayment($linkResult, $contract);
+            Payment::savePayment($linkResult, $contract);
         } catch (Exception $e) {
             throw new RuntimeException(
-                $e->getMessage().' (code: '.$e->getCode().')', Response::HTTP_NOT_ACCEPTABLE
+                'Ошибка при получении ссылки на оплату', Response::HTTP_NOT_ACCEPTABLE, $e
             );
         }
         $result = ['url' => $linkResult->getUrl(), 'orderId' => $linkResult->getOrderId()];
@@ -263,8 +266,10 @@ class ApiController extends BaseController
      * Метод отправляет подтверждение оплаты и возвращает статус полиса. Метод необходимо вызывать
      *     для подтверждения факта оплаты полиса клиентом. Полис должен быть в статусе Проект
      *     (Draft). После вызова этого метода полис переводится в статус Действующий (Confirmed).
+     *
      * @param  Payment  $payment
-     * @param $orderId
+     * @param           $orderId
+     *
      * @return JsonResource
      * @throws Exception
      * @internal param Contracts $contract
@@ -290,7 +295,7 @@ class ApiController extends BaseController
             return self::successResponse($this->driverService->acceptPayment($contract));
         }
 
-        throw new RuntimeException('Оплата заказа не обработана. Статус: '.$status["status"]);
+        throw new RuntimeException('Оплата заказа не обработана. Статус: ' . $status["status"]);
     }
 
     /**
@@ -326,7 +331,8 @@ class ApiController extends BaseController
      *
      * @param  Request  $request
      *
-     * @param $contractId
+     * @param           $contractId
+     *
      * @return JsonResource
      * @throws \Throwable
      * @internal param Contracts $contract
@@ -365,8 +371,10 @@ class ApiController extends BaseController
      * )
      *
      * Метод отправляет письмо с полисом на почту клиенту
+     *
      * @param  Request  $request
-     * @param $contractId
+     * @param           $contractId
+     *
      * @return JsonResource
      * @throws Exception
      * @internal param Payment $payment

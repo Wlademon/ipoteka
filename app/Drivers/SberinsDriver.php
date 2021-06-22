@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Drivers;
 
 use App\Drivers\DriverResults\Calculated;
@@ -18,16 +17,17 @@ use Throwable;
 
 /**
  * Class SberinsDriver
+ *
  * @package App\Drivers
  */
 class SberinsDriver implements DriverInterface
 {
-
     use PrintPdfTrait;
     use DriverTrait;
 
     /**
-     * @param array $data
+     * @param  array  $data
+     *
      * @return CalculatedInterface
      */
     public function calculate(array $data): CalculatedInterface
@@ -39,22 +39,19 @@ class SberinsDriver implements DriverInterface
         );
 
         return new Calculated(
-            null,
-            null,
-            $propertyInsurancePremium
+            null, null, $propertyInsurancePremium
         );
-
     }
 
     /**
-     * @param Contracts $contract
-     * @param array $data
+     * @param  Contracts  $contract
+     * @param  array      $data
+     *
      * @return CreatedPolicyInterface
      * @throws \App\Exceptions\Services\PolicyServiceException
      */
     public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
     {
-
         $propertyPremium = $this->calculate($data)->getPropertyPremium();
         $contract->premium = $propertyPremium;
 
@@ -67,21 +64,16 @@ class SberinsDriver implements DriverInterface
         $propertyPolicyNumber = $res->data->bso_numbers[0];
 
         return new CreatedPolicy(
-            $contract->id,
-            null,
-            '',
-            null,
-            $propertyPremium ?? null,
-            null,
-            $propertyPolicyNumber,
+            $contract->id, null, null, null, $propertyPremium, null, $propertyPolicyNumber,
         );
     }
 
     /**
-     * @param Contracts $contract
-     * @param bool $sample
-     * @param bool $reset
-     * @param string|null $filePath
+     * @param  Contracts  $contract
+     * @param  bool  $sample
+     * @param  bool  $reset
+     * @param  string|null  $filePath
+     *
      * @return string
      */
     public function printPolicy(
@@ -106,7 +98,7 @@ class SberinsDriver implements DriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
      */
     public function payAccept(Contracts $contract): void
     {
@@ -114,13 +106,17 @@ class SberinsDriver implements DriverInterface
     }
 
     /**
-     * @param string $programCode
-     * @param int $remainingDebt
-     * @param bool $isWooden
+     * @param  string  $programCode
+     * @param  int     $remainingDebt
+     * @param  bool    $isWooden
+     *
      * @return int
      */
-    public function getInsurancePremium(string $programCode, int $remainingDebt, bool $isWooden): int
-    {
+    public function getInsurancePremium(
+        string $programCode,
+        int $remainingDebt,
+        bool $isWooden
+    ): int {
         $matrix = Program::query()->where('program_code', $programCode)->first('matrix')->matrix;
         $woodenRate = Arr::get($matrix, 'tariff.wooden.percent', 1);
         $stoneRate = Arr::get($matrix, 'tariff.stone.percent', 1);
@@ -133,7 +129,8 @@ class SberinsDriver implements DriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
+     *
      * @return array
      */
     protected function getDataForPolicyNumber(Contracts $contract): array

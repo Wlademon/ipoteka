@@ -208,7 +208,7 @@ class MerchantServices
 
             $resp = $soap->__getLastRequestHeaders();
         } catch (Throwable $e) {
-            throw new AlphaException($e->getMessage());
+            throw new AlphaException($e->getMessage(), $e->getCode(), $e);
         }
 
         return collect($result);

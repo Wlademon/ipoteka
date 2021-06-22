@@ -28,7 +28,7 @@ class Subject extends BaseModel
         return $this->belongsTo(Contracts::class, 'contract_id');
     }
 
-    public function setValueAttributes($value)
+    public function setValueAttribute($value)
     {
         $this->attributes['value'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }

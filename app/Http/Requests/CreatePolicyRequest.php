@@ -126,14 +126,14 @@ class CreatePolicyRequest extends Request
     public function rules()
     {
         return [
-            "programCode" => ['required','string'],
-            'activeFrom' => ['required', 'date'],
-            'activeTo' => ['date'],
+            'programCode' => ['required', 'string', 'exists:programs,program_code'],
+            'activeFrom' => ['required', 'date', 'after_or_equal:today'],
+            'activeTo' => ['date', 'after:today'],
             'ownerCode' => ['string'],
-            "remainingDebt" => ['required','int'],
-            "mortgageAgreementNumber" => ['required','string'],
-            "isOwnership" => ['required','boolean'],
-            "mortgageeBank" => ['string'],
+            'remainingDebt' => ['required','int'],
+            'mortgageAgreementNumber' => ['required','string'],
+            'isOwnership' => ['required','boolean'],
+            'mortgageeBank' => ['string'],
             'objects' => ['required','array'],
             'subject' => ['required','array'],
 
@@ -182,8 +182,8 @@ class CreatePolicyRequest extends Request
                 'min:0',
                 'max:1'
             ],
-            'objects.life.weight' => ['numeric','max:255'],
-            'objects.life.height' => ['numeric','max:255'],
+            'objects.life.weight' => ['numeric','max:255', 'min:0'],
+            'objects.life.height' => ['numeric','max:255', 'min:0'],
             'objects.life.phone' => [
                 Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
                 'string',
