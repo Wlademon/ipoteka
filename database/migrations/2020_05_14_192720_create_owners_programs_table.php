@@ -16,12 +16,12 @@ class CreateOwnersProgramsTable extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('program_id')->nullable()->unsigned();
             $table->foreign('program_id')->references('id')->on('programs')
-                  ->onUpdate('no action')
-                  ->onDelete('set null');
+                ->onUpdate('cascade')
+                  ->onDelete('cascade');
             $table->bigInteger('owner_id')->nullable()->unsigned();
             $table->foreign('owner_id')->references('id')->on('owners')
-                  ->onUpdate('no action')
-                  ->onDelete('set null');
+                  ->onUpdate('cascade')
+                  ->onDelete('cascade');
         });
     }
 

@@ -16,10 +16,10 @@ class CreateContractsTable extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('company_id')->unsigned();
             $table->foreign('company_id')->references('id')->on('companies')
-                ->onDelete('cascade');
+                ->onDelete('cascade')->onUpdate('cascade');
             $table->bigInteger('program_id')->unsigned();
             $table->foreign('program_id')->references('id')->on('programs')
-                ->onDelete('cascade');
+                ->onDelete('cascade')->onUpdate('cascade');
             $table->smallInteger('type', false, true);
             $table->longText('options')->nullable();
             $table->tinyInteger('status', false, true)->index();
