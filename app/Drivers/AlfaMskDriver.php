@@ -400,7 +400,7 @@ class AlfaMskDriver implements DriverInterface
         $files = [];
         $merchantService = $this->merchantServices;
         $objects = $contract->objects;
-        $objectIds = $objects->pluck('external_id', 'id');
+        $objectIds = $objects->pluck('integration_id', 'id');
         foreach ($objectIds as $id => $extId) {
             $filePath = self::createFilePath($contract, $id);
             if ($this->isFilePoliceExitst($contract, $filePath)) {

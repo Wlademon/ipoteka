@@ -208,7 +208,7 @@ class RensinsDriver implements DriverInterface
                 $result = $this->httpClient->getStatus(
                     collect(
                         [
-                            'policyID' => $contract->objects()->firstOrFail()->external_id
+                            'policyID' => $contract->objects()->firstOrFail()->integration_id
                         ]
                     )
                 );
@@ -376,7 +376,7 @@ class RensinsDriver implements DriverInterface
             $url = $this->httpClient->print(
                 collect(
                     [
-                        'calcID' => $object->external_id,
+                        'calcID' => $object->integration_id,
                         'type' => 'Печать'
                     ]
                 )

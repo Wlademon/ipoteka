@@ -26,7 +26,7 @@ class Objects extends BaseModel
         'product',
         'number',
         'premium',
-        'external_id',
+        'integration_id',
         'uw_contract_id',
     ];
     protected $casts = [
@@ -96,11 +96,11 @@ class Objects extends BaseModel
         if ($this->product === self::TYPE_PROPERTY) {
             $this->number = $createdPolicy->getPropertyPolicyNumber();
             $this->premium = $createdPolicy->getPropertyPremium();
-            $this->external_id = $createdPolicy->getPropertyPolicyId();
+            $this->integration_id = $createdPolicy->getPropertyPolicyId();
         } else {
             $this->number = $createdPolicy->getLifePolicyNumber();
             $this->premium = $createdPolicy->getLifePremium();
-            $this->external_id = $createdPolicy->getLifePolicyId();
+            $this->integration_id = $createdPolicy->getLifePolicyId();
         }
     }
 }
