@@ -258,6 +258,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
             $policyIdProperty = Arr::get($result,'policy.ID');
             $policyNumberProperty = Arr::get($result,'policy.number');
             $propSum = array_sum(Arr::pluck($propRisks, 'insPrem'));
+            $this->httpClient->issue(collect(['policyID' => $policyIdProperty]));
         }
 
         return new CreatedPolicy(
