@@ -23,6 +23,7 @@ use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
 /**
@@ -459,6 +460,13 @@ class AlfaMskDriver implements DriverInterface
      */
     public function payAccept(Contracts $contract): void
     {
-        return;
+        $this->getStatus($contract);
+
+        if ($contract->status != Contracts::STATUS_CONFIRMED) {
+            throw new AlphaException(
+                'Платеж не выполнен.',
+                HttpResponse::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
     }
 }
