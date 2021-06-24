@@ -282,20 +282,13 @@ class ApiController extends BaseController
 
         Log::info("Find Contract with ID: {$res->contract_id}");
         /** @var Contracts $contract */
+
         $contract = Contracts::with('company')->where('id', $res->contract_id)->where(
             'status',
             Contracts::STATUS_DRAFT
         )->firstOrFail();
 
-        Log::info("Start check payment status with OrderID: {$orderId}");
-        $status = $this->payService->getOrderStatus($orderId);
-        Log::info("Status: {$status['status']}");
-
-        if (isset($status['isPayed']) && $status['isPayed']) {
-            return self::successResponse($this->driverService->acceptPayment($contract));
-        }
-
-        throw new RuntimeException('Оплата заказа не обработана. Статус: ' . $status["status"]);
+        return self::successResponse($this->driverService->acceptPayment($contract, $this->payService, $orderId));
     }
 
     /**

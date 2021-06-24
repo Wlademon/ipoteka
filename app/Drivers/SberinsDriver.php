@@ -20,7 +20,7 @@ use Throwable;
  *
  * @package App\Drivers
  */
-class SberinsDriver implements DriverInterface
+class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface, DriverInterface
 {
     use PrintPdfTrait;
     use DriverTrait;

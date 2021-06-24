@@ -5,6 +5,8 @@ namespace App\Services;
 use App;
 use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
+use App\Drivers\LocalDriverInterface;
+use App\Drivers\LocalPaymentDriverInterface;
 use App\Exceptions\Drivers\DriverExceptionInterface;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
@@ -19,6 +21,7 @@ use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
+use Strahovka\Payment\PayService;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
@@ -304,7 +307,7 @@ class DriverService
         }
 
         $code = HttpResponse::HTTP_UNPROCESSABLE_ENTITY;
-        $message = 'Невозможно сгенерировать полис, т.к. полис в статусе \"ожидание оплаты\"';
+        $message = 'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"';
         throw (new DriverServiceException($message, $code))->addLogData(__METHOD__);
     }
 
@@ -322,6 +325,9 @@ class DriverService
             if ($throwable instanceof DriverExceptionInterface) {
                 $code = HttpResponse::HTTP_NOT_ACCEPTABLE;
             }
+            if ($throwable->getCode() === HttpResponse::HTTP_UNPROCESSABLE_ENTITY) {
+                $code = HttpResponse::HTTP_UNPROCESSABLE_ENTITY;
+            }
             throw (new DriverServiceException(
                 'Ошибка при подтверждении платежа.', $code
             ))->addLogData(
@@ -338,28 +344,36 @@ class DriverService
      * @return array
      * @internal param Contracts $contract
      */
-    public function acceptPayment(Contracts $contract): array
+    public function acceptPayment(Contracts $contract, PayService $payService, string $orderId): array
     {
-        if ($contract->status != Contracts::STATUS_DRAFT) {
-            throw (new DriverServiceException(
-                'Полис не в статусе "Ожидает оплаты"', Response::HTTP_PAYMENT_REQUIRED
-            ))->addLogData(__METHOD__);
-        }
         $company = $contract->company;
-        $contract->status = Contracts::STATUS_CONFIRMED;
-        $params = [
-            'product_code' => 'mortgage',
-            'program_code' => $contract->program->programCode,
-            'bso_owner_code' => $company->code,
-            'bso_receiver_code' => 'STRAHOVKA',
-            'count' => 1,
-        ];
-        Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
         try {
-            $res = Helper::getPolicyNumber($params);
+            $driver = $this->getDriverByCode($company->code);
+            if ($driver instanceof LocalPaymentDriverInterface) {
+                Log::info("Start check payment status with OrderID: {$orderId}");
+                $status = $payService->getOrderStatus($orderId);
+                Log::info("Status: {$status['status']}");
+                if (empty($status['isPayed'])) {
+                    throw new DriverServiceException('Полис не оплачен.');
+                }
+                $contract->status = Contracts::STATUS_CONFIRMED;
+            }
+            if ($driver instanceof LocalDriverInterface) {
+                $params = [
+                    'product_code' => 'mortgage',
+                    'program_code' => $contract->program->programCode,
+                    'bso_owner_code' => $company->code,
+                    'bso_receiver_code' => 'STRAHOVKA',
+                    'count' => 1,
+                ];
+                Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
+                $res = Helper::getPolicyNumber($params);
+                $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
+            }
+
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
-                'Ошибка при получении номера полиса.', HttpResponse::HTTP_BAD_REQUEST
+                'Ошибка при подтверждении платежа.', HttpResponse::HTTP_BAD_REQUEST
             ))->addLogData(
                 __METHOD__,
                 $throwable->getMessage(),
@@ -367,9 +381,8 @@ class DriverService
             );
         }
 
-        $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
-        $contract->save();
         $this->statusConfirmed($contract);
+        $contract->save();
         Log::info("Contract with ID {$contract->id} was saved.");
 
         return [
