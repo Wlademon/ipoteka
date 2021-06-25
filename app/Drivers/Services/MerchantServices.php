@@ -125,7 +125,7 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new SoapClient(config('mortgage.alfaMsk.merchant.contract_wsdl'), $options);
+        $soap = new SoapClient(config('mortgage.alfa_msk.merchant.contract_wsdl'), $options);
         $files = [];
         foreach ($contractId as $id) {
             try {
@@ -163,7 +163,7 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new SoapClient(config('mortgage.alfaMsk.merchant.wsdl'), $options);
+        $soap = new SoapClient(config('mortgage.alfa_msk.merchant.wsdl'), $options);
 
         try {
             $result = $soap->__SoapCall('getOrderStatus', [
@@ -192,7 +192,7 @@ class MerchantServices
             'trace' => 1,
             'cache_wsdl' => WSDL_CACHE_NONE
         );
-        $soap = new SoapClient(config('mortgage.alfaMsk.merchant.wsdl'), $options);
+        $soap = new SoapClient(config('mortgage.alfa_msk.merchant.wsdl'), $options);
 
         try {
             $result = $soap->__SoapCall('registerOrder', [
@@ -208,7 +208,7 @@ class MerchantServices
 
             $resp = $soap->__getLastRequestHeaders();
         } catch (Throwable $e) {
-            throw new AlphaException($e->getMessage());
+            throw new AlphaException($e->getMessage(), $e->getCode(), $e);
         }
 
         return collect($result);
@@ -227,7 +227,7 @@ class MerchantServices
 
         $packedNonce = pack('H*', $nonce);
         $packedTimestamp = pack('a*', $this->timestamp);
-        $packedPassword = pack('a*', config('mortgage.alfaMsk.merchant.password'));
+        $packedPassword = pack('a*', config('mortgage.alfa_msk.merchant.password'));
 
         $hash = sha1($packedNonce . $packedTimestamp . $packedPassword);
         $packedHash = pack('H*', $hash);

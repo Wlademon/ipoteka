@@ -19,19 +19,9 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read \App\Models\Contracts[] $contracts
  * @property-read int|null $policies_count
- * @method static Eloquent\Builder|\App\Models\Companies newModelQuery()
- * @method static Eloquent\Builder|\App\Models\Companies newQuery()
- * @method static Eloquent\Builder|\App\Models\Companies query()
- * @method static Eloquent\Builder|\App\Models\Companies whereCode($value)
- * @method static Eloquent\Builder|\App\Models\Programs whereIsActive($value)
- * @method static Eloquent\Builder|\App\Models\Companies whereCreatedAt($value)
- * @method static Eloquent\Builder|\App\Models\Companies whereDeletedAt($value)
- * @method static Eloquent\Builder|\App\Models\Companies whereId($value)
- * @method static Eloquent\Builder|\App\Models\Companies whereName($value)
- * @method static Eloquent\Builder|\App\Models\Companies whereUpdatedAt($value)
  * @mixin Eloquent
  */
-class Companies extends BaseModel
+class Company extends BaseModel
 {
     use Filterable;
 
@@ -59,6 +49,11 @@ class Companies extends BaseModel
     public function contracts()
     {
         return $this->hasMany(Contracts::class);
+    }
+
+    public function programs()
+    {
+        return $this->hasMany(Program::class);
     }
 
     public function getCodeAttribute()

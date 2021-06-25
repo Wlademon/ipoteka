@@ -55,7 +55,7 @@ interface CreatedPolicyInterface extends Arrayable
      * Идентификатор во внешней системе
      * @return string
      */
-    public function getPropertyPolicyId(): string;
+    public function getPropertyPolicyId(): ?string;
 
     /**
      * Идентификатор во внешней системе

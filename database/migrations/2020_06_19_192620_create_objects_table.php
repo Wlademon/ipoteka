@@ -15,11 +15,11 @@ class CreateObjectsTable extends Migration
         Schema::create('objects', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->bigInteger('contract_id', false, true);
-            $table->longText('value');
+            $table->jsonb('value');
             $table->string('product',64);
             $table->string('number',255)->nullable();
             $table->float('premium',14,2);
-            $table->string('external_id',255)->nullable();
+            $table->string('integration_id',255)->nullable();
             $table->bigInteger('uw_contract_id',false, true)->nullable();
             $table->timestamps();
             $table->softDeletes();

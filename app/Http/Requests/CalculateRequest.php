@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Programs;
+use App\Models\Program;
 use Illuminate\Validation\Rule;
 use OpenApi\Annotations as OA;
 /**
@@ -10,8 +10,8 @@ use OpenApi\Annotations as OA;
  *     required={"activeFrom", "activeTo", "programCode", "remainingDebt", "objects", "isOwnership"},
  *     schema="CalculateRequest",
  *     @OA\Property(property="programCode", type="string", example="RENSINS_MORTGAGE_002_01", description="Код программы"),
- *     @OA\Property(property="activeFrom", type="date", example="2021-06-21", description="Дата начала действия договора Ипотеки"),
- *     @OA\Property(property="activeTo", type="date", example="2022-06-20", description="Дата окончания действия договора Ипотеки"),
+ *     @OA\Property(property="activeFrom", type="date", example="2021-07-21", description="Дата начала действия договора Ипотеки"),
+ *     @OA\Property(property="activeTo", type="date", example="2022-07-20", description="Дата окончания действия договора Ипотеки"),
  *     @OA\Property(property="remainingDebt", type="float", example=1500000, description="Остаток  задолженности по договору ипотеки"),
  *     @OA\Property(property="isOwnership", type="boolean", example=1, description="Признак наличия права собственности"),
  *     @OA\Property(property="mortgageeBank", type="string", example="СБЕРБАНК РОССИИ", description="Банк-залогодержатель (выгодоприобретатель)"),
@@ -20,7 +20,7 @@ use OpenApi\Annotations as OA;
  *            required={"buildYear"},
  *            @OA\Property(property="type", type="string", example="flat", description="Тип недвижимого имущества."),
  *            @OA\Property(property="buildYear", type="integer", example=2000, description="Минимальный год постройки дома"),
- *            @OA\Property(property="isWooden", type="boolean", example=true, description="Признак Деревянные перекрытия (true - Деревянные перекрытия). Если не указан, то false")
+ *            @OA\Property(property="isWooden", type="boolean", example=0, description="Признак Деревянные перекрытия (true - Деревянные перекрытия). Если не указан, то false")
  *        ),
  *        @OA\Property(property="life", type="object", description="Тип объекта страхования - Жизнь и здоровье",
  *            required={"birthDate", "gender"},
@@ -46,7 +46,7 @@ class CalculateRequest extends Request
     public function rules()
     {
         return [
-            'programCode' => ['required', Rule::exists(Programs::getTableName(), 'program_code')],
+            'programCode' => ['required', Rule::exists(Program::getTableName(), 'program_code')],
             'activeFrom' => ['required', 'date', 'after:now'],
             'activeTo' => ['required', 'date', 'after:activeFrom'],
             'remainingDebt' => ['required', 'numeric', 'min:0'],

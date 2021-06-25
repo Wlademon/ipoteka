@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Exceptions\Drivers\DriverExceptionInterface;
+use App\Exceptions\Services\LogExceptionInterface;
 use App\Exceptions\Services\ServiceExceptionInterface;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -88,7 +89,7 @@ class Handler extends ExceptionHandler
             ModelNotFoundException::class => function (ModelNotFoundException $e) {
                 return [
                     'statusCode' => Response::HTTP_NOT_FOUND,
-                    'error' => "Model not found. " . URL::current(),
+                    'error' => "Entity not found. " . URL::current(),
                     'errorCode' => Response::HTTP_NOT_FOUND,
                 ];
             }
@@ -141,7 +142,18 @@ class Handler extends ExceptionHandler
     {
         if ($exception instanceof DriverExceptionInterface) {
             return function (DriverExceptionInterface $e) {
-                $code = 200 > $e->getCode() ? Response::HTTP_NOT_ACCEPTABLE : $e->getCode();
+                $code = (400 < $e->getCode() ? Response::HTTP_NOT_ACCEPTABLE : $e->getCode());
+                return [
+                    'statusCode' => $code,
+                    'error' => $e->getMessage(),
+                    'errorCode' => $code,
+                ];
+            };
+        }
+        if ($exception instanceof LogExceptionInterface) {
+            return function (LogExceptionInterface $e) {
+                $e->log();
+                $code = $e->getCode();
                 return [
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
@@ -151,7 +163,7 @@ class Handler extends ExceptionHandler
         }
         if ($exception instanceof ServiceExceptionInterface) {
             return function (ServiceExceptionInterface $e) {
-                $code = 200 > $e->getCode() ? Response::HTTP_BAD_REQUEST : $e->getCode();
+                $code = $e->getCode();
                 return [
                     'statusCode' => $code,
                     'error' => $e->getMessage(),
@@ -162,7 +174,7 @@ class Handler extends ExceptionHandler
 
         return $this->handlers[get_class($exception)] ?? function (Throwable $e) {
                 return [
-                    'statusCode' => 200 > $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode(),
+                    'statusCode' => (400 < $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode()),
                     'error' => $e->getMessage(),
                     'errorCode' => $e->getCode(),
                 ];

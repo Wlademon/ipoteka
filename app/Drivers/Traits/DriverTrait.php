@@ -12,11 +12,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use stdClass;
 use Strahovka\Payment\PayService;
+use Symfony\Component\HttpFoundation\Response;
 
 trait DriverTrait
 {
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
+     *
      * @return array
      */
     public function getStatus(Contracts $contract): array
@@ -36,7 +38,8 @@ trait DriverTrait
     /**
      * Отправка полиса на почту
      *
-     * @param Contracts $contract
+     * @param  Contracts  $contract
+     *
      * @return string Сообщение
      */
     public function sendPolice(Contracts $contract): string
@@ -70,7 +73,8 @@ trait DriverTrait
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
+     *
      * @return string
      */
     protected function getFilePolice(Contracts $contract)
@@ -85,7 +89,8 @@ trait DriverTrait
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
+     *
      * @return string
      */
     public static function gefaultFileName(Contracts $contract)
@@ -94,8 +99,9 @@ trait DriverTrait
     }
 
     /**
-     * @param Contracts $contract
-     * @param string $filenameWithPath
+     * @param  Contracts  $contract
+     * @param  string     $filenameWithPath
+     *
      * @return bool
      */
     protected function isFilePoliceExitst(Contracts $contract, &$filenameWithPath = ''): bool
@@ -109,8 +115,9 @@ trait DriverTrait
     }
 
     /**
-     * @param Contracts $contract
-     * @param $objectId
+     * @param  Contracts  $contract
+     * @param             $objectId
+     *
      * @return string
      */
     protected static function createFilePath(Contracts $contract, $objectId)
@@ -125,8 +132,9 @@ trait DriverTrait
     }
 
     /**
-     * @param Contracts $contract
-     * @param PayLinks $links
+     * @param  Contracts  $contract
+     * @param  PayLinks   $links
+     *
      * @return PayLink
      * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
@@ -150,7 +158,7 @@ trait DriverTrait
             'phone' => str_replace([' ', '-'], '', $contract['subject']['phone']),
             'fullName' => $contract['subject_fullname'],
             'passport' => $contract['subject_passport'],
-            'name' => "Полис по Телемед №{$contract->id}",
+            'name' => "Полис по Ипотека №{$contract->id}",
             'description' => "Оплата за полис {$contract->company->name} №{$contract->id}",
             'amount' => $contract['premium'],
             'merchantOrderNumber' => $invoiceNum,
@@ -161,7 +169,7 @@ trait DriverTrait
         if (isset($response->errorCode) && $response->errorCode !== 0) {
             throw new Exception(
                 $response->errorMessage . ' (code: ' . $response->errorCode . ')',
-                400
+                Response::HTTP_NOT_ACCEPTABLE
             );
         }
 
@@ -169,11 +177,17 @@ trait DriverTrait
     }
 
     /**
-     * @param Contracts $contract
-     * @param bool $sample
-     * @param bool $reset
-     * @param string|null $filePath
+     * @param  Contracts  $contract
+     * @param  bool  $sample
+     * @param  bool  $reset
+     * @param  string|null  $filePath
+     *
      * @return string|array
      */
-    public abstract function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null);
+    public abstract function printPolicy(
+        Contracts $contract,
+        bool $sample,
+        bool $reset,
+        ?string $filePath = null
+    );
 }

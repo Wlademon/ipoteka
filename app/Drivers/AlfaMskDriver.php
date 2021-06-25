@@ -14,6 +14,7 @@ use App\Drivers\Source\Alpha\AlphaCalculator;
 use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\PrintPdfTrait;
 use App\Exceptions\Drivers\AlphaException;
+use App\Exceptions\Drivers\ReninsException;
 use App\Models\Contracts;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
 /**
@@ -56,16 +58,15 @@ class AlfaMskDriver implements DriverInterface
     public function __construct(Repository $repository, string $prefix = '')
     {
         $this->client = new Client();
-        throw_if(
-            !$repository->get($prefix . 'host', false),
-            new AlphaException('Not set host property')
-        );
-        throw_if(
-            !($repository->get($prefix . 'auth.username') &&
-            $repository->get($prefix . 'auth.pass') &&
-            $repository->get($prefix . 'auth.auth_url')),
-            new AlphaException('Not set auth data')
-        );
+        if (!$repository->get($prefix.'host', false)) {
+            throw new AlphaException('Not set host property');
+        }
+        if (
+        !($repository->get($prefix.'auth.username') && $repository->get($prefix.'auth.pass') &&
+          $repository->get($prefix.'auth.auth_url'))
+        ) {
+            throw new AlphaException('Not set auth data');
+        }
         $this->numberIterations = $repository->get($prefix . 'numberIterations', 5);
         $this->auth = new AlfaAuth(
             $repository->get($prefix . 'auth.username'),
@@ -132,8 +133,8 @@ class AlfaMskDriver implements DriverInterface
                 Arr::get($life, 'birthDate')
             );
             $calculator->setLifeRisk(
-                $life->get('professions', []),
-                $life->get('sports', [])
+                Arr::get($life, 'professions', []),
+                Arr::get($life, 'sports', [])
             );
         }
         if ($objects->has('property')) {
@@ -172,10 +173,7 @@ class AlfaMskDriver implements DriverInterface
             throw new AlphaException($e->getMessage());
         }
 
-        throw_if(
-            $result->getStatusCode() !== 200,
-            new AlphaException('Error create payment')
-        );
+        throw_if($result->getStatusCode() !== 200, new AlphaException('Error create payment'));
         $decodeResult = json_decode($result->getBody()->getContents(), true);
 
         return [
@@ -212,7 +210,7 @@ class AlfaMskDriver implements DriverInterface
             $authToken,
             $contract->getOptionsAttribute()['contractList']);
         $contractOptions['singleAccount'] = $singleAcc[0];
-        $registerOrder->setDescription($singleAcc);
+        $registerOrder->setDescription($singleAcc[0]);
         $registerOrder->setMerchantOrderNumber($singleAcc[0]);
 
         $registerOrder->setExpirationDate(
@@ -224,10 +222,7 @@ class AlfaMskDriver implements DriverInterface
 
         $response = $registerOrder->registerOrder();
 
-        throw_if(
-            empty($response->get('orderId')),
-            new AlphaException('Missing orderId')
-        );
+        throw_if(empty($response->get('orderId')), new AlphaException('Missing orderId'));
 
         $contractOptions['orderId'] = $response->get('orderId');
         $contract->setOptionsAttribute($contractOptions);
@@ -329,6 +324,26 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
+     * @param Contracts $contract
+     * @return array
+     * @throws ReninsException
+     */
+    protected function getFilePolice(Contracts $contract): array
+    {
+        $objects = $contract->objects;
+        $files = [];
+        foreach ($objects as $object) {
+            $filePathObject = self::createFilePath($contract, $object->id);
+            if (!$this->isFilePoliceExitst($contract, $filePathObject)) {
+                $this->printPolicy($contract, false, true);
+            }
+            $files[] = public_path($filePathObject);
+        }
+
+        return $files;
+    }
+
+    /**
      * @param $authToken
      * @param $upid
      * @param $message
@@ -386,7 +401,7 @@ class AlfaMskDriver implements DriverInterface
         $files = [];
         $merchantService = $this->merchantServices;
         $objects = $contract->objects;
-        $objectIds = $objects->pluck('external_id', 'id');
+        $objectIds = $objects->pluck('integration_id', 'id');
         foreach ($objectIds as $id => $extId) {
             $filePath = self::createFilePath($contract, $id);
             if ($this->isFilePoliceExitst($contract, $filePath)) {
@@ -445,6 +460,13 @@ class AlfaMskDriver implements DriverInterface
      */
     public function payAccept(Contracts $contract): void
     {
-        return;
+        $this->getStatus($contract);
+
+        if ($contract->status != Contracts::STATUS_CONFIRMED) {
+            throw new AlphaException(
+                'Платеж не выполнен.',
+                HttpResponse::HTTP_UNPROCESSABLE_ENTITY
+            );
+        }
     }
 }

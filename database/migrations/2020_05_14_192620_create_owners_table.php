@@ -17,8 +17,8 @@ class CreateOwnersTable extends Migration
             $table->string('code')->nullable();
             $table->string('name')->nullable();
             $table->string('uw_login')->nullable();
-            $table->softDeletes();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

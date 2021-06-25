@@ -10,8 +10,8 @@ use Illuminate\Validation\Rule;
  *     schema="CreatePolicyRequest",
  *     @OA\Property(property="programCode", type="string", example="RENSINS_MORTGAGE_002_01", description="Код программы страхования"),
  *     @OA\Property(property="ownerCode", type="string", example="STRAHOVKA", description="Код канала, откуда идут запросы для методов"),
- *     @OA\Property(property="activeFrom", type="date", example="2021-06-18", description="Дата начала действия договора страхования"),
- *     @OA\Property(property="activeTo", type="date", example="2022-06-17", description="Дата окончания действия договора страхования"),
+ *     @OA\Property(property="activeFrom", type="date", example="2021-07-18", description="Дата начала действия договора страхования"),
+ *     @OA\Property(property="activeTo", type="date", example="2022-07-17", description="Дата окончания действия договора страхования"),
  *     @OA\Property(property="remainingDebt", type="integer", example=100000, description="Страховая сумма"),
  *     @OA\Property(property="mortgageAgreementNumber", type="string", example="100000", description="Номер ипотечного договора"),
  *     @OA\Property(property="isOwnership", type="boolean", example=1, description="Указатель на наличие в собственности"),
@@ -37,7 +37,7 @@ use Illuminate\Validation\Rule;
  *     description="Страхование имущества",
  *     @OA\Property(property="type",  type="string", example="flat", description="Тип помещения"),
  *     @OA\Property(property="buildYear",  type="integer", example="2000", description="Год постройки"),
- *     @OA\Property(property="isWooden",  type="boolean", example=1, description="Наличие деревянных перекрытий"),
+ *     @OA\Property(property="isWooden",  type="boolean", example=0, description="Наличие деревянных перекрытий"),
  *     @OA\Property(property="area",  type="float", example="55.3", description="Площадь"),
  *     @OA\Property(property="state",  type="string", example="Московская область", description="Регион"),
  *     @OA\Property(property="city",  type="string", example="Москва", description="Город"),
@@ -126,14 +126,14 @@ class CreatePolicyRequest extends Request
     public function rules()
     {
         return [
-            "programCode" => ['required','string'],
-            'activeFrom' => ['required', 'date'],
-            'activeTo' => ['date'],
+            'programCode' => ['required', 'string', 'exists:programs,program_code'],
+            'activeFrom' => ['required', 'date', 'after_or_equal:today'],
+            'activeTo' => ['date', 'after:today'],
             'ownerCode' => ['string'],
-            "remainingDebt" => ['required','int'],
-            "mortgageAgreementNumber" => ['required','string'],
-            "isOwnership" => ['required','boolean'],
-            "mortgageeBank" => ['string'],
+            'remainingDebt' => ['required','int'],
+            'mortgageAgreementNumber' => ['required','string'],
+            'isOwnership' => ['required','boolean'],
+            'mortgageeBank' => ['string'],
             'objects' => ['required','array'],
             'subject' => ['required','array'],
 
@@ -182,8 +182,8 @@ class CreatePolicyRequest extends Request
                 'min:0',
                 'max:1'
             ],
-            'objects.life.weight' => ['numeric','max:255'],
-            'objects.life.height' => ['numeric','max:255'],
+            'objects.life.weight' => ['numeric','max:255', 'min:0'],
+            'objects.life.height' => ['numeric','max:255', 'min:0'],
             'objects.life.phone' => [
                 Rule::requiredIf(fn() => \Arr::exists(request()->json()->all(), 'objects.life')),
                 'string',

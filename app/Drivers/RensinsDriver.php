@@ -14,7 +14,7 @@ use App\Drivers\Traits\PrintPdfTrait;
 use App\Drivers\Traits\ZipTrait;
 use App\Exceptions\Drivers\ReninsException;
 use App\Models\Contracts;
-use App\Models\Programs;
+use App\Models\Program;
 use Arr;
 use File;
 use Illuminate\Config\Repository;
@@ -27,7 +27,7 @@ use Throwable;
  * Class RensinsDriver
  * @package App\Drivers
  */
-class RensinsDriver implements DriverInterface
+class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
 {
     use DriverTrait {
         DriverTrait::getStatus as getTStatus;
@@ -44,6 +44,8 @@ class RensinsDriver implements DriverInterface
 
     /** @var ReninsClientService */
     protected ReninsClientService $httpClient;
+
+    protected ?Program $program = null;
 
     /**
      * RensinsDriver constructor.
@@ -153,11 +155,15 @@ class RensinsDriver implements DriverInterface
 
     /**
      * @param $programCode
-     * @return Programs
+     * @return Program
      */
-    public function getProgram(string $programCode): Programs
+    public function getProgram(string $programCode): Program
     {
-        return Programs::whereProgramCode($programCode)->firstOrFail();
+        if (!$this->program) {
+            $this->program = Program::where('program_code', $programCode)->firstOrFail();
+        }
+
+        return $this->program;
     }
 
     /**
@@ -166,7 +172,13 @@ class RensinsDriver implements DriverInterface
      */
     protected function isLive(array $data): bool
     {
-        return !empty($data['objects']['life']);
+        $isLife = $this->getProgram($data['programCode'])->is_life;
+
+        if ($isLife && empty($data['objects']['life'])) {
+            throw new ReninsException('Не заполнены данные для страхования жизни.');
+        }
+
+        return $isLife;
     }
 
     /**
@@ -175,8 +187,14 @@ class RensinsDriver implements DriverInterface
      */
     protected function isProperty(array $data): bool
     {
-        return !empty($data['objects']['property']);
+        $isProperty = $this->getProgram($data['programCode'])->is_property;
+        if ($isProperty && empty($data['objects']['property'])) {
+            throw new ReninsException('Не заполнены данные для страхования имущества.');
+        }
+
+        return $isProperty;
     }
+
 
     /**
      * @param Contracts $contract
@@ -190,7 +208,7 @@ class RensinsDriver implements DriverInterface
                 $result = $this->httpClient->getStatus(
                     collect(
                         [
-                            'policyID' => $contract->objects()->firstOrFail()->external_id
+                            'policyID' => $contract->objects()->firstOrFail()->integration_id
                         ]
                     )
                 );
@@ -358,7 +376,7 @@ class RensinsDriver implements DriverInterface
             $url = $this->httpClient->print(
                 collect(
                     [
-                        'calcID' => $object->external_id,
+                        'calcID' => $object->integration_id,
                         'type' => 'Печать'
                     ]
                 )

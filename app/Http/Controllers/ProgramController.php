@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Filters\ProgramFilter;
 use App\Http\Requests\CreateProgramRequest;
-use App\Models\Programs;
+use App\Models\Program;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProgramController extends BaseController
 {
     public function __construct(ProgramFilter $filter)
     {
-        $this->model = new Programs();
+        $this->model = new Program();
         $this->filter = $filter;
     }
 
@@ -69,14 +70,13 @@ class ProgramController extends BaseController
      *
      * Возвращает список программ с возможностью фильтрации.
      * @param Request $request
-     * @return \Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @return JsonResource
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResource
     {
         /** @var Builder $query */
-        $query = Programs::query();
+        $query = Program::query();
         $this->initRequest($request);
-        $this->setTotalCount(Programs::count());
         if ($insuredSum = $request->get('insuredSum')) {
             $query->where('insured_sum', '>', $insuredSum);
         }
@@ -112,14 +112,14 @@ class ProgramController extends BaseController
      * )
      *
      * @param CreateProgramRequest $request
-     * @return Programs
+     * @return JsonResource
      */
-    public function store(CreateProgramRequest $request)
+    public function store(CreateProgramRequest $request): JsonResource
     {
-        $program = (new Programs())->fill($request->all());
+        $program = (new Program())->fill($request->all());
         $program->save();
 
-        return $program;
+        return self::successResponse($program);
     }
 
 
@@ -150,23 +150,20 @@ class ProgramController extends BaseController
      * )
      * @param CreateProgramRequest $request
      * @param int $id
-     * @return \App\Models\BaseModel
+     * @return JsonResource
      */
-    public function update(CreateProgramRequest $request, $id)
+    public function update(CreateProgramRequest $request, int $id): JsonResource
     {
-        $currentModel = Programs::findOrFail($id);
-        if (!$currentModel) {
-            return null;
-        }
+        $currentModel = Program::findOrFail($id);
         $attributes = $request->all();
-        if (count($attributes) == 0) {
+        if (count($attributes) === 0) {
             $program = $currentModel;
         } else {
             $program = $currentModel->fill($attributes);
             $program->save();
         }
 
-        return $program;
+        return self::successResponse($program);
     }
 
     /**
@@ -191,9 +188,11 @@ class ProgramController extends BaseController
      *     )
      * )
      * @param int $id
-     * @return \Illuminate\Http\Response
+     * @return JsonResource
+     *
+     * @throws \Exception
      */
-    public function destroy($id)
+    public function destroy(int $id): JsonResource
     {
         return parent::destroy($id);
     }

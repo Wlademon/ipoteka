@@ -21,16 +21,6 @@ class PolicyService extends Service
     }
 
     /**
-     * @param Contracts $contract
-     * @return array
-     * @internal param Contracts $contract
-     */
-    public function acceptPayment(Contracts $contract): array
-    {
-        return (new DriverService())->acceptPayment($contract);
-    }
-
-    /**
      * @param $data array
      * @return string
      * @internal param Contracts $contract
