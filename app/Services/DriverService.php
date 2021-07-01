@@ -210,9 +210,9 @@ class DriverService
                 $throwable->getCode()
             );
         }
-        $result->setContractId($model->id);
+        $result->setContractId($model->ext_id);
 
-        return $result->toArray();
+        return array_merge(['id' => $model->id], $result->toArray());
     }
 
     /**
@@ -387,6 +387,7 @@ class DriverService
 
         return [
             'id' => $contract['id'],
+            'contractId' => $contract['ext_id'],
             'subject' => [
                 'email' => $contract->subject_value['email'],
             ],
