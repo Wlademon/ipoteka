@@ -31,6 +31,7 @@ class Company extends BaseModel
         'code',
         'name',
         'isActive',
+        'inn',
     ];
 
     protected $visible = [
@@ -38,6 +39,7 @@ class Company extends BaseModel
         'code',
         'name',
         'isActive',
+        'inn',
     ];
 
     protected $appends = [
