@@ -29,7 +29,7 @@
         "phpunit/phpunit": "^9.5",
         "setasign/fpdi": "^2.3",
         "strahovka/laravel-filterable": "dev-master",
-        "strahovka/payment": "^1.*",
+        "strahovka/payment": "1.*",
         "swagger-api/swagger-ui": "^3.50"
     },
     "config": {
