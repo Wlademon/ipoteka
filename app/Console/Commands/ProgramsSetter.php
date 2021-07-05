@@ -79,6 +79,7 @@ class ProgramsSetter extends Command
                     'code' => $p->companyCode,
                 ], [
                     'name' => $p->companyName,
+                    'inn' => $p->companyInn,
                 ]);
 
                 $program = Program::updateOrCreate([
@@ -104,6 +105,7 @@ class ProgramsSetter extends Command
                 'code' => $p->companyCode,
             ], [
                 'name' => $p->companyName,
+                'inn' => $p->companyInn,
             ]);
 
             $program = Program::updateOrCreate([

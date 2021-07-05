@@ -162,6 +162,13 @@ trait DriverTrait
             'description' => "Оплата за полис {$contract->company->name} №{$contract->id}",
             'amount' => $contract['premium'],
             'merchantOrderNumber' => $invoiceNum,
+            'agent_info' => [
+                'type' => 7, // Хардкод в соттветствии с ТЗ
+            ],
+            'supplier_info' => [
+                'name' => $contract->company->name,
+                'inn' => $contract->company->inn,
+            ],
         ];
         Log::info(__METHOD__ . '. Data for acquiring', [$data]);
         $response = app()->make(PayService::class)->getPayLink($data);
