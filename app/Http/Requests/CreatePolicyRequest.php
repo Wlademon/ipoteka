@@ -126,6 +126,7 @@ class CreatePolicyRequest extends Request
     public function rules()
     {
         return [
+            'contractId' => ['int'],
             'programCode' => ['required', 'string', 'exists:programs,program_code'],
             'activeFrom' => ['required', 'date', 'after_or_equal:today'],
             'activeTo' => ['date', 'after:today'],

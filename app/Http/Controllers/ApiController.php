@@ -136,7 +136,11 @@ class ApiController extends BaseController
     public function getPolicy(Request $request, int $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
-        $contract = Contracts::query()->with(['objects', 'subject'])->findOrFail($contractId);
+
+        $contract = Contracts::query()
+            ->with(['objects', 'subject'])
+            ->where('ext_id', $contractId)
+            ->firstOrFail();
 
         return self::successResponse(new ContractResource($contract));
     }
@@ -176,7 +180,8 @@ class ApiController extends BaseController
     public function getPolicyStatus(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
-        $contract = Contracts::findOrFail($contractId);
+
+        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
 
         return self::successResponse($this->driverService->getStatus($contract));
     }
@@ -224,7 +229,7 @@ class ApiController extends BaseController
     public function getPolicyPayLink(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
-        $contract = Contracts::findOrFail($contractId);
+        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
         try {
             $links = new PayLinks($request->query('successUrl'), $request->query('failUrl'));
             $linkResult = $this->driverService->getPayLink($contract, $links);
@@ -335,7 +340,7 @@ class ApiController extends BaseController
         Log::info("Find Contract with ID: {$contractId}");
         $isSample = filter_var($request->get('sample', false), FILTER_VALIDATE_BOOLEAN);
 
-        $contract = Contracts::findOrFail($contractId);
+        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
         Log::info('Params', [$contract]);
 
         $response = $this->driverService->printPdf($contract, $isSample);
@@ -377,7 +382,7 @@ class ApiController extends BaseController
     public function postPolicySend(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
-        $contract = Contracts::findOrFail($contractId);
+        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
 
         $result = $this->driverService->sendMail($contract);
         Log::info("Response", [$result]);

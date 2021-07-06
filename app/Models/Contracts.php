@@ -83,6 +83,8 @@ class Contracts extends BaseModel
         'isOwnership',
         'mortgageeBank',
         'remainingDebt',
+        'ext_id',
+        'contractId',
     ];
 
     protected $visible = [
@@ -107,6 +109,7 @@ class Contracts extends BaseModel
         'isOwnership',
         'mortgageeBank',
         'remainingDebt',
+        'contractId',
     ];
 
     protected $appends = [
@@ -198,7 +201,12 @@ class Contracts extends BaseModel
 
     public function getContractIdAttribute()
     {
-        return $this->attributes['id'];
+        return $this->attributes['ext_id'];
+    }
+
+    public function setContractIdAttribute($value)
+    {
+        $this->attributes['ext_id'] = $value;
     }
 
     public function getPremiumAttribute()

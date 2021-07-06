@@ -16,6 +16,8 @@ class ContractResource extends \Illuminate\Http\Resources\Json\JsonResource
     public function toArray($request)
     {
         return [
+            'id' => $this->id,
+            'contractId' => $this->ext_id,
             'companyCode' => $this->getCompanyCodeAttribute(),
             'programCode' => $this->getProgramCodeAttribute(),
             'activeFrom' => $this->active_from,
