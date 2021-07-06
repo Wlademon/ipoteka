@@ -83,16 +83,16 @@
     },
     "repositories": [
         {
-            "type": "vcs",
-            "url": "https://gitlab.com/strahovkaru-dev/pkg/laravel-filterable"
-        },
-        {
             "type": "composer",
             "url": "https://larapack.io"
         },
         {
             "type": "vcs",
-            "url": "git@gitlab.com:strahovkaru-dev/pkg/str-laravel-payment.git"
+            "url": "git@gitlab.price-co.ru:strahovka/packages/str-laravel-payment.git"
+        },
+        {
+            "type": "vcs",
+            "url": "git@gitlab.price-co.ru:strahovka/packages/laravel-filterable.git"
         }
     ]
 }
