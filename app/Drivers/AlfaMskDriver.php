@@ -23,11 +23,13 @@ use GuzzleHttp\Client;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
 /**
  * Class AbsolutDriver
+ *
  * @package App\Drivers
  */
 class AlfaMskDriver implements DriverInterface
@@ -41,7 +43,6 @@ class AlfaMskDriver implements DriverInterface
     const POST_POLICY_CREATE_URL = '/msrv/mortgage/partner/calcAndSave';
     const GET_POLICY_STATUS_URL = '/msrv/mortgage/partner/contractStatus';
     const POST_PAYMENT_RECEIPT = '/msrv/payment/receipt/common';
-
     protected string $host;
     protected Client $client;
     protected int $managerId = 0;
@@ -51,19 +52,21 @@ class AlfaMskDriver implements DriverInterface
 
     /**
      * AlfaMskDriver constructor.
-     * @param Repository $repository
-     * @param string $prefix
+     *
+     * @param  Repository  $repository
+     * @param  string      $prefix
+     *
      * @throws Throwable
      */
     public function __construct(Repository $repository, string $prefix = '')
     {
         $this->client = new Client();
-        if (!$repository->get($prefix.'host', false)) {
+        if (!$repository->get($prefix . 'host', false)) {
             throw new AlphaException('Not set host property');
         }
         if (
-        !($repository->get($prefix.'auth.username') && $repository->get($prefix.'auth.pass') &&
-          $repository->get($prefix.'auth.auth_url'))
+        !($repository->get($prefix . 'auth.username') && $repository->get($prefix . 'auth.pass') &&
+          $repository->get($prefix . 'auth.auth_url'))
         ) {
             throw new AlphaException('Not set auth data');
         }
@@ -84,22 +87,35 @@ class AlfaMskDriver implements DriverInterface
     public function calculate(array $data): CalculatedInterface
     {
         $authToken = $this->auth->getToken($this->client)['access_token'];
-
         $calculator = $this->collectData($data);
 
+        Log::info(
+            __METHOD__ . ' расчет полиса',
+            [
+                'request' => $calculator->getData(),
+            ]
+        );
         $result = $this->client->post(
-            $this->host . self::POST_POLICY_URL, [
+            $this->host . self::POST_POLICY_URL,
+            [
                 'headers' => [
-                    'Authorization' => "Bearer {$authToken}"
+                    'Authorization' => "Bearer {$authToken}",
                 ],
-                'json' => $calculator->getData()
+                'json' => $calculator->getData(),
             ]
         );
 
         if ($result->getStatusCode() !== 200) {
-            throw new AlphaException('Error calc');
+            throw new AlphaException('Error calc', Response::HTTP_NOT_ACCEPTABLE);
         }
-        $decodeResult = json_decode($result->getBody()->getContents(), true);
+        $response = $result->getBody()->getContents();
+        Log::info(
+            __METHOD__ . ' расчет окончен',
+            [
+                'response' => $response,
+            ]
+        );
+        $decodeResult = json_decode($response, true);
 
         return new Calculated(
             null,
@@ -109,7 +125,8 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
+     *
      * @return AlphaCalculator
      * @throws Throwable
      */
@@ -142,8 +159,8 @@ class AlfaMskDriver implements DriverInterface
             $calculator->setInsurance();
             $calculator->setPropertyRisk(
                 'Москва',
-                Arr::get($property,'isWooden', false),
-                Arr::get($property,'buildYear')
+                Arr::get($property, 'isWooden', false),
+                Arr::get($property, 'buildYear')
             );
         }
 
@@ -153,20 +170,30 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @param $authToken
      * @param $contractList
+     *
      * @return array
      * @throws Throwable
      */
     protected function createSingleAccount($authToken, $contractList): array
     {
         try {
+            $data = [
+                'contractList' => $contractList,
+            ];
+            Log::info(
+                __METHOD__ . ' Создание единого аккаунта',
+                [
+                    'url' => $this->host . self::POST_PAYMENT_RECEIPT,
+                    'request' => $data,
+                ]
+            );
             $result = $this->client->post(
-                $this->host . self::POST_PAYMENT_RECEIPT, [
+                $this->host . self::POST_PAYMENT_RECEIPT,
+                [
                     'headers' => [
-                        'Authorization' => "Bearer {$authToken}"
+                        'Authorization' => "Bearer {$authToken}",
                     ],
-                    'json' => [
-                        'contractList' => $contractList
-                    ]
+                    'json' => $data,
                 ]
             );
         } catch (Throwable $e) {
@@ -175,6 +202,12 @@ class AlfaMskDriver implements DriverInterface
 
         throw_if($result->getStatusCode() !== 200, new AlphaException('Error create payment'));
         $decodeResult = json_decode($result->getBody()->getContents(), true);
+        Log::info(
+            __METHOD__ . ' Единый аккаунт создан',
+            [
+                'response' => $decodeResult,
+            ]
+        );
 
         return [
             Arr::get($decodeResult, 'id', 0),
@@ -191,8 +224,9 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param Contracts $contract
-     * @param PayLinks $payLinks
+     * @param  Contracts  $contract
+     * @param  PayLinks   $payLinks
+     *
      * @return PayLinkInterface
      * @throws AlphaException
      * @throws Throwable
@@ -208,7 +242,8 @@ class AlfaMskDriver implements DriverInterface
         $registerOrder = $this->merchantServices;
         $singleAcc = $this->createSingleAccount(
             $authToken,
-            $contract->getOptionsAttribute()['contractList']);
+            $contract->getOptionsAttribute()['contractList']
+        );
         $contractOptions['singleAccount'] = $singleAcc[0];
         $registerOrder->setDescription($singleAcc[0]);
         $registerOrder->setMerchantOrderNumber($singleAcc[0]);
@@ -220,18 +255,27 @@ class AlfaMskDriver implements DriverInterface
         $registerOrder->setReturnUrl(url($payLinks->getSuccessUrl()));
         $registerOrder->setFailUrl(url($payLinks->getFailUrl()));
 
+        Log::info(
+            __METHOD__ . ' Получение ссылки на оплату',
+            [
+                'request' => $registerOrder->getData(),
+            ]
+        );
         $response = $registerOrder->registerOrder();
 
         throw_if(empty($response->get('orderId')), new AlphaException('Missing orderId'));
-
+        Log::info(
+            __METHOD__ . ' Ссылка на оплату получена',
+            [
+                'response' => $response->all(),
+            ]
+        );
         $contractOptions['orderId'] = $response->get('orderId');
         $contract->setOptionsAttribute($contractOptions);
         $contract->save();
 
         return new PayLink(
-            $response->get('orderId'),
-            $response->get('formUrl'),
-            $contract->remainingDebt
+            $response->get('orderId'), $response->get('formUrl'), $contract->remainingDebt
         );
     }
 
@@ -252,7 +296,11 @@ class AlfaMskDriver implements DriverInterface
 
         $policy->setInsurerAddress($subject->get('city'), $subject->get('street'));
         $policy->setInsurerEmail($subject->get('email'));
-        $policy->setInsurerFullName($subject->get('firstName'), $subject->get('lastName'), $subject->get('middleName'));
+        $policy->setInsurerFullName(
+            $subject->get('firstName'),
+            $subject->get('lastName'),
+            $subject->get('middleName')
+        );
         $policy->setInsurerPersonDocument(
             (new Carbon($subject->get('docIssueDate')))->format('Y-m-d'),
             $subject->get('docNumber'),
@@ -260,21 +308,48 @@ class AlfaMskDriver implements DriverInterface
         );
         $policy->setInsurerPhone($subject->get('phone'));
         if ($property->isNotEmpty()) {
-            $policy->setAddress($property->only(['city', 'state', 'street', 'house', 'block', 'apartment'])->join(','));
+            $policy->setAddress(
+                $property->only(['city', 'state', 'street', 'house', 'block', 'apartment'])->join(
+                    ','
+                )
+            );
             $policy->setAddressSquare($property->get('area'));
         }
         $policy->setDateCreditDoc((new Carbon())->format('Y-m-d'));
         $policy->setNumberCreditDoc($dataCollect->get('mortgageAgreementNumber')); //?
-
+        Log::info(
+            __METHOD__ . ' Создание полиса',
+            [
+                'request' => $policy->getData(),
+            ]
+        );
         $decodePostResult = $this->getDataFromCreatePolicy($authToken, $policy);
+        Log::info(
+            __METHOD__ . ' Полис создан',
+            [
+                'response' => $decodePostResult,
+            ]
+        );
         $contractOptions['upid'] = Arr::get($decodePostResult, 'upid');
-        $decodeGetResult = $this->getStatusContract($authToken, Arr::get($decodePostResult, 'upid'), 'Error get data from createPolicy');
+        $decodeGetResult = $this->getStatusContract(
+            $authToken,
+            Arr::get($decodePostResult, 'upid'),
+            'Error get data from createPolicy'
+        );
 
         if (Arr::has($decodeGetResult['propertyContract'], 'contractId')) {
-            $contractOptions['contractList'][] = Arr::get($decodeGetResult['propertyContract'], 'contractId', 0);
+            $contractOptions['contractList'][] = Arr::get(
+                $decodeGetResult['propertyContract'],
+                'contractId',
+                0
+            );
         }
         if (Arr::has($decodeGetResult['lifeContract'], 'contractId')) {
-            $contractOptions['contractList'][] = Arr::get($decodeGetResult['lifeContract'], 'contractId', 0);
+            $contractOptions['contractList'][] = Arr::get(
+                $decodeGetResult['lifeContract'],
+                'contractId',
+                0
+            );
         }
         $contract->setOptionsAttribute($contractOptions);
         $contract->save();
@@ -293,6 +368,7 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @param $authToken
      * @param $policy
+     *
      * @return array
      * @throws AlphaException
      */
@@ -300,11 +376,12 @@ class AlfaMskDriver implements DriverInterface
     {
         try {
             $postResult = $this->client->post(
-                $this->host . self::POST_POLICY_CREATE_URL, [
+                $this->host . self::POST_POLICY_CREATE_URL,
+                [
                     'headers' => [
-                        'Authorization' => "Bearer {$authToken}"
+                        'Authorization' => "Bearer {$authToken}",
                     ],
-                    'json' => $policy->getData()
+                    'json' => $policy->getData(),
                 ]
             );
         } catch (Throwable $e) {
@@ -324,7 +401,8 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
+     *
      * @return array
      * @throws ReninsException
      */
@@ -347,6 +425,7 @@ class AlfaMskDriver implements DriverInterface
      * @param $authToken
      * @param $upid
      * @param $message
+     *
      * @return mixed
      * @throws AlphaException
      */
@@ -354,17 +433,24 @@ class AlfaMskDriver implements DriverInterface
     {
         sleep(5);
         $i = 0;
+        Log::info(
+            __METHOD__ . ' Получение статуса сделки',
+            [
+                'upid' => $upid,
+            ]
+        );
         do {
             $i++;
             try {
                 $getResult = $this->client->get(
-                    $this->host . self::GET_POLICY_STATUS_URL, [
+                    $this->host . self::GET_POLICY_STATUS_URL,
+                    [
                         'headers' => [
-                            'Authorization' => "Bearer {$authToken}"
+                            'Authorization' => "Bearer {$authToken}",
                         ],
                         'query' => [
-                            'upid' => $upid
-                        ]
+                            'upid' => $upid,
+                        ],
                     ]
                 );
                 if ($getResult->getStatusCode() !== 200) {
@@ -377,14 +463,18 @@ class AlfaMskDriver implements DriverInterface
             $contracts = Arr::only($response, ['lifeContract', 'propertyContract']);
             $contractIds = array_filter(Arr::pluck($contracts, 'contractId'));
             usleep(500000);
-        } while (
-            (count($contracts) !== count($contractIds))
-           || ($i < ((int)$this->numberIterations))
-        );
+        } while ((count($contracts) !== count($contractIds)) ||
+                 ($i < ((int)$this->numberIterations)));
 
         if (count($contracts) !== count($contractIds)) {
             throw new AlphaException('Misstake contractId');
         }
+        Log::info(
+            __METHOD__ . ' Получен статус сделки',
+            [
+                'response' => $response,
+            ]
+        );
 
         return $response;
     }
@@ -427,7 +517,8 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
+     *
      * @return array
      * @throws Throwable
      */
@@ -440,7 +531,6 @@ class AlfaMskDriver implements DriverInterface
                     $statusOrder = $clientStatusOrder->getOrderStatus(
                         $contract->getOptionsAttribute()['orderId']
                     );
-
                 } catch (Throwable $throwable) {
                     Log::error($throwable->getMessage());
                 }
@@ -456,7 +546,7 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param  Contracts  $contract
      */
     public function payAccept(Contracts $contract): void
     {
@@ -464,8 +554,7 @@ class AlfaMskDriver implements DriverInterface
 
         if ($contract->status != Contracts::STATUS_CONFIRMED) {
             throw new AlphaException(
-                'Платеж не выполнен.',
-                HttpResponse::HTTP_UNPROCESSABLE_ENTITY
+                'Платеж не выполнен.', HttpResponse::HTTP_UNPROCESSABLE_ENTITY
             );
         }
     }
