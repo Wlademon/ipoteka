@@ -12,6 +12,7 @@ use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
 use App\Models\Contract;
 use App\Models\InsuranceObject;
+use App\Models\Payment;
 use App\Models\Program;
 use App\Models\Subject;
 use App\Services\PayService\PayLinks;
@@ -341,13 +342,13 @@ class DriverService
     /**
      * @param Contract $contract
      * @param PaymentService $payService
-     * @param App\Models\Payment $payment
+     * @param Payment $payment
      * @return array
      * @throws App\Exceptions\Services\LogExceptionInterface
      * @throws DriverServiceException
      * @internal param Contracts $contract
      */
-    public function acceptPayment(Contract $contract, PaymentService $payService, App\Models\Payment $payment): array
+    public function acceptPayment(Contract $contract, PaymentService $payService, Payment $payment): array
     {
         $company = $contract->company;
         try {
