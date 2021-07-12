@@ -293,7 +293,9 @@ class ApiController extends BaseController
             Contract::STATUS_DRAFT
         )->firstOrFail();
 
-        return self::successResponse($this->driverService->acceptPayment($contract, $this->payService, $orderId));
+        return self::successResponse(
+            $this->driverService->acceptPayment($contract, $this->payService, $res)
+        );
     }
 
     /**

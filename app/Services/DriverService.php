@@ -339,22 +339,25 @@ class DriverService
     }
 
     /**
-     * @param  Contract  $contract
-     *
+     * @param Contract $contract
+     * @param PaymentService $payService
+     * @param App\Models\Payment $payment
      * @return array
+     * @throws App\Exceptions\Services\LogExceptionInterface
+     * @throws DriverServiceException
      * @internal param Contracts $contract
      */
-    public function acceptPayment(Contract $contract, PayService $payService, string $orderId): array
+    public function acceptPayment(Contract $contract, PaymentService $payService, App\Models\Payment $payment): array
     {
         $company = $contract->company;
         try {
             $driver = $this->getDriverByCode($company->code);
             if ($driver instanceof LocalPaymentDriverInterface) {
-                Log::info("Start check payment status with OrderID: {$orderId}");
-                $status = $payService->getOrderStatus($orderId);
-                Log::info("Status: {$status['status']}");
-                if (empty($status['isPayed'])) {
-                    throw new DriverServiceException('Полис не оплачен.');
+                Log::info("Start check payment status with OrderID: {$payment->orderId}");
+                $status = $payService->orderStatus($payment);
+                Log::info("Status: {$status}");
+                if ($status !== Contract::STATUS_CONFIRMED) {
+                    throw new DriverServiceException('Полис не оплачен.', Response::HTTP_PAYMENT_REQUIRED);
                 }
                 $contract->status = Contract::STATUS_CONFIRMED;
             }
