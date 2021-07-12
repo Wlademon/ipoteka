@@ -5,6 +5,7 @@ namespace App\Drivers\Traits;
 use App\Drivers\DriverResults\PayLink;
 use App\Mail\Email;
 use App\Models\Contract;
+use App\Services\PaymentService;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use Exception;
@@ -136,51 +137,20 @@ trait DriverTrait
      * @param  PayLinks   $links
      *
      * @return PayLink
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException|\App\Exceptions\Services\PaymentServiceException
      */
     public function getPayLink(Contract $contract, PayLinks $links): PayLink
     {
-        $invoiceNum = sprintf(
-            '%s%03d%06d/%s',
-            'NS',
-            $contract->company_id,
-            $contract->id,
-            Carbon::now()->format('His')
+        $response = app()->make(PaymentService::class)->payLink($contract, [
+            'success' => config('mortgage.str_host') . $links->getSuccessUrl(),
+            'fail' => config('mortgage.str_host') . $links->getFailUrl(),
+        ]);
+
+        return new PayLink(
+            $response['orderId'],
+            $response['url'],
+            $response['invoiceNum']
         );
-
-        if (in_array(config('app.env'), ['local', 'testing'])) {
-            $invoiceNum = time() % 100 . $invoiceNum;
-        }
-
-        $data = [
-            'successUrl' => config('mortgage.str_host') . $links->getSuccessUrl(),
-            'failUrl' => config('mortgage.str_host') . $links->getFailUrl(),
-            'phone' => str_replace([' ', '-'], '', $contract['subject']['phone']),
-            'fullName' => $contract['subject_fullname'],
-            'passport' => $contract['subject_passport'],
-            'name' => "Полис по Ипотека №{$contract->id}",
-            'description' => "Оплата за полис {$contract->company->name} №{$contract->id}",
-            'amount' => $contract['premium'],
-            'merchantOrderNumber' => $invoiceNum,
-            'agent_info' => [
-                'type' => 7, // Хардкод в соттветствии с ТЗ
-            ],
-            'supplier_info' => [
-                'name' => $contract->company->name,
-                'inn' => $contract->company->inn,
-            ],
-        ];
-        Log::info(__METHOD__ . '. Data for acquiring', [$data]);
-        $response = app()->make(PayService::class)->getPayLink($data);
-
-        if (isset($response->errorCode) && $response->errorCode !== 0) {
-            throw new Exception(
-                $response->errorMessage . ' (code: ' . $response->errorCode . ')',
-                Response::HTTP_NOT_ACCEPTABLE
-            );
-        }
-
-        return new PayLink($response->orderId, $response->formUrl, $invoiceNum);
     }
 
     /**

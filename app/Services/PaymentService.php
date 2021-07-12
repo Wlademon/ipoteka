@@ -81,7 +81,8 @@ class PaymentService
 
         return [
             'url' => Arr::get($resp, 'payLink'),
-            'orderId' => Arr::get($resp, 'orderId')
+            'orderId' => Arr::get($resp, 'orderId'),
+            'invoiceNum' => Arr::get($resp, 'invoiceNum'),
         ];
     }
 
