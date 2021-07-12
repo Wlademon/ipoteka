@@ -10,7 +10,7 @@ namespace App\Models;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property-read Contracts $contracts
+ * @property-read Contract $contracts
  * @mixin \Eloquent
  */
 class Subject extends BaseModel
@@ -25,7 +25,7 @@ class Subject extends BaseModel
 
     public function contract()
     {
-        return $this->belongsTo(Contracts::class, 'contract_id');
+        return $this->belongsTo(Contract::class, 'contract_id');
     }
 
     public function setValueAttribute($value)

@@ -91,7 +91,7 @@ class Program extends BaseModel
 
     public function contracts()
     {
-        return $this->hasMany(Contracts::class);
+        return $this->hasMany(Contract::class);
     }
 
     public function owners()

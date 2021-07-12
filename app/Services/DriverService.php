@@ -10,8 +10,8 @@ use App\Drivers\LocalPaymentDriverInterface;
 use App\Exceptions\Drivers\DriverExceptionInterface;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
-use App\Models\Contracts;
-use App\Models\Objects;
+use App\Models\Contract;
+use App\Models\InsuranceObject;
 use App\Models\Program;
 use App\Models\Subject;
 use App\Services\PayService\PayLinks;
@@ -82,12 +82,12 @@ class DriverService
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param  PayLinks   $links
      *
      * @return PayLinkInterface
      */
-    public function getPayLink(Contracts $contract, PayLinks $links): PayLinkInterface
+    public function getPayLink(Contract $contract, PayLinks $links): PayLinkInterface
     {
         return $this->getDriverByCode($contract->program->company->code)->getPayLink(
             $contract,
@@ -164,7 +164,7 @@ class DriverService
     public function savePolicy(array $data): array
     {
         DB::beginTransaction();
-        $model = new Contracts();
+        $model = new Contract();
         $model->fill($data);
         $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
         try {
@@ -219,15 +219,15 @@ class DriverService
      * @param  Collection  $collection
      * @param  string      $type
      *
-     * @return Objects|null
+     * @return InsuranceObject|null
      */
-    protected function getObjectModel(Collection $collection, string $type): ?Objects
+    protected function getObjectModel(Collection $collection, string $type): ?InsuranceObject
     {
         $object = $collection->get($type);
         if (!$object) {
             return $object;
         }
-        $model = new Objects();
+        $model = new InsuranceObject();
         $model->product = $type;
         $model->value = $object;
 
@@ -235,7 +235,7 @@ class DriverService
     }
 
     /**
-     * @param  Contracts    $contract
+     * @param  Contract    $contract
      * @param  bool         $sample
      * @param  bool         $reset
      * @param  string|null  $filePath
@@ -244,13 +244,13 @@ class DriverService
      * @throws DriverServiceException
      */
     public function printPdf(
-        Contracts $contract,
+        Contract $contract,
         bool $sample,
         bool $reset = false,
         ?string $filePath = null
     ) {
         $this->getStatus($contract);
-        if (!$sample && $contract->status !== Contracts::STATUS_CONFIRMED) {
+        if (!$sample && $contract->status !== Contract::STATUS_CONFIRMED) {
             throw (new DriverServiceException(
                 'Невозможно сгенерировать полис, т.к. полис в статусе "ожидание оплаты"',
                 HttpResponse::HTTP_UNPROCESSABLE_ENTITY
@@ -282,14 +282,14 @@ class DriverService
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return array
      * @throws DriverServiceException
      */
-    public function sendMail(Contracts $contract): array
+    public function sendMail(Contract $contract): array
     {
-        if ($contract->status == Contracts::STATUS_CONFIRMED) {
+        if ($contract->status == Contract::STATUS_CONFIRMED) {
             $code = HttpResponse::HTTP_INTERNAL_SERVER_ERROR;
             try {
                 $driver = $this->getDriverByCode($contract->program->company->code);
@@ -312,11 +312,11 @@ class DriverService
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @throws DriverServiceException
      */
-    public function statusConfirmed(Contracts $contract): void
+    public function statusConfirmed(Contract $contract): void
     {
         try {
             $this->getDriverByCode($contract->program->company->code)->payAccept($contract);
@@ -339,12 +339,12 @@ class DriverService
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return array
      * @internal param Contracts $contract
      */
-    public function acceptPayment(Contracts $contract, PayService $payService, string $orderId): array
+    public function acceptPayment(Contract $contract, PayService $payService, string $orderId): array
     {
         $company = $contract->company;
         try {
@@ -356,7 +356,7 @@ class DriverService
                 if (empty($status['isPayed'])) {
                     throw new DriverServiceException('Полис не оплачен.');
                 }
-                $contract->status = Contracts::STATUS_CONFIRMED;
+                $contract->status = Contract::STATUS_CONFIRMED;
             }
             if ($driver instanceof LocalDriverInterface) {
                 $params = [
@@ -395,12 +395,12 @@ class DriverService
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return array
      * @throws DriverServiceException
      */
-    public function getStatus(Contracts $contract): array
+    public function getStatus(Contract $contract): array
     {
         try {
             return $this->getDriverByCode($contract->program->company->code)->getStatus($contract);

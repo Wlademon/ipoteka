@@ -13,7 +13,7 @@ use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\PrintPdfTrait;
 use App\Drivers\Traits\ZipTrait;
 use App\Exceptions\Drivers\ReninsException;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Models\Program;
 use Arr;
 use File;
@@ -197,13 +197,13 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
 
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @return array
      * @throws Throwable
      */
-    public function getStatus(Contracts $contract): array
+    public function getStatus(Contract $contract): array
     {
-        if ($contract->status !== Contracts::STATUS_CONFIRMED) {
+        if ($contract->status !== Contract::STATUS_CONFIRMED) {
             try {
                 $result = $this->httpClient->getStatus(
                     collect(
@@ -218,7 +218,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
             }
 
             if ($result === self::ISSUE_SUCCESSFUL) {
-                $contract->status = Contracts::STATUS_CONFIRMED;
+                $contract->status = Contract::STATUS_CONFIRMED;
                 $contract->saveOrFail();
             }
         }
@@ -229,7 +229,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     /**
      * @inheritDoc
      */
-    public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
+    public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface
     {
         $calc = $this->calculate($data);
 
@@ -273,14 +273,14 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param array $data
      * @param float $paySum
      * @param bool $life
      * @return ReninsCreateCollector
      */
     protected function collectCreateData(
-        Contracts $contract,
+        Contract $contract,
         array $data,
         float $paySum,
         bool $life = false
@@ -334,11 +334,11 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @return array
      * @throws ReninsException
      */
-    protected function getFilePolice(Contracts $contract): array
+    protected function getFilePolice(Contract $contract): array
     {
         $objects = $contract->objects;
         $files = [];
@@ -357,12 +357,12 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
      * @inheritDoc
      */
     public function printPolicy(
-        Contracts $contract,
+        Contract $contract,
         bool $sample,
         bool $reset,
         ?string $filePath = null
     ) {
-        if ($contract->status !== Contracts::STATUS_CONFIRMED) {
+        if ($contract->status !== Contract::STATUS_CONFIRMED) {
             throw new ReninsException('Status is not confirmed!');
         }
         $filesOut = [];
@@ -400,11 +400,11 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param $objectId
      * @return string
      */
-    protected static function createFilePath(Contracts $contract, $objectId): string
+    protected static function createFilePath(Contract $contract, $objectId): string
     {
         $filePathObject = self::gefaultFileName($contract);
         $filePathObjectArray = explode('.', $filePathObject);
@@ -418,7 +418,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     /**
      * @inheritDoc
      */
-    public function payAccept(Contracts $contract): void
+    public function payAccept(Contract $contract): void
     {
         return;
     }

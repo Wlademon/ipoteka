@@ -15,7 +15,7 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property \Illuminate\Support\Carbon|null $createdAt
  * @property \Illuminate\Support\Carbon|null $updatedAt
  * @property \Illuminate\Support\Carbon|null $deletedAt
- * @property-read Contracts                  $contracts
+ * @property-read Contract                  $contracts
  * @mixin \Eloquent
  */
 class Payment extends BaseModel
@@ -42,7 +42,7 @@ class Payment extends BaseModel
 
     public function contract()
     {
-        return $this->belongsTo('App\Models\Contracts', 'contract_id', 'id');
+        return $this->belongsTo('App\Models\Contract', 'contract_id', 'id');
     }
 
     public function getContractIdAttribute()
@@ -60,7 +60,7 @@ class Payment extends BaseModel
         return $this->attributes['invoice_num'];
     }
 
-    public static function savePayment(PayLinkInterface $payLink, Contracts $contract): void
+    public static function savePayment(PayLinkInterface $payLink, Contract $contract): void
     {
         $payment = self::query()->where('contract_id', '=', $contract->id)->updateOrCreate(
             ['contract_id' => $contract->id],

@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Drivers\DriverInterface;
 use App\Mail\Email;
-use App\Models\Contracts;
+use App\Models\Contract;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Mail;
 class MailPoliceService
 {
     /**
-     * @var Contracts
+     * @var Contract
      */
     protected $contract;
 
@@ -25,12 +25,12 @@ class MailPoliceService
     protected $driver;
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param DriverInterface $driver
      * @param false $isRebuild
      * @return bool
      */
-    public function send(Contracts $contract, DriverInterface $driver, $isRebuild = false)
+    public function send(Contract $contract, DriverInterface $driver, $isRebuild = false)
     {
         $this->contract = $contract;
         $this->driver = $driver;

@@ -10,7 +10,7 @@ use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\PrintPdfTrait;
 use App\Exceptions\Drivers\SberinsException;
 use App\Helpers\Helper;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Models\Program;
 use Arr;
 use Throwable;
@@ -44,13 +44,13 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param  array      $data
      *
      * @return CreatedPolicyInterface
      * @throws \App\Exceptions\Services\PolicyServiceException
      */
-    public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
+    public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface
     {
         $propertyPremium = $this->calculate($data)->getPropertyPremium();
         $contract->premium = $propertyPremium;
@@ -69,7 +69,7 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param  bool  $sample
      * @param  bool  $reset
      * @param  string|null  $filePath
@@ -77,7 +77,7 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
      * @return string
      */
     public function printPolicy(
-        Contracts $contract,
+        Contract $contract,
         bool $sample,
         bool $reset = false,
         ?string $filePath = null
@@ -98,9 +98,9 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      */
-    public function payAccept(Contracts $contract): void
+    public function payAccept(Contract $contract): void
     {
         return;
     }
@@ -129,11 +129,11 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return array
      */
-    protected function getDataForPolicyNumber(Contracts $contract): array
+    protected function getDataForPolicyNumber(Contract $contract): array
     {
         return [
             'product_code' => 'mortgage',

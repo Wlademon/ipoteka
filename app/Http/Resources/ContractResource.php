@@ -2,13 +2,13 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Contracts;
-use App\Models\Objects;
+use App\Models\Contract;
+use App\Models\InsuranceObject;
 
 /**
  * Class ContractResource
  * @package App\Http\Resources
- * @mixin Contracts
+ * @mixin Contract
  */
 class ContractResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
@@ -30,7 +30,7 @@ class ContractResource extends \Illuminate\Http\Resources\Json\JsonResource
             'premium' => $this->premium,
             'status' => $this->status,
             'subject' => $this->subject->getValueAttribute(),
-            'objects' => Objects::contractObjects($this->id)
+            'objects' => InsuranceObject::contractObjects($this->id)
         ];
     }
 }

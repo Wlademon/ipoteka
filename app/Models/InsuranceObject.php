@@ -12,11 +12,13 @@ use Illuminate\Support\Arr;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property-read Contracts                  $contracts
+ * @property-read Contract                  $contracts
  * @mixin \Eloquent
  */
-class Objects extends BaseModel
+class InsuranceObject extends BaseModel
 {
+    protected $table = 'objects';
+
     const TYPE_PROPERTY = 'property';
     const TYPE_LIFE = 'life';
     const PROPERY_TYPE_FIAT = 'flat';
@@ -55,7 +57,7 @@ class Objects extends BaseModel
 
     public function contract()
     {
-        return $this->belongsTo(Contracts::class, 'contract_id');
+        return $this->belongsTo(Contract::class, 'contract_id');
     }
 
     public function setValueAttribute($value)
@@ -80,7 +82,7 @@ class Objects extends BaseModel
     public static function contractObjects($contractId)
     {
         return self::query()->where('contract_id', '=', $contractId)->get()->keyBy('product')->map(
-                function (Objects $object)
+                function (InsuranceObject $object)
                 {
                     $val = $object->getValueAttribute();
                     $val = Arr::add($val, 'policyNumber', $object->number);

@@ -17,7 +17,7 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property-read \App\Models\Contracts[] $contracts
+ * @property-read \App\Models\Contract[] $contracts
  * @property-read int|null $policies_count
  * @mixin Eloquent
  */
@@ -50,7 +50,7 @@ class Company extends BaseModel
 
     public function contracts()
     {
-        return $this->hasMany(Contracts::class);
+        return $this->hasMany(Contract::class);
     }
 
     public function programs()

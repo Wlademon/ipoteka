@@ -38,5 +38,6 @@ return [
         'agentContractId' => env('SC_ALFA_AGENT_CONTRACT_ID', '6941313'),
         'managerId' => env('SC_ALFA_AGENT_MANAGER_ID', '52540865'),
         'numberIterations' => env('METHOD_ALFA_NUMBER_ITERATIONS_GET_STATUS_CONTRACT', 5)
-    ]
+    ],
+    'mercuriusHost' => env('MERCURIUS_HOST', 'http://mercurius.stage.strahovka.ru/'),
 ];
