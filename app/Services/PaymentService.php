@@ -59,7 +59,7 @@ class PaymentService
             ],
             'items' => [
                 [
-                    'id' => $contract->extId,
+                    'id' => $contract->id,
                     'name' => sprintf('Оплата за полис "%s"', $contract->program->programName),
                     'code' => 1,
                     'measure' => 'полис',
