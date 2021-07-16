@@ -38,9 +38,7 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
             Arr::get($data, 'objects.property.isWooden'),
         );
 
-        return new Calculated(
-            null, null, $propertyInsurancePremium
-        );
+        return new Calculated($data['contractId'] ?? null, null, $propertyInsurancePremium);
     }
 
     /**
