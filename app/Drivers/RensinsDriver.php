@@ -87,7 +87,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
         $propSum = array_sum(Arr::pluck($propRisks, 'insPrem'));
         $lifeSum = array_sum(Arr::pluck($lifeRisks, 'insPrem'));
 
-        return new Calculated(null, $lifeSum, $propSum);
+        return new Calculated($data['contractId'] ?? null, $lifeSum, $propSum);
     }
 
     /**
