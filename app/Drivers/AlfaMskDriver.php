@@ -118,7 +118,7 @@ class AlfaMskDriver implements DriverInterface
         $decodeResult = json_decode($response, true);
 
         return new Calculated(
-            null,
+            $data['contractId'] ?? null,
             Arr::get($decodeResult, 'lifePremium', 0),
             Arr::get($decodeResult, 'propertyPremium', 0)
         );

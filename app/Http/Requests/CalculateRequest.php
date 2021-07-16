@@ -53,6 +53,7 @@ class CalculateRequest extends Request
             'isOwnership' => ['required', 'boolean'],
             'mortgageeBank' => ['required', 'string'],
             'objects' => ['required', 'array', 'min:1'],
+            'contractId' => ['integer'],
 
             'objects.life' => ['required_without:objects.property'],
             'objects.life.birthDate' => ['required_with:objects.life', 'date', 'before_or_equal:-18 years'],
