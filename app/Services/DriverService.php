@@ -388,7 +388,7 @@ class DriverService
         return [
             'id' => $contract['id'],
             'contractId' => $contract['ext_id'],
-            'premium' => $contract->premium,
+            'premium' => $contract['premium'],
             'subject' => [
                 'email' => $contract->subject_value['email'],
             ],
