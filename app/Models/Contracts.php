@@ -19,7 +19,7 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property int $status
  * @property string $statusText
  * @property int $insured_sum
- * @property int $premium
+ * @property float $premium
  * @property int $integration_id
  * @property array|null $calcCoeff
  * @property \Illuminate\Support\Carbon|null $active_from
