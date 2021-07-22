@@ -10,7 +10,6 @@ namespace App\Http\Requests;
  * @OA\Property(property="code", type="string", example="INGOS", description="Код компании"),
  * @OA\Property(property="name", type="string", example="Ингос страхование", description="Название программы"),
  * @OA\Property(property="isActive", type="boolean", example=1, description="Флаг активности"),
-
  * )
  */
 

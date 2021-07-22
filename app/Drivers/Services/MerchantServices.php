@@ -292,6 +292,14 @@ class MerchantServices
 
             $resp = $soap->__getLastRequestHeaders();
         } catch (Throwable $e) {
+            Log::info(
+                __METHOD__ . ' Получение ссылки на оплату: ошибка',
+                [
+                    'request' => $soap->__getLastRequest(),
+                    'response' => $soap->__getLastResponse(),
+                    'headers' => $soap->__getLastResponseHeaders(),
+                ]
+            );
             throw new AlphaException($e->getMessage(), $e->getCode(), $e);
         }
 
