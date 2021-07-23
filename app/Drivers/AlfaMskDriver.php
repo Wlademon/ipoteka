@@ -39,10 +39,10 @@ class AlfaMskDriver implements DriverInterface
     }
     use PrintPdfTrait;
 
-    const POST_POLICY_URL = '/msrv/mortgage/partner/calc';
-    const POST_POLICY_CREATE_URL = '/msrv/mortgage/partner/calcAndSave';
-    const GET_POLICY_STATUS_URL = '/msrv/mortgage/partner/contractStatus';
-    const POST_PAYMENT_RECEIPT = '/msrv/payment/receipt/common';
+    const POST_POLICY_URL = '/mortgage/partner/calc';
+    const POST_POLICY_CREATE_URL = '/mortgage/partner/calcAndSave';
+    const GET_POLICY_STATUS_URL = '/mortgage/partner/contractStatus';
+    const POST_PAYMENT_RECEIPT = '/payment/receipt/common';
     protected string $host;
     protected Client $client;
     protected int $managerId = 0;
@@ -77,7 +77,7 @@ class AlfaMskDriver implements DriverInterface
             $repository->get($prefix . 'auth.auth_url')
         );
         $this->host = $repository->get($prefix . 'host');
-        $this->merchantServices = new MerchantServices($this->host);
+        $this->merchantServices = new MerchantServices($repository->get($prefix . 'merchan_host'));
     }
 
     /**
@@ -197,6 +197,15 @@ class AlfaMskDriver implements DriverInterface
                 ]
             );
         } catch (Throwable $e) {
+            Log::error(__METHOD__ . ' Ошибка при создании единого аккаунта', [
+                'headers' => [
+                    'Authorization' => "Bearer {$authToken}",
+                ],
+                'json' => $data,
+                'message' => $e->getMessage(),
+                'code' => $e->getCode(),
+                'class' => get_class($e)
+            ]);
             throw new AlphaException($e->getMessage());
         }
 

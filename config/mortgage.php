@@ -25,7 +25,7 @@ return [
         'auth' => [
             'username' => env('SC_ALFA_AUTH_USERNAME', 'E_PARTNER'),
             'pass' => env('SC_ALFA_AUTH_PASS', 'ALFAE313'),
-            'auth_url' => env('SC_ALFA_AUTH_URL', 'https://b2b-test2.alfastrah.ru/msrv/oauth/token?'),
+            'auth_url' => env('SC_ALFA_AUTH_URL', 'https://b2b-test2.alfastrah.ru/msrv_dev/oauth/token?'),
         ],
         'merchant' => [
             'wsdl' => env('SOAP_MERCHANT_SERVICE_WSDL', 'https://b2b-test2.alfastrah.ru/cxf/partner/MerchantServices?wsdl'),
@@ -34,7 +34,8 @@ return [
             'contract_wsdl' => env('SOAP_MS_GET_CONTRACT_SIGNED_WSDL', 'https://b2b-test2.alfastrah.ru/cxf/partner/GetContractSigned?wsdl'),
             'user_profile' => env('MS_REGISTER_USER_PROFILE', 'https://www.alfastrah.ru'),
         ],
-        'host' => env('SC_ALFA_HOST', 'https://b2b-test2.alfastrah.ru'),
+        'host' => env('SC_ALFA_HOST', 'https://b2b-test2.alfastrah.ru/msrv_dev'),
+        'merchan_host' => env('SC_ALFA_HOST_MERCHANT', 'https://b2b-test2.alfastrah.ru'),
         'agentContractId' => env('SC_ALFA_AGENT_CONTRACT_ID', '6941313'),
         'managerId' => env('SC_ALFA_AGENT_MANAGER_ID', '52540865'),
         'numberIterations' => env('METHOD_ALFA_NUMBER_ITERATIONS_GET_STATUS_CONTRACT', 5)
