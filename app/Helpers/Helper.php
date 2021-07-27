@@ -416,6 +416,9 @@ class Helper
                 $request->cookie('afclick'),
                 $request->cookie('admitad_uid'),
                 $request->cookie('adsbalance_id'),
+                $request->cookie('subid1'),
+                $request->cookie('subid2'),
+                $request->cookie('subid3'),
             )
         );
 
