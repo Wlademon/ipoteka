@@ -104,11 +104,11 @@ class DriverService
     public function calculate($data): array
     {
         try {
+
             $program = Program::whereProgramCode($data['programCode'])
                 ->with('company')
                 ->firstOrFail();
             $this->minStartValidator($program, $data);
-
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(

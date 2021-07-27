@@ -1,5 +1,6 @@
 <?php
 
+use App\Drivers\AbsoluteDriver;
 use App\Drivers\AlfaMskDriver;
 use App\Drivers\RensinsDriver;
 use App\Drivers\SberinsDriver;
@@ -14,6 +15,7 @@ return [
         'rensins' => RensinsDriver::class,
         'alfa_msk' => AlfaMskDriver::class,
         'sberins' => SberinsDriver::class,
+        'absolut_77' => AbsoluteDriver::class,
     ],
     'ccMailNotification' => env('CC_MAIL_NOTIFICATION', 'valentin.lukyanov@strahovka.ru'),
     'rensins' => [

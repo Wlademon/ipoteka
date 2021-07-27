@@ -31,9 +31,9 @@
         "strahovka/laravel-filterable": "dev-master",
         "strahovka/payment": "1.*",
         "swagger-api/swagger-ui": "^3.50",
-	  "ext-json": "*",
-	  "ext-soap": "*"
-	},
+        "ext-json": "*",
+        "ext-soap": "*"
+    },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
@@ -90,11 +90,11 @@
         },
         {
             "type": "vcs",
-            "url": "git@gitlab.price-co.ru:strahovka/packages/str-laravel-payment.git"
+            "url": "git@gitlab.com:strahovkaru-dev/pkg/str-laravel-payment.git"
         },
         {
             "type": "vcs",
-            "url": "git@gitlab.price-co.ru:strahovka/packages/laravel-filterable.git"
+            "url": "git@gitlab.com:strahovkaru-dev/pkg/laravel-filterable.git"
         }
     ]
 }
