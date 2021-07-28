@@ -166,6 +166,12 @@ class DriverService
     {
         DB::beginTransaction();
         $model = new Contract();
+
+        Log::info(__METHOD__ . ". getTrafficSource");
+        $data['options'] = array_merge(
+            request()->except(['object', 'subject']),
+            ['trafficSource' => Helper::getTrafficSource(request())]
+        );
         $model->fill($data);
         $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
         try {
@@ -392,6 +398,7 @@ class DriverService
         return [
             'id' => $contract['id'],
             'contractId' => $contract['ext_id'],
+            'premium' => $contract['premium'],
             'subject' => [
                 'email' => $contract->subject_value['email'],
             ],

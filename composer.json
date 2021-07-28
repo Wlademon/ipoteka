@@ -30,7 +30,8 @@
         "setasign/fpdi": "^2.3",
         "strahovka/laravel-filterable": "dev-master",
         "swagger-api/swagger-ui": "^3.50",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ext-soap": "*"
     },
     "config": {
         "optimize-autoloader": true,
