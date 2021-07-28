@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App;
 use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\LocalDriverInterface;
@@ -17,12 +16,12 @@ use App\Models\Program;
 use App\Models\Subject;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
-use DB;
 use Exception;
 use Illuminate\Http\Response;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Strahovka\Payment\PayService;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
