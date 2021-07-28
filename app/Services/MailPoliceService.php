@@ -48,6 +48,7 @@ class MailPoliceService
                 "Cant send email to userEmail={$contract->subject_value['email']} contractId={$contract->id}",
                 [$e->getMessage()]
             );
+
             return false;
         }
 

@@ -124,6 +124,7 @@ class PaymentService
             }
             throw new PaymentServiceException($e->getMessage(), Response::HTTP_BAD_REQUEST);
         }
+
         return json_decode((string) $resp->getBody(), true, 128);
     }
 
