@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Http\Requests\Request;
 use Exception;
-use App\Models\Contracts;
+use App\Models\Contract;
 
 class PolicyService extends Service
 {
@@ -23,6 +23,7 @@ class PolicyService extends Service
     /**
      * @param $data array
      * @return string
+     * @throws \App\Exceptions\Services\DriverServiceException
      * @internal param Contracts $contract
      */
     public function getPolicyPrint($data): string
@@ -37,20 +38,21 @@ class PolicyService extends Service
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @return array
      * @throws Exception
      */
-    public function sendMail(Contracts $contract): array
+    public function sendMail(Contract $contract): array
     {
         return (new DriverService())->sendMail($contract);
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @return array|null
+     * @throws \App\Exceptions\Services\DriverServiceException
      */
-    public function getStatus(Contracts $contract): array
+    public function getStatus(Contract $contract): array
     {
         return (new DriverService())->getStatus($contract);
     }

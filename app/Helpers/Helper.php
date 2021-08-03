@@ -5,7 +5,7 @@ namespace App\Helpers;
 
 use App\Exceptions\Services\PolicyServiceException;
 use App\Models\BaseModel;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Models\Payment;
 use App\Services\SiteService;
 use Exception;
@@ -230,10 +230,10 @@ class Helper
     /**
      * Экспорт полиса в Uwin - вернет номер ContractId
      *
-     * @param Contracts $contract
+     * @param Contract $contract
      * @return mixed|void
      */
-    public static function getUwinContractId(Contracts $contract)
+    public static function getUwinContractId(Contract $contract)
     {
         if (config('app.env') == 'local' || config('app.env') == 'testing') {
             return json_decode(json_encode(['contractId' => '111111']));

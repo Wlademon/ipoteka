@@ -3,7 +3,7 @@
 namespace App\Drivers\Traits;
 
 use Ajaxray\PHPWatermark\Watermark;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Services\WatermarkService;
 use Barryvdh\DomPDF\Facade as PDF;
 use RuntimeException;
@@ -27,12 +27,12 @@ trait PrintPdfTrait
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param $sample boolean
      * @param string $filename PDF filename with path
      * @return string
      */
-    protected static function generatePdf(Contracts $contract, $sample = false, $filename = ''): string
+    protected static function generatePdf(Contract $contract, $sample = false, $filename = ''): string
     {
         $template = mb_strtolower($contract->program->programCode);
 

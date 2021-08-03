@@ -4,7 +4,8 @@ namespace App\Drivers\Traits;
 
 use App\Drivers\DriverResults\PayLink;
 use App\Mail\Email;
-use App\Models\Contracts;
+use App\Models\Contract;
+use App\Services\PaymentService;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use Exception;
@@ -17,17 +18,17 @@ use Symfony\Component\HttpFoundation\Response;
 trait DriverTrait
 {
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return array
      */
-    public function getStatus(Contracts $contract): array
+    public function getStatus(Contract $contract): array
     {
         $status = 'undefined';
         if (isset($contract->status)) {
-            if ($contract->status == Contracts::STATUS_DRAFT) {
+            if ($contract->status == Contract::STATUS_DRAFT) {
                 $status = 'Draft';
-            } elseif ($contract->status == Contracts::STATUS_CONFIRMED) {
+            } elseif ($contract->status == Contract::STATUS_CONFIRMED) {
                 $status = 'Confirmed';
             }
         }
@@ -38,11 +39,11 @@ trait DriverTrait
     /**
      * Отправка полиса на почту
      *
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return string Сообщение
      */
-    public function sendPolice(Contracts $contract): string
+    public function sendPolice(Contract $contract): string
     {
         $data = new stdClass();
         $data->receiver = $contract->subject_fullname;
@@ -73,11 +74,11 @@ trait DriverTrait
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return string
      */
-    protected function getFilePolice(Contracts $contract)
+    protected function getFilePolice(Contract $contract)
     {
         $filename = config('mortgage.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
         $filenameWithPath = public_path() . '/' . $filename;
@@ -89,22 +90,22 @@ trait DriverTrait
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return string
      */
-    public static function gefaultFileName(Contracts $contract)
+    public static function gefaultFileName(Contract $contract)
     {
         return config('mortgage.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param  string     $filenameWithPath
      *
      * @return bool
      */
-    protected function isFilePoliceExitst(Contracts $contract, &$filenameWithPath = ''): bool
+    protected function isFilePoliceExitst(Contract $contract, &$filenameWithPath = ''): bool
     {
         if (!$filenameWithPath) {
             $filename = self::gefaultFileName($contract);
@@ -115,12 +116,12 @@ trait DriverTrait
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param             $objectId
      *
      * @return string
      */
-    protected static function createFilePath(Contracts $contract, $objectId)
+    protected static function createFilePath(Contract $contract, $objectId)
     {
         $filePathObject = self::gefaultFileName($contract);
         $filePathObjectArray = explode('.', $filePathObject);
@@ -132,59 +133,28 @@ trait DriverTrait
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param  PayLinks   $links
      *
      * @return PayLink
-     * @throws \Illuminate\Contracts\Container\BindingResolutionException
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException|\App\Exceptions\Services\PaymentServiceException
      */
-    public function getPayLink(Contracts $contract, PayLinks $links): PayLink
+    public function getPayLink(Contract $contract, PayLinks $links): PayLink
     {
-        $invoiceNum = sprintf(
-            '%s%03d%06d/%s',
-            'NS',
-            $contract->company_id,
-            $contract->id,
-            Carbon::now()->format('His')
+        $response = app()->make(PaymentService::class)->payLink($contract, [
+            'success' => config('mortgage.str_host') . $links->getSuccessUrl(),
+            'fail' => config('mortgage.str_host') . $links->getFailUrl(),
+        ]);
+
+        return new PayLink(
+            $response['orderId'],
+            $response['url'],
+            $response['invoiceNum']
         );
-
-        if (in_array(config('app.env'), ['local', 'testing'])) {
-            $invoiceNum = time() % 100 . $invoiceNum;
-        }
-
-        $data = [
-            'successUrl' => config('mortgage.str_host') . $links->getSuccessUrl(),
-            'failUrl' => config('mortgage.str_host') . $links->getFailUrl(),
-            'phone' => str_replace([' ', '-'], '', $contract['subject']['phone']),
-            'fullName' => $contract['subject_fullname'],
-            'passport' => $contract['subject_passport'],
-            'name' => "Полис по Ипотека №{$contract->id}",
-            'description' => "Оплата за полис {$contract->company->name} №{$contract->id}",
-            'amount' => $contract['premium'],
-            'merchantOrderNumber' => $invoiceNum,
-            'agent_info' => [
-                'type' => 7, // Хардкод в соттветствии с ТЗ
-            ],
-            'supplier_info' => [
-                'name' => $contract->company->name,
-                'inn' => $contract->company->inn,
-            ],
-        ];
-        Log::info(__METHOD__ . '. Data for acquiring', [$data]);
-        $response = app()->make(PayService::class)->getPayLink($data);
-
-        if (isset($response->errorCode) && $response->errorCode !== 0) {
-            throw new Exception(
-                $response->errorMessage . ' (code: ' . $response->errorCode . ')',
-                Response::HTTP_NOT_ACCEPTABLE
-            );
-        }
-
-        return new PayLink($response->orderId, $response->formUrl, $invoiceNum);
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param  bool  $sample
      * @param  bool  $reset
      * @param  string|null  $filePath
@@ -192,7 +162,7 @@ trait DriverTrait
      * @return string|array
      */
     public abstract function printPolicy(
-        Contracts $contract,
+        Contract $contract,
         bool $sample,
         bool $reset,
         ?string $filePath = null

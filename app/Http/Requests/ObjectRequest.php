@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Objects;
+use App\Models\InsuranceObject;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -55,7 +55,7 @@ class ObjectRequest extends FormRequest
     {
         return [
             'contract_id' => ['required', 'integer', 'exists:contracts,id'],
-            'product' => ['required', 'string', 'in:' . Objects::types(true)],
+            'product' => ['required', 'string', 'in:' . InsuranceObject::types(true)],
             'value' => ['required', 'array'],
             'number' => ['nullable', 'string', 'max:255'],
             'integration_id' => ['nullable', 'string', 'max:255'],
@@ -69,31 +69,31 @@ class ObjectRequest extends FormRequest
             'value.block' => ['nullable', 'string', 'max:255'],
             'value.apartment' => ['nullable', 'string', 'max:255'],
             // life
-            'value.lastName' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'max:255'],
-            'value.firstName' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'max:255'],
-            'value.middleName' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'max:255'],
-            'value.birthDate' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'date'],
-            'value.gender' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'integer', 'max:1', 'min:0'],
-            'value.weight' => ['prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'nullable', 'integer', 'min:0', 'max:500'],
-            'value.height' => ['prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'integer', 'min:0', 'max:300'],
-            'value.phone' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'regex:/^\+7\d{5,7}-\d{2}-\d{2}$/'],
-            'value.email' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'regex:/^\w+@(\w+\.)+\w+$/'],
-            'value.docSeries' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'integer', 'min:1000', 'max:9999'],
-            'value.docNumber' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'integer', 'min:100000', 'max:999999'],
-            'value.docIssueDate' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'date'],
-            'value.docIssuePlace' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'max:255'],
-            'value.docIssuePlaceCode' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'regex:/^\d{3,3}-\d{3,3}$/'],
-            'value.kladr' => ['required_if:product,' . Objects::TYPE_LIFE, 'prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'string', 'max:255'],
-            'value.sports' => ['prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'array'],
+            'value.lastName' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'max:255'],
+            'value.firstName' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'max:255'],
+            'value.middleName' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'max:255'],
+            'value.birthDate' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'date'],
+            'value.gender' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'integer', 'max:1', 'min:0'],
+            'value.weight' => ['prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'nullable', 'integer', 'min:0', 'max:500'],
+            'value.height' => ['prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'integer', 'min:0', 'max:300'],
+            'value.phone' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'regex:/^\+7\d{5,7}-\d{2}-\d{2}$/'],
+            'value.email' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'regex:/^\w+@(\w+\.)+\w+$/'],
+            'value.docSeries' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'integer', 'min:1000', 'max:9999'],
+            'value.docNumber' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'integer', 'min:100000', 'max:999999'],
+            'value.docIssueDate' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'date'],
+            'value.docIssuePlace' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'max:255'],
+            'value.docIssuePlaceCode' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'regex:/^\d{3,3}-\d{3,3}$/'],
+            'value.kladr' => ['required_if:product,' . InsuranceObject::TYPE_LIFE, 'prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'string', 'max:255'],
+            'value.sports' => ['prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'array'],
             'value.sports.*' => ['string', 'max:255'],
-            'value.professions' => ['prohibited_if:product,' .  Objects::TYPE_PROPERTY, 'array'],
+            'value.professions' => ['prohibited_if:product,' .  InsuranceObject::TYPE_PROPERTY, 'array'],
             'value.professions.*' => ['string', 'max:255'],
             // property
-            'value.type' => ['prohibited_if:product,' .  Objects::TYPE_LIFE, 'nullable', 'string', 'in:' . Objects::propertyTypes(true)],
-            'value.buildYear' => ['required_if:product,' . Objects::TYPE_PROPERTY, 'prohibited_if:product,' .  Objects::TYPE_LIFE, 'integer', 'min:1000', 'max:' . date('Y')],
-            'value.isWooden' => ['nullable', 'prohibited_if:product,' .  Objects::TYPE_LIFE, 'boolean'],
-            'value.area' => ['nullable', 'required_if:product,' . Objects::TYPE_PROPERTY, 'prohibited_if:product,' .  Objects::TYPE_LIFE, 'numeric', 'min:0'],
-            'value.cityKladr' => ['required_if:product,' . Objects::TYPE_PROPERTY, 'prohibited_if:product,' .  Objects::TYPE_LIFE, 'string', 'max:255'],
+            'value.type' => ['prohibited_if:product,' .  InsuranceObject::TYPE_LIFE, 'nullable', 'string', 'in:' . InsuranceObject::propertyTypes(true)],
+            'value.buildYear' => ['required_if:product,' . InsuranceObject::TYPE_PROPERTY, 'prohibited_if:product,' .  InsuranceObject::TYPE_LIFE, 'integer', 'min:1000', 'max:' . date('Y')],
+            'value.isWooden' => ['nullable', 'prohibited_if:product,' .  InsuranceObject::TYPE_LIFE, 'boolean'],
+            'value.area' => ['nullable', 'required_if:product,' . InsuranceObject::TYPE_PROPERTY, 'prohibited_if:product,' .  InsuranceObject::TYPE_LIFE, 'numeric', 'min:0'],
+            'value.cityKladr' => ['required_if:product,' . InsuranceObject::TYPE_PROPERTY, 'prohibited_if:product,' .  InsuranceObject::TYPE_LIFE, 'string', 'max:255'],
         ];
     }
 }

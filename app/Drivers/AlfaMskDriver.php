@@ -15,7 +15,7 @@ use App\Drivers\Traits\DriverTrait;
 use App\Drivers\Traits\PrintPdfTrait;
 use App\Exceptions\Drivers\AlphaException;
 use App\Exceptions\Drivers\ReninsException;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use File;
@@ -170,7 +170,6 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @param $authToken
      * @param $contractList
-     *
      * @return array
      * @throws Throwable
      */
@@ -233,14 +232,14 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      * @param  PayLinks   $payLinks
      *
      * @return PayLinkInterface
      * @throws AlphaException
      * @throws Throwable
      */
-    public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface
+    public function getPayLink(Contract $contract, PayLinks $payLinks): PayLinkInterface
     {
         $contractOptions = $contract->getOptionsAttribute();
         $contractOptions['singleAccount'] = '';
@@ -291,7 +290,7 @@ class AlfaMskDriver implements DriverInterface
     /**
      * @inheritDoc
      */
-    public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface
+    public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface
     {
         $contractOptions = $contract->getOptionsAttribute();
         $contractOptions['contractList'] = [];
@@ -410,12 +409,12 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return array
      * @throws ReninsException
      */
-    protected function getFilePolice(Contracts $contract): array
+    protected function getFilePolice(Contract $contract): array
     {
         $objects = $contract->objects;
         $files = [];
@@ -492,7 +491,7 @@ class AlfaMskDriver implements DriverInterface
      * @inheritDoc
      */
     public function printPolicy(
-        Contracts $contract,
+        Contract $contract,
         bool $sample,
         bool $reset,
         ?string $filePath = null
@@ -526,15 +525,15 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      *
      * @return array
      * @throws Throwable
      */
-    public function getStatus(Contracts $contract): array
+    public function getStatus(Contract $contract): array
     {
         if (!empty($contract->getOptionsAttribute()['orderId'])) {
-            if ($contract->status !== Contracts::STATUS_CONFIRMED) {
+            if ($contract->status !== Contract::STATUS_CONFIRMED) {
                 try {
                     $clientStatusOrder = $this->merchantServices;
                     $statusOrder = $clientStatusOrder->getOrderStatus(
@@ -544,8 +543,8 @@ class AlfaMskDriver implements DriverInterface
                     Log::error($throwable->getMessage());
                 }
 
-                if ($statusOrder->get('orderStatus') === Contracts::STATUS_CONFIRMED) {
-                    $contract->status = Contracts::STATUS_CONFIRMED;
+                if ($statusOrder->get('orderStatus') === Contract::STATUS_CONFIRMED) {
+                    $contract->status = Contract::STATUS_CONFIRMED;
                     $contract->saveOrFail();
                 }
             }
@@ -555,13 +554,13 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param  Contracts  $contract
+     * @param  Contract  $contract
      */
-    public function payAccept(Contracts $contract): void
+    public function payAccept(Contract $contract): void
     {
         $this->getStatus($contract);
 
-        if ($contract->status != Contracts::STATUS_CONFIRMED) {
+        if ($contract->status != Contract::STATUS_CONFIRMED) {
             throw new AlphaException(
                 'Платеж не выполнен.', HttpResponse::HTTP_UNPROCESSABLE_ENTITY
             );

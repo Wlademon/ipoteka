@@ -24,6 +24,7 @@ class WatermarkService extends Watermark
         if ($builder instanceof PDFCommandBuilder) {
             $builder = new PdfBuilder($sourcePath);
             $builder->setTransparent($this->transparent);
+
             return $builder;
         }
 

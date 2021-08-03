@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Printers\Base64Trait;
+use App\Services\PaymentService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
@@ -25,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        $conf = config('mortgage');
+        $this->app->singleton(PaymentService::class, fn($app) => new PaymentService($conf['mercuriusHost']));
         Blade::directive('image_to_base64', function (string $imageFile) {
             $class =  new class {
                 use Base64Trait;

@@ -29,11 +29,10 @@
         "phpunit/phpunit": "^9.5",
         "setasign/fpdi": "^2.3",
         "strahovka/laravel-filterable": "dev-master",
-        "strahovka/payment": "1.*",
         "swagger-api/swagger-ui": "^3.50",
-	  "ext-json": "*",
-	  "ext-soap": "*"
-	},
+        "ext-json": "*",
+        "ext-soap": "*"
+    },
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
