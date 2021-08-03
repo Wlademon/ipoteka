@@ -60,7 +60,7 @@ class PaymentService
             'items' => [
                 [
                     'id' => $contract->id,
-                    'name' => sprintf('Оплата за полис "%s"', $contract->program->programName),
+                    'name' => "Оплата за полис №{$contract->number}",
                     'code' => 1,
                     'measure' => 'полис',
                     'quantity' => 1,
