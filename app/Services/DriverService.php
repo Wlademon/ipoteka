@@ -166,6 +166,7 @@ class DriverService
         DB::beginTransaction();
         $model = new Contracts();
         $model->fill($data);
+
         $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
         try {
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
@@ -182,6 +183,7 @@ class DriverService
             $policeData = collect($data);
             $objects = collect($policeData->only(['objects'])->get('objects'));
             $model->premium = $result->getPremiumSum();
+            $model->ext_id = time();
             $model->saveOrFail();
             $subject = (new Subject())->fill(['value' => $policeData->get('subject')]);
             $subject->contract()->associate($model);
@@ -201,6 +203,7 @@ class DriverService
 
             DB::commit();
         } catch (Throwable $throwable) {
+            //    throw $throwable;
             DB::rollBack();
             throw (new DriverServiceException(
                 'При создании полиса возникла ошибка.', Response::HTTP_INTERNAL_SERVER_ERROR

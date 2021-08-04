@@ -230,8 +230,9 @@ class ApiController extends BaseController
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
+
         try {
-            $links = new PayLinks($request->query('successUrl'), $request->query('failUrl'));
+            $links = new PayLinks($request->query('successUrl',null), $request->query('failUrl',null));
             $linkResult = $this->driverService->getPayLink($contract, $links);
             Payment::savePayment($linkResult, $contract);
         } catch (Exception $e) {

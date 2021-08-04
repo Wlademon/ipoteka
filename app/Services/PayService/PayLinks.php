@@ -20,12 +20,13 @@ class PayLinks implements Arrayable
      */
     protected string $failUrl;
 
+
     /**
      * PayLinks constructor.
      * @param string $successUrl
      * @param string $failUrl
      */
-    public function __construct(string $successUrl, string $failUrl)
+    public function __construct($successUrl, $failUrl)
     {
         $this->successUrl = $successUrl;
         $this->failUrl = $failUrl;
@@ -46,6 +47,7 @@ class PayLinks implements Arrayable
     {
         return $this->successUrl;
     }
+
 
     /**
      * @return array
