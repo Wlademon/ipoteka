@@ -60,7 +60,7 @@ class PaymentService
             'items' => [
                 [
                     'id' => $contract->id,
-                    'name' => "Оплата за полис №{$contract->number}",
+                    'name' => "Оплата за полис №{$contract->ext_id}",
                     'code' => 1,
                     'measure' => 'полис',
                     'quantity' => 1,
