@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Helpers\Helper;
-use App\Models\Contracts;
+use App\Models\Contract;
 use Illuminate\Console\Command;
 use Log;
 
@@ -42,7 +42,7 @@ class ExportUw extends Command
         $this->info("Start Export to UW (NS)");
         Log::info("Start Export to UW (NS)");
 
-        $list = Contracts::where('status', Contracts::STATUS_CONFIRMED)->whereNull('uw_contract_id')->get();
+        $list = Contract::where('status', Contract::STATUS_CONFIRMED)->whereNull('uw_contract_id')->get();
 
         foreach ($list as $contract) {
             $resUwin = Helper::getUwinContractId($contract);

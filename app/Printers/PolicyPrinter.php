@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Printers;
 
-use App\Models\Contracts;
+use App\Models\Contract;
 use Barryvdh\DomPDF\Facade as PDF;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -42,11 +42,11 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param string|null $filename
      * @return string
      */
-    public function printPolicy(Contracts $contract, bool $sample = false): string
+    public function printPolicy(Contract $contract, bool $sample = false): string
     {
         $template = mb_strtolower($contract->program->companyCode);
         $filename = $this->getFilenameWithDir($contract, $sample);
@@ -65,21 +65,21 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param bool $sample
      * @return string
      */
-    public function getFilenameWithDir(Contracts $contract, bool $sample = false): ?string
+    public function getFilenameWithDir(Contract $contract, bool $sample = false): ?string
     {
         return $this->pdfPaths['path'] . '/' . $this->getFilename($contract, $sample);
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param bool $sample
      * @return string
      */
-    public function getFilename(Contracts $contract, bool $sample = false): string
+    public function getFilename(Contract $contract, bool $sample = false): string
     {
         return sha1($contract->id . $contract->number) . ($sample ? '_sample' : '') . '.pdf';
     }
@@ -87,11 +87,11 @@ class PolicyPrinter
     /**
      * @note предварительно настроить публичные ссылки и хранилище!!
      *
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param bool $sample
      * @return string|null
      */
-    public function getPolicyLink(Contracts $contract, bool $sample = false): ?string
+    public function getPolicyLink(Contract $contract, bool $sample = false): ?string
     {
         return $this->isPolicyExists($contract, $sample)
             ? Storage::url($this->getFilenameWithDir($contract, $sample))
@@ -99,11 +99,11 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param bool $sample
      * @return bool
      */
-    public function isPolicyExists(Contracts $contract, bool $sample = false): bool
+    public function isPolicyExists(Contract $contract, bool $sample = false): bool
     {
         return Storage::disk()
             ->exists(
@@ -112,11 +112,11 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param bool $sample
      * @return string|null
      */
-    public function getBase64Policy(Contracts $contract, bool $sample = false): ?string
+    public function getBase64Policy(Contract $contract, bool $sample = false): ?string
     {
         $filename = $this->getFilenameWithDir($contract, $sample);
         return null !== $filename

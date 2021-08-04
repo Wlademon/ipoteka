@@ -33,14 +33,14 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property-read \App\Models\Program|null $program
  * @property-read \App\Models\Company|null $company
  * @property-read \App\Models\Owner|null $owner
- * @property-read \App\Models\Objects[]|array|Collection $objects
+ * @property-read \App\Models\InsuranceObject[]|array|Collection $objects
  * @property-read \App\Models\Subject|null $subject
  * @property-read mixed $ownerCode
  * @property-read mixed $ownerUwLogin
  * @property int|null $uwContractId
  * @mixin Eloquent
  */
-class Contracts extends BaseModel
+class Contract extends BaseModel
 {
     use Filterable;
 
@@ -173,7 +173,7 @@ class Contracts extends BaseModel
      */
     public function objects()
     {
-        return $this->hasMany(Objects::class, 'contract_id');
+        return $this->hasMany(InsuranceObject::class, 'contract_id');
     }
 
     /**

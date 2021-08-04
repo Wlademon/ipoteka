@@ -5,17 +5,17 @@ namespace App\Http\Controllers;
 use App\Http\Requests\CalculateRequest;
 use App\Http\Requests\CreatePolicyRequest;
 use App\Http\Resources\ContractResource;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Models\Payment;
 use App\Services\DriverService;
+use App\Services\PaymentService;
 use App\Services\PayService\PayLinks;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Http\Response;
-use Log;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
-use Strahovka\Payment\PayService;
 
 /**
  * Class ApiController
@@ -24,16 +24,16 @@ use Strahovka\Payment\PayService;
  */
 class ApiController extends BaseController
 {
-    protected PayService $payService;
+    protected PaymentService $payService;
     protected DriverService $driverService;
 
     /**
      * Create a new controller instance.
      *
-     * @param  PayService     $payService
+     * @param  PaymentService     $payService
      * @param  DriverService  $driver
      */
-    public function __construct(PayService $payService, DriverService $driver)
+    public function __construct(PaymentService $payService, DriverService $driver)
     {
         $this->payService = $payService;
         $this->driverService = $driver;
@@ -137,7 +137,7 @@ class ApiController extends BaseController
     {
         Log::info("Find Contract with ID: {$contractId}");
 
-        $contract = Contracts::query()
+        $contract = Contract::query()
             ->with(['objects', 'subject'])
             ->where('ext_id', $contractId)
             ->firstOrFail();
@@ -181,7 +181,7 @@ class ApiController extends BaseController
     {
         Log::info("Find Contract with ID: {$contractId}");
 
-        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
+        $contract = Contract::where('ext_id', $contractId)->firstOrFail();
 
         return self::successResponse($this->driverService->getStatus($contract));
     }
@@ -229,8 +229,7 @@ class ApiController extends BaseController
     public function getPolicyPayLink(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
-        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
-
+        $contract = Contract::where('ext_id', $contractId)->firstOrFail();
         try {
             $links = new PayLinks($request->query('successUrl',null), $request->query('failUrl',null));
             $linkResult = $this->driverService->getPayLink($contract, $links);
@@ -287,14 +286,16 @@ class ApiController extends BaseController
         $res = $payment->where('order_id', $orderId)->firstOrFail();
 
         Log::info("Find Contract with ID: {$res->contract_id}");
-        /** @var Contracts $contract */
+        /** @var Contract $contract */
 
-        $contract = Contracts::with('company')->where('id', $res->contract_id)->where(
+        $contract = Contract::with('company')->where('id', $res->contract_id)->where(
             'status',
-            Contracts::STATUS_DRAFT
+            Contract::STATUS_DRAFT
         )->firstOrFail();
 
-        return self::successResponse($this->driverService->acceptPayment($contract, $this->payService, $orderId));
+        return self::successResponse(
+            $this->driverService->acceptPayment($contract, $this->payService, $res)
+        );
     }
 
     /**
@@ -341,7 +342,7 @@ class ApiController extends BaseController
         Log::info("Find Contract with ID: {$contractId}");
         $isSample = filter_var($request->get('sample', false), FILTER_VALIDATE_BOOLEAN);
 
-        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
+        $contract = Contract::where('ext_id', $contractId)->firstOrFail();
         Log::info('Params', [$contract]);
 
         $response = $this->driverService->printPdf($contract, $isSample);
@@ -383,7 +384,7 @@ class ApiController extends BaseController
     public function postPolicySend(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
-        $contract = Contracts::where('ext_id', $contractId)->firstOrFail();
+        $contract = Contract::where('ext_id', $contractId)->firstOrFail();
 
         $result = $this->driverService->sendMail($contract);
         Log::info("Response", [$result]);
