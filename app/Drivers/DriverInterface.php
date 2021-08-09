@@ -5,7 +5,7 @@ namespace App\Drivers;
 use App\Drivers\DriverResults\CalculatedInterface;
 use App\Drivers\DriverResults\CreatedPolicyInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Services\PayService\PayLinks;
 
 /**
@@ -25,11 +25,11 @@ interface DriverInterface
     /**
      * Получить ссылку на оплату
      *
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param PayLinks $payLinks
      * @return PayLinkInterface
      */
-    public function getPayLink(Contracts $contract, PayLinks $payLinks): PayLinkInterface;
+    public function getPayLink(Contract $contract, PayLinks $payLinks): PayLinkInterface;
 
     /**
      * Стартовая функция создания полиса
@@ -37,37 +37,37 @@ interface DriverInterface
      * @param array $data Данные для создания договора по полису
      * @return CreatedPolicyInterface
      */
-    public function createPolicy(Contracts $contract, array $data): CreatedPolicyInterface;
+    public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface;
 
     /**
      * Функция печати полиса
      *
-     * @param Contracts $contract
+     * @param Contract $contract
      * @param bool $sample Шаблон
      * @param bool $reset Перепечатать
      * @param string|null $filePath Путь сохранения файла
      * @return string|array Файл в формате base64
      */
-    public function printPolicy(Contracts $contract, bool $sample, bool $reset, ?string $filePath = null);
+    public function printPolicy(Contract $contract, bool $sample, bool $reset, ?string $filePath = null);
 
     /**
      * Функция вызываемая после оплаты полиса
      *
-     * @param Contracts $contract
+     * @param Contract $contract
      */
-    public function payAccept(Contracts $contract): void;
+    public function payAccept(Contract $contract): void;
 
     /**
      * Отправка полиса на почту
      *
-     * @param Contracts $contract
+     * @param Contract $contract
      * @return string Сообщение
      */
-    public function sendPolice(Contracts $contract): string;
+    public function sendPolice(Contract $contract): string;
 
     /**
-     * @param Contracts $contract
+     * @param Contract $contract
      * @return array
      */
-    public function getStatus(Contracts $contract): array;
+    public function getStatus(Contract $contract): array;
 }

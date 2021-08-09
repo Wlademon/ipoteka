@@ -44,14 +44,17 @@ class SiteService extends Service
                 }
             }
             Log::error(__METHOD__ . '. Exception:', [$httpStatusCode, $json, $e->getMessage(), $e->getTraceAsString()]);
+
             return false;
         } catch (\Exception $e) {
             Log::error( __METHOD__ . '. ERROR - Response: ', [$e->getCode(), $e->getMessage(), $e->getTraceAsString()]);
+
             return false;
         }
 
         if ($response->getStatusCode() !== 200) {
             Log::error(__METHOD__ . '. ERROR - Response: ', [$response->getBody()]);
+
             return false;
         }
         $result = json_decode($response->getBody(), true);

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Filters\ContractFilter;
 use App\Http\Requests\CreatePolicyRequest;
-use App\Models\Contracts;
+use App\Models\Contract;
 use App\Services\DriverService;
 use App\Services\PolicyService;
 use Illuminate\Http\Request;
@@ -16,7 +16,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ContractController extends BaseController
 {
-    public function __construct(Contracts $model, ContractFilter $filter)
+    public function __construct(Contract $model, ContractFilter $filter)
     {
         $this->model = $model;
         $this->filter = $filter;

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ObjectRequest;
-use App\Models\Objects;
+use App\Models\InsuranceObject;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,7 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ObjectController extends BaseController
 {
-    public function __construct(Objects $model)
+    public function __construct(InsuranceObject $model)
     {
         $this->model = $model;
     }
