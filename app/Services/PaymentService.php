@@ -45,20 +45,11 @@ class PaymentService
      * @return array
      * @throws PaymentServiceException
      */
-    public function payLink(Contract $contract, array $urls) : array
+    public function payLink(Contract $contract, array $urls, ?array $itemArray = null) : array
     {
-        $data = [
-            'bankCode' => self::BANK_CODE,
-            'successUrl' => Arr::get($urls, 'success'),
-            'failUrl' => Arr::get($urls, 'fail'),
-            'totalAmount' => $contract->premium,
-            'customerDetails' => [
-                'phone' => str_replace('-', '', Arr::get($contract->subject->value, 'phone')),
-                'email' => Arr::get($contract->subject->value, 'email'),
-                'fullName' => $contract->subjectFullname,
-            ],
-            'items' => [
-                [
+
+        if ($itemsArray = null){
+            $items = [
                     'id' => $contract->id,
                     'name' => "Оплата за полис №{$contract->ext_id}",
                     'code' => 1,
@@ -69,9 +60,41 @@ class PaymentService
                         'supplierName' => $contract->company->name,
                         'supplierInn' => $contract->company->inn,
                     ]
-                ]
-            ]
+            ];
+        } else {
+            foreach ($itemArray as $item) {
+                $items[] = [
+                    'id' => $item['isn'],
+                    'name' => "Оплата за полис №{$item['isn']}",
+                    'code' => 1,
+                    'measure' => "полис {$item['description']}",
+                    'quantity' => 1,
+                    'price' => $item['price'],
+                    'ofdDetails' => [
+                        'supplierName' => $contract->company->name,
+                        'supplierInn' => $contract->company->inn,
+                    ]
+                ];
+            }
+        }
+
+        $data = [
+            'bankCode' => self::BANK_CODE,
+            'successUrl' => Arr::get($urls, 'success'),
+            'failUrl' => Arr::get($urls, 'fail'),
+            'totalAmount' => $contract->premium,
+            'customerDetails' => [
+                'phone' => str_replace('-', '', Arr::get($contract->subject->value, 'phone')),
+                'email' => Arr::get($contract->subject->value, 'email'),
+                'fullName' => $contract->subjectFullname,
+                'inn'=>$contract->company->inn,
+                'passport'=>'1234657890',
+            ],
+            'items' =>
+                $items,
+
         ];
+
         $resp = Arr::get(
             $this->request('POST', '/v1/orders', ['json' => $data], __METHOD__),
             'data'
@@ -124,7 +147,6 @@ class PaymentService
             }
             throw new PaymentServiceException($e->getMessage(), Response::HTTP_BAD_REQUEST);
         }
-
         return json_decode((string) $resp->getBody(), true, 128);
     }
 

@@ -42,5 +42,11 @@ return [
         'managerId' => env('SC_ALFA_AGENT_MANAGER_ID', '52540865'),
         'numberIterations' => env('METHOD_ALFA_NUMBER_ITERATIONS_GET_STATUS_CONTRACT', 5)
     ],
+    'absolut_77' => [
+        'pay_host' => env('MERCURIUS_HOST', 'http://mercurius.stage.strahovka.ru/'),
+        'pdf' => [
+            'path' => env('PDF_PATH', 'ab/pdf/'),
+        ],
+    ],
     'mercuriusHost' => env('MERCURIUS_HOST', 'http://mercurius.stage.strahovka.ru/'),
 ];

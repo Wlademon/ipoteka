@@ -91,7 +91,7 @@ class DriverService
     {
         return $this->getDriverByCode($contract->program->company->code)->getPayLink(
             $contract,
-            $links
+            $links,
         );
     }
 
@@ -165,17 +165,17 @@ class DriverService
     {
         DB::beginTransaction();
         $model = new Contract();
-
         Log::info(__METHOD__ . ". getTrafficSource");
         $data['options'] = array_merge(
             request()->except(['object', 'subject']),
             ['trafficSource' => Helper::getTrafficSource(request())]
         );
         $model->fill($data);
-
         $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
         try {
+
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
+
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
                 'При получении полиса возникла ошибка.', Response::HTTP_NOT_ACCEPTABLE
@@ -194,12 +194,14 @@ class DriverService
             $subject = (new Subject())->fill(['value' => $policeData->get('subject')]);
             $subject->contract()->associate($model);
             $subject->saveOrFail();
+
             $objectLife = $this->getObjectModel($objects, 'life');
             if ($objectLife && $result->getLifePremium()) {
                 $objectLife->contract()->associate($model);
                 $objectLife->loadFromDriverResult($result);
                 $objectLife->saveOrFail();
             }
+
             $objectProp = $this->getObjectModel($objects, 'property');
             if ($objectProp && $result->getPropertyPremium()) {
                 $objectProp->contract()->associate($model);

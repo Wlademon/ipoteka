@@ -182,7 +182,6 @@ class ApiController extends BaseController
         Log::info("Find Contract with ID: {$contractId}");
 
         $contract = Contract::where('ext_id', $contractId)->firstOrFail();
-
         return self::successResponse($this->driverService->getStatus($contract));
     }
 
@@ -282,9 +281,9 @@ class ApiController extends BaseController
      */
     public function postPolicyAccept(Payment $payment, $orderId): JsonResource
     {
+
         Log::info("Find Payment with OrderID: {$orderId}");
         $res = $payment->where('order_id', $orderId)->firstOrFail();
-
         Log::info("Find Contract with ID: {$res->contract_id}");
         /** @var Contract $contract */
 

@@ -29,7 +29,7 @@ Route::group(['prefix' => 'v1'], function () {
             Route::get('/', 'ApiController@getPolicy');// вернуть не полис а контракт!
             Route::get('/status', 'ApiController@getPolicyStatus'); //! Проверка договора на предмет оплаты
             Route::get('/payLink', 'ApiController@getPolicyPayLink'); //! Получение ссылки на поплату
-            Route::post('/accept', 'ApiController@postPolicyAccept');
+            Route::post('/accept', 'ApiController@postPolicyAccept'); //!!!!!!
             Route::get('/print', 'ApiController@getPolicyPdf'); //! Получение печатной формы
             Route::post('/send', 'ApiController@postPolicySend');
         });
