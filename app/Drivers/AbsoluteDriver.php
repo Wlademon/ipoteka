@@ -44,11 +44,18 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
     const CALCULATE_LIFE_PATH = '/api/mortgage/sber/life/calculation/create';
     const CALCULATE_PROPERTY_PATH = '/api/mortgage/sber/property/calculation/create';
+    const LIFE_AGREEMENT_PATH = '/api/mortgage/sber/life/agreement/create';
+    const PROPERTY_AGREEMENT_PATH = '/api/mortgage/sber/property/agreement/create';
+    const PRINT_POLICY_PATH = '/api/print/agreement/';
+    const RELEASED_POLICY_PATH = '/api/agreement/set/released/';
     const ADDRESS_CODE_2247 = 2247;
     const ADDRESS_CODE_2246 = 2246;
     const CONTACT_CODE_2243 = 2243;
     const CONTACT_CODE_2240 = 2240;
     const DOCUMENT_CODE_1165 = 1165;
+    const IS_LIFE = 'ABSOLUT_MORTGAGE_003_01';
+    const IS_PROPERTY = 'ABSOLUT_MORTGAGE_001_01';
+    const IS_PROPERTY_AND_LIFE = 'ABSOLUT_MORTGAGE_002_01';
 
 
     public function __construct(Repository $repository, string $prefix = '')
@@ -139,17 +146,17 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
     public static function isLife($data): bool
     {
-        return in_array('ABSOLUT_MORTGAGE_003_01', $data);
+        return in_array(self::IS_LIFE, $data);
     }
 
     public static function isProperty($data): bool
     {
-        return in_array('ABSOLUT_MORTGAGE_001_01', $data);
+        return in_array(self::IS_PROPERTY, $data);
     }
 
     public static function isPropertyAndLife($data): bool
     {
-        return in_array('ABSOLUT_MORTGAGE_002_01', $data);
+        return in_array(self::IS_PROPERTY_AND_LIFE, $data);
     }
 
     public static function getGender($data)
@@ -202,7 +209,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         ];
 
         switch ($contract->options['programCode']) {
-            case 'ABSOLUT_MORTGAGE_002_01':
+            case self::IS_PROPERTY_AND_LIFE:
                 $array = [
                     [
                         'price' => $contract->options['price']['priceLife'],
@@ -216,7 +223,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                     ],
                 ];
                 break;
-            case 'ABSOLUT_MORTGAGE_001_01':
+            case self::IS_PROPERTY:
                 $array = [
                     [
                         'price' => $contract->options['price']['priceProperty'],
@@ -225,7 +232,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                     ],
                 ];
                 break;
-            case 'ABSOLUT_MORTGAGE_003_01':
+            case self::IS_LIFE:
                 $array = [
                     [
                         'price' => $contract->options['price']['priceLife'],
@@ -276,7 +283,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
     public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface
     {
-        if ($this::isLife($data) || $this::isPropertyAndLife($data)) {
+        if (self::isLife($data) || self::isPropertyAndLife($data)) {
             $body = [
                 'date_begin' => $data['activeFrom'],
                 'agr_credit_number' => $data['mortgageAgreementNumber'],
@@ -322,7 +329,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 ],
             ];
 
-            $path = '/api/mortgage/sber/life/agreement/create';
+            $path = self::LIFE_AGREEMENT_PATH;
 
             $validateFields = [
                 'result' => 'required',
@@ -394,7 +401,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 ],
             ];
 
-            $path = '/api/mortgage/sber/property/agreement/create';
+            $path = self::PROPERTY_AGREEMENT_PATH;
             $validateFields = [
                 'result' => 'required',
                 'result.*.data' => 'required',
@@ -448,26 +455,26 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
     public function policyExist($isn): bool
     {
-        $result = Storage::exists($this->pdfpath . $isn . '.pdf') ? true : false;
+        $result = Storage::exists($this->getFileName($isn));
         return $result;
     }
 
     public function getPolicyIsn($contract): array
     {
         switch ($contract->getOptionsAttribute()['programCode']) {
-            case 'ABSOLUT_MORTGAGE_002_01':
+            case self::IS_PROPERTY_AND_LIFE:
                 $response = [
                     $contract->getOptionsAttribute()['isn']['isnLife'],
                     $contract->getOptionsAttribute()['isn']['isnProperty'],
                 ];
                 break;
-            case 'ABSOLUT_MORTGAGE_001_01':
+            case self::IS_PROPERTY:
                 $response = [
                     $contract->getOptionsAttribute()['isn']['isnProperty'],
                 ];
 
                 break;
-            case 'ABSOLUT_MORTGAGE_003_01':
+            case self::IS_LIFE:
                 $response = [
                     $contract->getOptionsAttribute()['isn']['isnLife'],
                 ];
@@ -490,7 +497,9 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     public function printPolicy(Contract $contract, bool $sample, bool $reset, ?string $filePath = null)
     {
         $isnArray = $this->getPolicyIsn($contract);
-        if (count($isnArray)) {
+        if (empty($isnArray)) {
+            throw new RuntimeException('ISN not found for this contract');
+        }
             foreach ($isnArray as $isn) {
                 if ($this->policyExist($isn)) {
                     $result[] = [
@@ -503,7 +512,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                         'results.*.data.*.document' => 'required',
                         'results.*.data.*.document.*.bytes' => 'required',
                     ];
-                    $bytes = $this->get("/api/print/agreement/{$isn}",
+                    $bytes = $this->get(self::PRINT_POLICY_PATH.$isn,
                         $validateFields)['result']['data']['document']['bytes'];
                     $result[] = [
                         $this->generatePDF($bytes, $isn),
@@ -511,9 +520,6 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 }
             }
             return $result;
-        } else {
-            throw new RuntimeException('ISN not found for this contract');
-        }
     }
 
     /**
@@ -527,7 +533,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         ];
         $isnArray = $this->getPolicyIsn($contract);
         foreach ($isnArray as $isn) {
-            $response = $this->put("/api/agreement/set/released/{$isn}", $validateFields);
+            $response = $this->put(self::RELEASED_POLICY_PATH.$isn, $validateFields);
         }
     }
 
