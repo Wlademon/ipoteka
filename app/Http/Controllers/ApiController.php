@@ -180,7 +180,6 @@ class ApiController extends BaseController
     public function getPolicyStatus(Request $request, $contractId): JsonResource
     {
         Log::info("Find Contract with ID: {$contractId}");
-
         $contract = Contract::where('ext_id', $contractId)->firstOrFail();
         return self::successResponse($this->driverService->getStatus($contract));
     }
@@ -340,10 +339,8 @@ class ApiController extends BaseController
     {
         Log::info("Find Contract with ID: {$contractId}");
         $isSample = filter_var($request->get('sample', false), FILTER_VALIDATE_BOOLEAN);
-
         $contract = Contract::where('ext_id', $contractId)->firstOrFail();
         Log::info('Params', [$contract]);
-
         $response = $this->driverService->printPdf($contract, $isSample);
         Log::info('Policy generated!');
 
@@ -384,10 +381,8 @@ class ApiController extends BaseController
     {
         Log::info("Find Contract with ID: {$contractId}");
         $contract = Contract::where('ext_id', $contractId)->firstOrFail();
-
         $result = $this->driverService->sendMail($contract);
         Log::info("Response", [$result]);
-
         return self::successResponse($result);
     }
 }

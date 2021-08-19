@@ -34,12 +34,13 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     /**
      * @inheritDoc
      */
-    protected $baseUrl = 'https://represtapi.absolutins.ru/ords/rest';
+    protected $baseUrl;
     protected $accessToken;
-    protected $ClientID = 'Wpsa0QvBoyjwUMQYJ6707A..';
-    protected $ClientSecret = 'waSVo19oyiyd78T-QCMxIw..';
+    protected $ClientID;
+    protected $ClientSecret;
     protected $paymentService;
-    protected $pdfpath = 'ab/pdf/';
+    protected $pdfpath;
+    protected $grantType;
     protected Client $client;
 
     const CALCULATE_LIFE_PATH = '/api/mortgage/sber/life/calculation/create';
@@ -60,6 +61,12 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
     public function __construct(Repository $repository, string $prefix = '')
     {
+        $this->baseUrl = $repository->get($prefix.'base_Url');
+        $this->ClientID = $repository->get($prefix.'client_id');
+        $this->ClientSecret = $repository->get($prefix.'client_secret');
+        $this->pdfpath = $repository->get($prefix.'pdf.path');
+        $this->grantType = $repository->get($prefix. 'grant_type');
+
         $this->client = new Client();
         $this->paymentService = new PaymentService($repository->get($prefix . 'pay_host'));
         $this->accessToken = $this->getToken();
@@ -67,10 +74,15 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
     protected function getToken()
     {
-        $data = ['grant_type' => 'client_credentials'];
-        $response = Http::withBasicAuth($this->ClientID, $this->ClientSecret)
-            ->asForm()
-            ->post($this->baseUrl . '/oauth/token', $data);
+        $data = ['grant_type' => $this->grantType];
+        $response = $this->client->request('POST',$this->baseUrl . '/oauth/token',[
+            'auth'=>[
+                $this->ClientID,
+                $this->ClientSecret,
+            ],
+            'form_params' => $data,
+          ]
+        );
 
         if (!$response->getStatusCode() == 200) {
             throw new Exception('Error get token');
@@ -98,7 +110,8 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     public function post($data, $path, $validateFields)
     {
         try {
-            $response = $this->client->post(
+            $response = $this->client->post
+            (
                 $this->baseUrl . $path,
                 [
                     'headers' => [

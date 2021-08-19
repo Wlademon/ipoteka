@@ -211,7 +211,6 @@ class DriverService
 
             DB::commit();
         } catch (Throwable $throwable) {
-            //    throw $throwable;
             DB::rollBack();
             throw (new DriverServiceException(
                 'При создании полиса возникла ошибка.', Response::HTTP_INTERNAL_SERVER_ERROR

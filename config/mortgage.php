@@ -44,6 +44,10 @@ return [
     ],
     'absolut_77' => [
         'pay_host' => env('MERCURIUS_HOST', 'http://mercurius.stage.strahovka.ru/'),
+        'base_Url' =>env('SC_ABSOLUT_HOST','https://represtapi.absolutins.ru/ords/rest'),
+        'client_id'=>env('SC_ABSOLUT_CLIENT_ID','Wpsa0QvBoyjwUMQYJ6707A..'),
+        'client_secret'=>env('SC_ABSOLUT_CLIENT_SECRET','waSVo19oyiyd78T-QCMxIw..'),
+        'grant_type'=>env('SC_ABSOLUT_GRANT_TYPE','client_credentials'),
         'pdf' => [
             'path' => env('PDF_PATH', 'ab/pdf/'),
         ],
