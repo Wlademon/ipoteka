@@ -356,6 +356,7 @@ class DriverService
     public function acceptPayment(Contract $contract, PaymentService $payService, Payment $payment): array
     {
         $company = $contract->company;
+
         try {
             $driver = $this->getDriverByCode($company->code);
             if ($driver instanceof LocalPaymentDriverInterface) {
@@ -365,19 +366,23 @@ class DriverService
                 if ($status !== Contract::STATUS_CONFIRMED) {
                     throw new DriverServiceException('Полис не оплачен.', Response::HTTP_PAYMENT_REQUIRED);
                 }
-                $contract->status = Contract::STATUS_CONFIRMED;
             }
+
+            $contract->refresh();
+
             if ($driver instanceof LocalDriverInterface) {
-                $params = [
-                    'product_code' => 'mortgage',
-                    'program_code' => $contract->program->programCode,
-                    'bso_owner_code' => $company->code,
-                    'bso_receiver_code' => 'STRAHOVKA',
-                    'count' => 1,
-                ];
-                Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
-                $res = Helper::getPolicyNumber($params);
-                $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
+                if (!($contract->number ?? null)) {
+                    $params = [
+                        'product_code' => 'mortgage',
+                        'program_code' => $contract->program->programCode,
+                        'bso_owner_code' => $company->code,
+                        'bso_receiver_code' => 'STRAHOVKA',
+                        'count' => 1,
+                    ];
+                    Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
+                    $res = Helper::getPolicyNumber($params);
+                    $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
+                }
             }
 
         } catch (Throwable $throwable) {
@@ -390,6 +395,7 @@ class DriverService
             );
         }
 
+        $contract->status = Contract::STATUS_CONFIRMED;
         $this->statusConfirmed($contract);
         $contract->save();
         Log::info("Contract with ID {$contract->id} was saved.");
