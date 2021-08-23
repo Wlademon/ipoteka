@@ -384,7 +384,11 @@ class DriverService
                     $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
                 }
             }
+            $resUwin = Helper::getUwinContractId($contract);
 
+            if ($resUwin) {
+                $contract->uw_contract_id = isset($resUwin->contractId) ? $resUwin->contractId : null;
+            }
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
                 'Ошибка при подтверждении платежа.', HttpResponse::HTTP_BAD_REQUEST
@@ -395,9 +399,12 @@ class DriverService
             );
         }
 
-        $contract->status = Contract::STATUS_CONFIRMED;
+        $contract->status =  Contract::STATUS_CONFIRMED;
         $this->statusConfirmed($contract);
         $contract->save();
+        // Подтвердить номер в Bishop
+        Helper::acceptPolicyNumber(['contract_id' => $contract->ext_id, 'bso_number' => $contract->number]);
+
         Log::info("Contract with ID {$contract->id} was saved.");
 
         return [
