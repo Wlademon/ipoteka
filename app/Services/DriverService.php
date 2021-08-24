@@ -389,7 +389,7 @@ class DriverService
             $resUwin = Helper::getUwinContractId($contract);
 
             if ($resUwin) {
-                $contract->uw_contract_id = $resUwin->contractId;
+                $contract->uw_contract_id = $resUwin->contractId ?? null;
             }
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
