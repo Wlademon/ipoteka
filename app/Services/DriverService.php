@@ -6,6 +6,7 @@ use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\LocalDriverInterface;
 use App\Drivers\LocalPaymentDriverInterface;
+use App\Drivers\SberinsDriver;
 use App\Exceptions\Drivers\DriverExceptionInterface;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
@@ -377,7 +378,16 @@ class DriverService
                 ];
                 Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
                 $res = Helper::getPolicyNumber($params);
-                $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
+                $bsoNumber = $res->data->bso_numbers[0];
+
+                if (get_class($driver) == SberinsDriver::class) {
+                    Helper::acceptPolicyNumber([
+                        'bso_number' => $bsoNumber,
+                        'contract_id' => $contract->ext_id,
+                    ]);
+                }
+
+                $contract->objects->first()->setAttribute('number', $bsoNumber)->save();
             }
 
         } catch (Throwable $throwable) {
