@@ -85,6 +85,7 @@ class Contract extends BaseModel
         'remainingDebt',
         'ext_id',
         'contractId',
+        'uw_contract_id',
     ];
 
     protected $visible = [
@@ -118,6 +119,7 @@ class Contract extends BaseModel
         'mortgageAgreementNumber',
         'isOwnership',
         'mortgageeBank',
+        'uwContractId',
     ];
 
     public function getCompanyCodeAttribute()

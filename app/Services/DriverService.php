@@ -373,6 +373,7 @@ class DriverService
             if ($driver instanceof LocalDriverInterface) {
                 if (!($contract->number ?? null)) {
                     $params = [
+                        'contract_id' => $contract->ext_id,
                         'product_code' => 'mortgage',
                         'program_code' => $contract->program->programCode,
                         'bso_owner_code' => $company->code,
@@ -384,10 +385,11 @@ class DriverService
                     $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
                 }
             }
+
             $resUwin = Helper::getUwinContractId($contract);
 
             if ($resUwin) {
-                $contract->uw_contract_id = isset($resUwin->contractId) ? $resUwin->contractId : null;
+                $contract->uw_contract_id = $resUwin->contractId;
             }
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
