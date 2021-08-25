@@ -6,6 +6,7 @@ use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\LocalDriverInterface;
 use App\Drivers\LocalPaymentDriverInterface;
+use App\Drivers\SberinsDriver;
 use App\Exceptions\Drivers\DriverExceptionInterface;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
@@ -38,7 +39,7 @@ class DriverService
     private ?DriverInterface $driver = null;
 
     /**
-     * @param  string|null  $driver
+     * @param string|null $driver
      *
      * @throws Exception
      */
@@ -57,8 +58,8 @@ class DriverService
     }
 
     /**
-     * @param  string  $code
-     * @param  bool    $reset
+     * @param string $code
+     * @param bool $reset
      *
      * @return DriverInterface
      * @throws Exception
@@ -82,8 +83,8 @@ class DriverService
     }
 
     /**
-     * @param  Contract  $contract
-     * @param  PayLinks   $links
+     * @param Contract $contract
+     * @param PayLinks $links
      *
      * @return PayLinkInterface
      */
@@ -121,8 +122,8 @@ class DriverService
     }
 
     /**
-     * @param  Program  $program
-     * @param  array    $data
+     * @param Program $program
+     * @param array $data
      *
      * @throws Exception
      */
@@ -156,7 +157,7 @@ class DriverService
     }
 
     /**
-     * @param  array  $data
+     * @param array $data
      *
      * @return array
      * @throws DriverServiceException
@@ -222,8 +223,8 @@ class DriverService
     }
 
     /**
-     * @param  Collection  $collection
-     * @param  string      $type
+     * @param Collection $collection
+     * @param string $type
      *
      * @return InsuranceObject|null
      */
@@ -241,10 +242,10 @@ class DriverService
     }
 
     /**
-     * @param  Contract    $contract
-     * @param  bool         $sample
-     * @param  bool         $reset
-     * @param  string|null  $filePath
+     * @param Contract $contract
+     * @param bool $sample
+     * @param bool $reset
+     * @param string|null $filePath
      *
      * @return string|array
      * @throws DriverServiceException
@@ -254,7 +255,8 @@ class DriverService
         bool $sample,
         bool $reset = false,
         ?string $filePath = null
-    ) {
+    )
+    {
         $this->getStatus($contract);
         if (!$sample && $contract->status !== Contract::STATUS_CONFIRMED) {
             throw (new DriverServiceException(
@@ -288,7 +290,7 @@ class DriverService
     }
 
     /**
-     * @param  Contract  $contract
+     * @param Contract $contract
      *
      * @return array
      * @throws DriverServiceException
@@ -318,7 +320,7 @@ class DriverService
     }
 
     /**
-     * @param  Contract  $contract
+     * @param Contract $contract
      *
      * @throws DriverServiceException
      */
@@ -382,6 +384,8 @@ class DriverService
                     ];
                     Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
                     $res = Helper::getPolicyNumber($params);
+                    $bsoNumber = $res->data->bso_numbers[0];
+
                     $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
                 }
             }
@@ -401,11 +405,16 @@ class DriverService
             );
         }
 
-        $contract->status =  Contract::STATUS_CONFIRMED;
+        $contract->status = Contract::STATUS_CONFIRMED;
         $this->statusConfirmed($contract);
         $contract->save();
-        // Подтвердить номер в Bishop
-        Helper::acceptPolicyNumber(['contract_id' => $contract->ext_id, 'bso_number' => $contract->number]);
+
+        if (isset($bsoNumber) && isset($driver) && get_class($driver) == SberinsDriver::class) {
+            Helper::acceptPolicyNumber([
+                'bso_number' => $bsoNumber,
+                'contract_id' => $contract->ext_id,
+            ]);
+        }
 
         Log::info("Contract with ID {$contract->id} was saved.");
 
@@ -420,7 +429,7 @@ class DriverService
     }
 
     /**
-     * @param  Contract  $contract
+     * @param Contract $contract
      *
      * @return array
      * @throws DriverServiceException
