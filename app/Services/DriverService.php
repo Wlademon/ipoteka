@@ -39,7 +39,7 @@ class DriverService
     private ?DriverInterface $driver = null;
 
     /**
-     * @param string|null $driver
+     * @param  string|null  $driver
      *
      * @throws Exception
      */
@@ -58,8 +58,8 @@ class DriverService
     }
 
     /**
-     * @param string $code
-     * @param bool $reset
+     * @param  string  $code
+     * @param  bool    $reset
      *
      * @return DriverInterface
      * @throws Exception
@@ -83,8 +83,8 @@ class DriverService
     }
 
     /**
-     * @param Contract $contract
-     * @param PayLinks $links
+     * @param  Contract  $contract
+     * @param  PayLinks   $links
      *
      * @return PayLinkInterface
      */
@@ -122,8 +122,8 @@ class DriverService
     }
 
     /**
-     * @param Program $program
-     * @param array $data
+     * @param  Program  $program
+     * @param  array    $data
      *
      * @throws Exception
      */
@@ -157,7 +157,7 @@ class DriverService
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
      *
      * @return array
      * @throws DriverServiceException
@@ -223,8 +223,8 @@ class DriverService
     }
 
     /**
-     * @param Collection $collection
-     * @param string $type
+     * @param  Collection  $collection
+     * @param  string      $type
      *
      * @return InsuranceObject|null
      */
@@ -242,10 +242,10 @@ class DriverService
     }
 
     /**
-     * @param Contract $contract
-     * @param bool $sample
-     * @param bool $reset
-     * @param string|null $filePath
+     * @param  Contract    $contract
+     * @param  bool         $sample
+     * @param  bool         $reset
+     * @param  string|null  $filePath
      *
      * @return string|array
      * @throws DriverServiceException
@@ -255,8 +255,7 @@ class DriverService
         bool $sample,
         bool $reset = false,
         ?string $filePath = null
-    )
-    {
+    ) {
         $this->getStatus($contract);
         if (!$sample && $contract->status !== Contract::STATUS_CONFIRMED) {
             throw (new DriverServiceException(
@@ -290,7 +289,7 @@ class DriverService
     }
 
     /**
-     * @param Contract $contract
+     * @param  Contract  $contract
      *
      * @return array
      * @throws DriverServiceException
@@ -320,7 +319,7 @@ class DriverService
     }
 
     /**
-     * @param Contract $contract
+     * @param  Contract  $contract
      *
      * @throws DriverServiceException
      */
@@ -385,17 +384,16 @@ class DriverService
                     Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
                     $res = Helper::getPolicyNumber($params);
                     $bsoNumber = $res->data->bso_numbers[0];
-
                     $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
                 }
             }
-
+        } catch (Throwable $throwable) {
             $resUwin = Helper::getUwinContractId($contract);
 
             if ($resUwin) {
                 $contract->uw_contract_id = $resUwin->contractId ?? null;
             }
-        } catch (Throwable $throwable) {
+
             throw (new DriverServiceException(
                 'Ошибка при подтверждении платежа.', HttpResponse::HTTP_BAD_REQUEST
             ))->addLogData(
@@ -429,7 +427,7 @@ class DriverService
     }
 
     /**
-     * @param Contract $contract
+     * @param  Contract  $contract
      *
      * @return array
      * @throws DriverServiceException

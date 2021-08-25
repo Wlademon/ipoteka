@@ -52,6 +52,7 @@ class PaymentService
             'successUrl' => Arr::get($urls, 'success'),
             'failUrl' => Arr::get($urls, 'fail'),
             'totalAmount' => $contract->premium,
+            'description' => "СП {$contract->company->name} №{$contract->ext_id}",
             'customerDetails' => [
                 'phone' => str_replace('-', '', Arr::get($contract->subject->value, 'phone')),
                 'email' => Arr::get($contract->subject->value, 'email'),
