@@ -7,13 +7,9 @@ use App\Mail\Email;
 use App\Models\Contract;
 use App\Services\PaymentService;
 use App\Services\PayService\PayLinks;
-use Carbon\Carbon;
 use Exception;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use stdClass;
-use Strahovka\Payment\PayService;
-use Symfony\Component\HttpFoundation\Response;
 
 trait DriverTrait
 {

@@ -13,18 +13,15 @@ use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\Traits\DriverTrait;
 use App\Models\Contract;
 use App\Services\PayService\PayLinks;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PaymentService;
-use PHPUnit\Framework\MockObject\RuntimeException;
 use GuzzleHttp\Client;
-use PHPUnit\Util\Exception;
-use Psy\Util\Str;
+use RuntimeException;
 
 class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 {
@@ -34,29 +31,28 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     /**
      * @inheritDoc
      */
-    protected $baseUrl;
-    protected $accessToken;
-    protected $ClientID;
-    protected $ClientSecret;
-    protected $paymentService;
-    protected $pdfpath;
-    protected $grantType;
+    protected string $baseUrl;
+    protected ?string $accessToken = null;
+    protected string $ClientID;
+    protected string $ClientSecret;
+    protected PaymentService $paymentService;
+    protected string $pdfpath;
+    protected string $grantType;
     protected Client $client;
 
-    const CALCULATE_LIFE_PATH = '/api/mortgage/sber/life/calculation/create';
-    const CALCULATE_PROPERTY_PATH = '/api/mortgage/sber/property/calculation/create';
-    const LIFE_AGREEMENT_PATH = '/api/mortgage/sber/life/agreement/create';
-    const PROPERTY_AGREEMENT_PATH = '/api/mortgage/sber/property/agreement/create';
-    const PRINT_POLICY_PATH = '/api/print/agreement/';
-    const RELEASED_POLICY_PATH = '/api/agreement/set/released/';
-    const ADDRESS_CODE_2247 = 2247;
-    const ADDRESS_CODE_2246 = 2246;
-    const CONTACT_CODE_2243 = 2243;
-    const CONTACT_CODE_2240 = 2240;
-    const DOCUMENT_CODE_1165 = 1165;
-    const IS_LIFE = 'ABSOLUT_MORTGAGE_003_01';
-    const IS_PROPERTY = 'ABSOLUT_MORTGAGE_001_01';
-    const IS_PROPERTY_AND_LIFE = 'ABSOLUT_MORTGAGE_002_01';
+    protected const CALCULATE_LIFE_PATH = '/api/mortgage/sber/life/calculation/create';
+    protected const CALCULATE_PROPERTY_PATH = '/api/mortgage/sber/property/calculation/create';
+    protected const LIFE_AGREEMENT_PATH = '/api/mortgage/sber/life/agreement/create';
+    protected const PROPERTY_AGREEMENT_PATH = '/api/mortgage/sber/property/agreement/create';
+    protected const PRINT_POLICY_PATH = '/api/print/agreement/';
+    protected const RELEASED_POLICY_PATH = '/api/agreement/set/released/';
+    protected  const ADDRESS_CODE_2247 = 2247;
+    protected const ADDRESS_CODE_2246 = 2246;
+    protected const CONTACT_CODE_2243 = 2243;
+    protected const CONTACT_CODE_2240 = 2240;
+    protected const DOCUMENT_CODE_1165 = 1165;
+    protected const LIFE_OBJECT = 'life';
+    protected const PROPERTY_OBJECT = 'property';
 
 
     public function __construct(Repository $repository, string $prefix = '')
@@ -69,10 +65,18 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
         $this->client = new Client();
         $this->paymentService = new PaymentService($repository->get($prefix . 'pay_host'));
-        $this->accessToken = $this->getToken();
     }
 
-    protected function getToken()
+    protected function getAccessToken(): string
+    {
+        if (empty($this->accessToken)) {
+            $this->accessToken = $this->getToken();
+        }
+
+        return $this->accessToken;
+    }
+
+    protected function getToken(): string
     {
         $data = ['grant_type' => $this->grantType];
         $response = $this->client->request('POST',$this->baseUrl . '/oauth/token',[
@@ -93,6 +97,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         if (!Arr::has($decodeResponse, 'access_token')) {
             throw new Exception('Response has not access_token');
         }
+
         return $decodeResponse['access_token'];
     }
 
@@ -115,13 +120,13 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 $this->baseUrl . $path,
                 [
                     'headers' => [
-                        'Authorization' => "Bearer {$this->accessToken}",
+                        'Authorization' => "Bearer {$this->getAccessToken()}",
                     ],
                     'json' => $data,
                 ]
             );
-            $decodeResponse = $this::decodeResponse($response, $validateFields);
-            return $decodeResponse;
+
+            return $this::decodeResponse($response, $validateFields);
         } catch (GuzzleException $e) {
             throw new RuntimeException("POST request exception from {$path} {$e->getMessage()}");
         }
@@ -132,11 +137,11 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         try {
             $response = $this->client->put($this->baseUrl . $path, [
                 'headers' => [
-                    'Authorization' => "Bearer {$this->accessToken}",
+                    'Authorization' => "Bearer {$this->getAccessToken()}",
                 ]
             ]);
-            $decodeResponse = $this::decodeResponse($response, $validateFields);
-            return $decodeResponse;
+
+            return $this::decodeResponse($response, $validateFields);
         } catch (GuzzleException $e) {
             throw new RuntimeException("PUT request exception from {$path} {$e->getMessage()}");
         }
@@ -147,32 +152,32 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         try {
             $response = $this->client->get($this->baseUrl . $path, [
                 'headers' => [
-                    'Authorization' => "Bearer {$this->accessToken}",
+                    'Authorization' => "Bearer {$this->getAccessToken()}",
                 ]
             ]);
-            $decodeResponse = $this::decodeResponse($response, $validateFields);
-            return $decodeResponse;
+
+            return $this::decodeResponse($response, $validateFields);
         } catch (GuzzleException $e) {
             throw new RuntimeException("Put request exception from {$path} {$e->getMessage()}");
         }
     }
 
-    public static function isLife($data): bool
+    public static function isLife(array $data): bool
     {
-        return in_array(self::IS_LIFE, $data);
+        return Arr::exists($data, 'objects.life');
     }
 
-    public static function isProperty($data): bool
+    public static function isProperty(array $data): bool
     {
-        return in_array(self::IS_PROPERTY, $data);
+        return Arr::exists($data, 'objects.property');
     }
 
-    public static function isPropertyAndLife($data): bool
+    public static function isPropertyAndLife(array $data): bool
     {
-        return in_array(self::IS_PROPERTY_AND_LIFE, $data);
+        return self::isLife($data) && self::isProperty($data);
     }
 
-    public static function getGender($data)
+    public static function getGender($data): string
     {
         return $data['objects']['life']['gender'] == 0 ? 'М' : 'Ж';
     }
@@ -211,6 +216,11 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         return new Calculated($data['isn'] ?? null, $result['life'] ?? null, $result['property'] ?? null);
     }
 
+    protected function getProducts(Contract $contract): array
+    {
+        return $contract->objects->pluck('product')->all();
+    }
+
     /**
      * @inheritDoc
      */
@@ -221,39 +231,21 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
             'fail' => $payLinks->getFailUrl(),
         ];
 
-        switch ($contract->options['programCode']) {
-            case self::IS_PROPERTY_AND_LIFE:
-                $array = [
-                    [
-                        'price' => $contract->options['price']['priceLife'],
-                        'isn' => $contract->options['isn']['isnLife'],
-                        'description' => 'Жизнь',
-                    ],
-                    [
-                        'price' => $contract->options['price']['priceProperty'],
-                        'isn' => $contract->options['isn']['isnProperty'],
-                        'description' => 'Имущество',
-                    ],
-                ];
-                break;
-            case self::IS_PROPERTY:
-                $array = [
-                    [
-                        'price' => $contract->options['price']['priceProperty'],
-                        'isn' => $contract->options['isn']['isnProperty'],
-                        'description' => 'Имущество',
-                    ],
-                ];
-                break;
-            case self::IS_LIFE:
-                $array = [
-                    [
-                        'price' => $contract->options['price']['priceLife'],
-                        'isn' => $contract->options['isn']['isnLife'],
-                        'description' => 'Жизнь',
-                    ],
-                ];
-                break;
+        $products = $this->getProducts($contract);
+        $array = [];
+        if (in_array(self::LIFE_OBJECT, $products)) {
+            $array[] = [
+                'price' => $contract->options['price']['priceLife'],
+                'isn' => $contract->options['isn']['isnLife'],
+                'description' => 'Жизнь',
+            ];
+        }
+        if (in_array(self::PROPERTY_OBJECT, $products)) {
+            $array[] = [
+                'price' => $contract->options['price']['priceProperty'],
+                'isn' => $contract->options['isn']['isnProperty'],
+                'description' => 'Имущество',
+            ];
         }
 
         $result = $this->paymentService->payLink($contract, $urls, $array);
@@ -267,7 +259,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
      * @inheritDoc
      */
 
-    public static function getSubjectAddress($data)
+    public static function getSubjectAddress($data): string
     {
         $arr = [
             $data['subject']['state'],
@@ -281,7 +273,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
 
-    public static function getObjectPropertyAddress($data)
+    public static function getObjectPropertyAddress($data): string
     {
         $arr = [
             $data['objects']['property']['state'],
@@ -437,6 +429,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
             'isnProperty' => isset($policyIdProperty) ? $policyIdProperty : null,
         ];
         $contract->options = $options;
+
         return new CreatedPolicy(
             null,
             isset($policyIdLife) ? $policyIdLife : null,
@@ -462,37 +455,26 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         }
         $pdf = base64_decode($bytes);
         Storage::put($this->getFileName($filename), $pdf);
-        $base64 = $this->generateBase64($this->getFileName($filename));
-        return $base64;
+
+        return self::generateBase64($this->getFileName($filename));
     }
 
     public function policyExist($isn): bool
     {
-        $result = Storage::exists($this->getFileName($isn));
-        return $result;
+        return Storage::exists($this->getFileName($isn));
     }
 
-    public function getPolicyIsn($contract): array
+    public function getPolicyIsn(Contract $contract): array
     {
-        switch ($contract->getOptionsAttribute()['programCode']) {
-            case self::IS_PROPERTY_AND_LIFE:
-                $response = [
-                    $contract->getOptionsAttribute()['isn']['isnLife'],
-                    $contract->getOptionsAttribute()['isn']['isnProperty'],
-                ];
-                break;
-            case self::IS_PROPERTY:
-                $response = [
-                    $contract->getOptionsAttribute()['isn']['isnProperty'],
-                ];
-
-                break;
-            case self::IS_LIFE:
-                $response = [
-                    $contract->getOptionsAttribute()['isn']['isnLife'],
-                ];
-                break;
+        $products = $this->getProducts($contract);
+        $response = [];
+        if (in_array(self::PROPERTY_OBJECT, $products)) {
+            $response[] = $contract->getOptionsAttribute()['isn']['isnProperty'];
         }
+        if (in_array(self::LIFE_OBJECT, $products)) {
+            $response[] = $contract->getOptionsAttribute()['isn']['isnLife'];
+        }
+
         return $response;
     }
 
@@ -501,10 +483,9 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         return base64_encode(Storage::get($path));
     }
 
-    public function getFileName($filename)
+    public function getFileName($filename): string
     {
-        $filename = $this->pdfpath . $filename . '.pdf';
-        return $filename;
+        return $this->pdfpath . $filename . '.pdf';
     }
 
     public function printPolicy(Contract $contract, bool $sample, bool $reset, ?string $filePath = null)
@@ -516,7 +497,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
             foreach ($isnArray as $isn) {
                 if ($this->policyExist($isn)) {
                     $result[] = [
-                        $this->generateBase64($this->getFileName($isn)),
+                        self::generateBase64($this->getFileName($isn)),
                     ];
                 } else {
                     $validateFields = [
@@ -532,6 +513,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                     ];
                 }
             }
+
             return $result;
     }
 
@@ -546,15 +528,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         ];
         $isnArray = $this->getPolicyIsn($contract);
         foreach ($isnArray as $isn) {
-            $response = $this->put(self::RELEASED_POLICY_PATH.$isn, $validateFields);
+            $this->put(self::RELEASED_POLICY_PATH.$isn, $validateFields);
         }
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function sendPolice(Contract $contract): string
-    {
-        // TODO: Implement sendPolice() method.
     }
 }
