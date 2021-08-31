@@ -9,20 +9,27 @@ use App\Drivers\DriverResults\CreatedPolicyInterface;
 use App\Drivers\DriverResults\PayLink;
 use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\Traits\DriverTrait;
+use App\Exceptions\Drivers\AbsoluteDriverException;
+use App\Exceptions\Drivers\AbsoluteDriverValidationException;
+use App\Exceptions\Drivers\DriverException;
 use App\Models\Contract;
 use App\Services\PayService\PayLinks;
-use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PaymentService;
 use GuzzleHttp\Client;
-use Illuminate\Validation\ValidationException;
 use Psr\Http\Message\ResponseInterface;
-use RuntimeException;
+use Throwable;
 
+/**
+ * Class AbsoluteDriver
+ *
+ * @package App\Drivers
+ */
 class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 {
     use DriverTrait;
@@ -38,20 +45,26 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     protected string $pdfpath;
     protected string $grantType;
     protected Client $client;
-    protected const CALCULATE_LIFE_PATH = '/api/mortgage/sber/life/calculation/create';
-    protected const CALCULATE_PROPERTY_PATH = '/api/mortgage/sber/property/calculation/create';
-    protected const LIFE_AGREEMENT_PATH = '/api/mortgage/sber/life/agreement/create';
-    protected const PROPERTY_AGREEMENT_PATH = '/api/mortgage/sber/property/agreement/create';
-    protected const PRINT_POLICY_PATH = '/api/print/agreement/';
-    protected const RELEASED_POLICY_PATH = '/api/agreement/set/released/';
-    protected const ADDRESS_CODE_2247 = 2247;
-    protected const ADDRESS_CODE_2246 = 2246;
-    protected const CONTACT_CODE_2243 = 2243;
-    protected const CONTACT_CODE_2240 = 2240;
-    protected const DOCUMENT_CODE_1165 = 1165;
+    protected string $calculateLifePath;
+    protected string $calculatePropertyPath;
+    protected string $lifeAgreementPath;
+    protected string $propertyAgreementPath;
+    protected string $printPolicyPath;
+    protected string $releasedPolicyPath;
+    protected const ADDRESS_CODE_OBJECT = 2247;
+    protected const ADDRESS_CODE_SUBJECT = 2246;
+    protected const CONTACT_CODE_EMAIL = 2243;
+    protected const CONTACT_CODE_PHONE = 2240;
+    protected const DOCUMENT_CODE_PASSPORT = 1165;
     protected const LIFE_OBJECT = 'life';
     protected const PROPERTY_OBJECT = 'property';
 
+    /**
+     * AbsoluteDriver constructor.
+     *
+     * @param  Repository  $repository
+     * @param  string      $prefix
+     */
     public function __construct(Repository $repository, string $prefix = '')
     {
         $this->baseUrl = $repository->get($prefix . 'base_Url');
@@ -59,11 +72,24 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         $this->ClientSecret = $repository->get($prefix . 'client_secret');
         $this->pdfpath = $repository->get($prefix . 'pdf.path');
         $this->grantType = $repository->get($prefix . 'grant_type');
+        $this->calculateLifePath = $repository->get($prefix . 'calculate_life_path');
+        $this->calculatePropertyPath = $repository->get($prefix . 'calculate_property_path');
+        $this->lifeAgreementPath = $repository->get($prefix . 'life_agreement_path');
+        $this->propertyAgreementPath = $repository->get($prefix . 'property_agreement_path');
+        $this->printPolicyPath = $repository->get($prefix . 'print_policy_path');
+        $this->releasedPolicyPath = $repository->get($prefix . 'released_policy_path');
 
-        $this->client = new Client();
-        $this->paymentService = new PaymentService($repository->get($prefix . 'pay_host'));
+        $this->client = App::make(Client::class);
+        $this->paymentService = App::make(
+            PaymentService::class,
+            ['host' => $repository->get($prefix . 'pay_host')]
+        );
     }
 
+    /**
+     * @return string
+     * @throws AbsoluteDriverException
+     */
     protected function getAccessToken(): string
     {
         if (empty($this->accessToken)) {
@@ -73,46 +99,76 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         return $this->accessToken;
     }
 
+    /**
+     * @return string
+     * @throws AbsoluteDriverException
+     */
     protected function getToken(): string
     {
         $data = ['grant_type' => $this->grantType];
-        $response = $this->client->request(
-            'POST',
-            $this->baseUrl . '/oauth/token',
-            [
-                'auth' => [
-                    $this->ClientID,
-                    $this->ClientSecret,
-                ],
-                'form_params' => $data,
-            ]
-        );
+        try {
+            $response = $this->client->request(
+                'POST',
+                $this->baseUrl . '/oauth/token',
+                [
+                    'auth' => [
+                        $this->ClientID,
+                        $this->ClientSecret,
+                    ],
+                    'form_params' => $data,
+                ]
+            );
+        } catch (Throwable $throwable) {
+            throw new AbsoluteDriverException(
+                __METHOD__, 'Ошибка получения токена', AbsoluteDriverException::DEFAULT_CODE, $throwable
+            );
+        }
 
         if (!$response->getStatusCode() == 200) {
-            throw new Exception('Error get token');
+            throw new AbsoluteDriverException(__METHOD__, 'Ошибка получения токена');
         }
 
         $decodeResponse = json_decode($response->getBody()->getContents(), true);
 
         if (!Arr::has($decodeResponse, 'access_token')) {
-            throw new Exception('Response has not access_token');
+            throw new AbsoluteDriverException(__METHOD__, 'В ответе нет access_token');
         }
 
         return $decodeResponse['access_token'];
     }
 
+    /**
+     * @param  ResponseInterface  $response
+     * @param  array              $validateFields
+     *
+     * @return mixed
+     * @throws AbsoluteDriverValidationException
+     * @throws \Illuminate\Validation\ValidationException
+     */
     public static function decodeResponse(ResponseInterface $response, array $validateFields)
     {
         $decodeResponse = json_decode($response->getBody()->getContents(), true);
         $validator = Validator::make($decodeResponse, $validateFields);
 
         if (!$validator->validated()) {
-            throw ValidationException::withMessages($validator->errors()->messages());
+            throw AbsoluteDriverValidationException::withMessages(
+                __METHOD__,
+                $validator->errors()->messages()
+            );
         }
 
         return $decodeResponse;
     }
 
+    /**
+     * @param  array   $data
+     * @param  string  $path
+     * @param  array   $validateFields
+     *
+     * @return mixed
+     * @throws AbsoluteDriverException
+     * @throws AbsoluteDriverValidationException
+     */
     public function post(array $data, string $path, array $validateFields)
     {
         try {
@@ -128,10 +184,23 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
             return self::decodeResponse($response, $validateFields);
         } catch (GuzzleException $e) {
-            throw new RuntimeException("POST request exception from {$path} {$e->getMessage()}");
+            throw new AbsoluteDriverException(
+                __METHOD__,
+                "POST запрос исключение от {$path} {$e->getMessage()}",
+                DriverException::DEFAULT_CODE,
+                $e
+            );
         }
     }
 
+    /**
+     * @param  string  $path
+     * @param  array   $validateFields
+     *
+     * @return mixed
+     * @throws AbsoluteDriverException
+     * @throws AbsoluteDriverValidationException
+     */
     public function put(string $path, array $validateFields)
     {
         try {
@@ -146,10 +215,24 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
             return self::decodeResponse($response, $validateFields);
         } catch (GuzzleException $e) {
-            throw new RuntimeException("PUT request exception from {$path} {$e->getMessage()}");
+            throw new AbsoluteDriverException(
+                __METHOD__,
+                "PUT запрос исключение от {$path} {$e->getMessage()}",
+                DriverException::DEFAULT_CODE,
+                $e
+            );
         }
     }
 
+    /**
+     * @param  string  $path
+     * @param  array   $validateFields
+     *
+     * @return mixed
+     * @throws AbsoluteDriverException
+     * @throws AbsoluteDriverValidationException
+     * @throws \Illuminate\Validation\ValidationException
+     */
     public function get(string $path, array $validateFields)
     {
         try {
@@ -164,30 +247,62 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
 
             return self::decodeResponse($response, $validateFields);
         } catch (GuzzleException $e) {
-            throw new RuntimeException("Put request exception from {$path} {$e->getMessage()}");
+            throw new AbsoluteDriverException(
+                __METHOD__,
+                "GET запрос исключение от {$path} {$e->getMessage()}",
+                DriverException::DEFAULT_CODE,
+                $e
+            );
         }
     }
 
+    /**
+     * @param  array  $data
+     *
+     * @return bool
+     */
     public static function isLife(array $data): bool
     {
         return Arr::exists($data, 'objects.life');
     }
 
+    /**
+     * @param  array  $data
+     *
+     * @return bool
+     */
     public static function isProperty(array $data): bool
     {
         return Arr::exists($data, 'objects.property');
     }
 
+    /**
+     * @param  array  $data
+     *
+     * @return bool
+     */
     public static function isPropertyAndLife(array $data): bool
     {
         return self::isLife($data) && self::isProperty($data);
     }
 
+    /**
+     * @param  array  $data
+     *
+     * @return string
+     */
     public static function getGender(array $data): string
     {
         return Arr::get($data, 'objects.life.gender') == 0 ? 'М' : 'Ж';
     }
 
+    /**
+     * @param  array  $data
+     *
+     * @return CalculatedInterface
+     * @throws AbsoluteDriverException
+     * @throws AbsoluteDriverValidationException
+     */
     public function calculate(array $data): CalculatedInterface
     {
         $life = 0;
@@ -205,14 +320,14 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 'sex' => self::getGender($data),
                 'birthday' => Arr::get($data, 'objects.life.birthDate'),
             ];
-            $resultQuery = $this->post($body, self::CALCULATE_LIFE_PATH, $validateFileds);
+            $resultQuery = $this->post($body, $this->calculateLifePath, $validateFileds);
             $life = Arr::get($resultQuery, 'result.data.premium_sum');
         }
         if (self::isProperty($data) || self::isPropertyAndLife($data)) {
             $body = [
                 'limit_sum' => Arr::get($data, 'remainingDebt'),
             ];
-            $resultQuery = $this->post($body, self::CALCULATE_PROPERTY_PATH, $validateFileds);
+            $resultQuery = $this->post($body, $this->calculatePropertyPath, $validateFileds);
             $property = Arr::get($resultQuery, 'result.data.premium_sum');
         }
         $result = [
@@ -221,12 +336,15 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         ];
 
         return new Calculated(
-            $data['isn'] ?? null,
-            $result['life'] ?? null,
-            $result['property'] ?? null
+            $data['isn'] ?? null, $result['life'] ?? null, $result['property'] ?? null
         );
     }
 
+    /**
+     * @param  Contract  $contract
+     *
+     * @return array
+     */
     protected function getProducts(Contract $contract): array
     {
         return $contract->objects->pluck('product')->all();
@@ -269,7 +387,6 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     /**
      * @inheritDoc
      */
-
     public static function getSubjectAddress(array $data): string
     {
         $arr = [
@@ -284,6 +401,11 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         return implode(', ', array_filter($arr));
     }
 
+    /**
+     * @param  array  $data
+     *
+     * @return string
+     */
     public static function getObjectPropertyAddress(array $data): string
     {
         $arr = [
@@ -298,6 +420,14 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         return implode(', ', array_filter($arr));
     }
 
+    /**
+     * @param  Contract  $contract
+     * @param  array     $data
+     *
+     * @return CreatedPolicyInterface
+     * @throws AbsoluteDriverException
+     * @throws AbsoluteDriverValidationException
+     */
     public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface
     {
         $body = [
@@ -313,30 +443,30 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 'birthday' => Arr::get($data, 'subject.birthDate'),
                 'address' => [
                     [
-                        'code' => self::ADDRESS_CODE_2247,
+                        'code' => self::ADDRESS_CODE_OBJECT,
                         'code_desc' => '',
                         'text' => self::getSubjectAddress($data),
                         'fias_id' => '',
                     ],
                     [
-                        'code' => self::ADDRESS_CODE_2246,
+                        'code' => self::ADDRESS_CODE_SUBJECT,
                         'code_desc' => '',
                         'text' => self::getSubjectAddress($data),
                     ],
                 ],
                 'contact' => [
                     [
-                        'code' => self::CONTACT_CODE_2243,
+                        'code' => self::CONTACT_CODE_EMAIL,
                         'code_desc' => 'E-mail',
                         'text' => Arr::get($data, 'subject.email'),
                     ],
                     [
-                        'code' => self::CONTACT_CODE_2240,
+                        'code' => self::CONTACT_CODE_PHONE,
                         'text' => Arr::get($data, 'subject.phone'),
                     ],
                 ],
                 'document' => [
-                    'code' => self::DOCUMENT_CODE_1165,
+                    'code' => self::DOCUMENT_CODE_PASSPORT,
                     'series' => Arr::get($data, 'subject.docSeries'),
                     'number' => Arr::get($data, 'subject.docNumber'),
                     'issue_date' => Arr::get($data, 'subject.docIssueDate'),
@@ -345,7 +475,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
             ],
         ];
         if (self::isLife($data)) {
-            $path = self::LIFE_AGREEMENT_PATH;
+            $path = $this->lifeAgreementPath;
 
             $validateFields = [
                 'result' => 'required',
@@ -366,14 +496,14 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         if (self::isProperty($data)) {
             $body['ins_object'] = [
                 'address' => [
-                    'code' => self::ADDRESS_CODE_2247,
+                    'code' => self::ADDRESS_CODE_OBJECT,
                     'code_desc' => '',
                     'text' => self::getObjectPropertyAddress($data),
                     'fias_id' => '',
                 ],
             ];
 
-            $path = self::PROPERTY_AGREEMENT_PATH;
+            $path = $this->propertyAgreementPath;
             $validateFields = [
                 'result' => 'required',
                 'result.*.data' => 'required',
@@ -411,21 +541,19 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     /**
      * @inheritDoc
      */
-
     public function generatePDF(string $bytes, string $filename): string
     {
-        $filepath = Storage::path($this->pdfpath);
-        if (!Storage::exists($this->pdfpath)) {
-            if (!mkdir($filepath, 0777, true) && !is_dir($filepath)) {
-                throw new RuntimeException('Directory "%s" was not created :' . $filepath);
-            }
-        }
         $pdf = base64_decode($bytes);
         Storage::put($this->getFileName($filename), $pdf);
 
         return self::generateBase64($this->getFileName($filename));
     }
 
+    /**
+     * @param  string  $isn
+     *
+     * @return bool
+     */
     public function policyExist(string $isn): bool
     {
         return Storage::exists($this->getFileName($isn));
@@ -445,16 +573,39 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         return $response;
     }
 
+    /**
+     * @param  string  $path
+     *
+     * @return string
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     */
     public static function generateBase64(string $path): string
     {
         return base64_encode(Storage::get($path));
     }
 
+    /**
+     * @param  string  $filename
+     *
+     * @return string
+     */
     public function getFileName(string $filename): string
     {
         return $this->pdfpath . $filename . '.pdf';
     }
 
+    /**
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  bool         $reset
+     * @param  string|null  $filePath
+     *
+     * @return array
+     * @throws AbsoluteDriverException
+     * @throws AbsoluteDriverValidationException
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
+     * @throws \Illuminate\Validation\ValidationException
+     */
     public function printPolicy(
         Contract $contract,
         bool $sample,
@@ -463,7 +614,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     ) {
         $isnArray = $this->getPolicyIsn($contract);
         if (empty($isnArray)) {
-            throw new RuntimeException('ISN not found for this contract');
+            throw new AbsoluteDriverException('ISN для этого контракта не найден');
         }
         foreach ($isnArray as $isn) {
             if ($this->policyExist($isn)) {
@@ -478,7 +629,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                     'results.*.data.*.document.*.bytes' => 'required',
                 ];
                 $bytes = $this->get(
-                    self::PRINT_POLICY_PATH . $isn,
+                    $this->printPolicyPath . $isn,
                     $validateFields
                 )['result']['data']['document']['bytes'];
                 $result[] = [
@@ -501,7 +652,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         ];
         $isnArray = $this->getPolicyIsn($contract);
         foreach ($isnArray as $isn) {
-            $this->put(self::RELEASED_POLICY_PATH . $isn, $validateFields);
+            $this->put($this->releasedPolicyPath . $isn, $validateFields);
         }
     }
 }

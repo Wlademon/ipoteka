@@ -44,6 +44,12 @@ return [
     ],
     'absolut_77' => [
         'pay_host' => env('MERCURIUS_HOST', 'http://mercurius.stage.strahovka.ru/'),
+        'calculate_life_path' => env('SC_ABSOLUT_CALCULATE_LIFE_PATH', '/api/mortgage/sber/life/calculation/create'),
+        'calculate_property_path' => env('SC_ABSOLUT_CALCULATE_PROPERTY_PATH', '/api/mortgage/sber/property/calculation/create'),
+        'life_agreement_path' => env('SC_ABSOLUT_LIFE_AGREEMENT_PATH', '/api/mortgage/sber/life/agreement/create'),
+        'property_agreement_path' => env('SC_ABSOLUT_PROPERTY_AGREEMENT_PATH', '/api/mortgage/sber/property/agreement/create'),
+        'print_policy_path' => env('SC_ABSOLUT_PRINT_POLICY_PATH', '/api/print/agreement/'),
+        'released_policy_path' => env('SC_ABSOLUT_RELEASED_POLICY_PATH', '/api/agreement/set/released/'),
         'base_Url' =>env('SC_ABSOLUT_HOST','https://represtapi.absolutins.ru/ords/rest'),
         'client_id'=>env('SC_ABSOLUT_CLIENT_ID','Wpsa0QvBoyjwUMQYJ6707A..'),
         'client_secret'=>env('SC_ABSOLUT_CLIENT_SECRET','waSVo19oyiyd78T-QCMxIw..'),
