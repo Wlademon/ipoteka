@@ -45,9 +45,8 @@ class PaymentService
      * @return array
      * @throws PaymentServiceException
      */
-    public function payLink(Contract $contract, array $urls, ?array $itemArray = null) : array
+    public function payLink(Contract $contract, array $urls, ?array $itemArray = null): array
     {
-
         if ($itemsArray = null){
             $items = [
                     'id' => $contract->id,
@@ -83,6 +82,7 @@ class PaymentService
             'successUrl' => Arr::get($urls, 'success'),
             'failUrl' => Arr::get($urls, 'fail'),
             'totalAmount' => $contract->premium,
+            'description' => "СП {$contract->company->name} №{$contract->ext_id}",
             'customerDetails' => [
                 'phone' => str_replace('-', '', Arr::get($contract->subject->value, 'phone')),
                 'email' => Arr::get($contract->subject->value, 'email'),
@@ -90,9 +90,7 @@ class PaymentService
                 'inn'=>$contract->company->inn,
                 'passport'=>'1234657890',
             ],
-            'items' =>
-                $items,
-
+            'items' => $items,
         ];
 
         $resp = Arr::get(
@@ -147,6 +145,7 @@ class PaymentService
             }
             throw new PaymentServiceException($e->getMessage(), Response::HTTP_BAD_REQUEST);
         }
+
         return json_decode((string) $resp->getBody(), true, 128);
     }
 

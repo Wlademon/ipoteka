@@ -6,6 +6,7 @@ use App\Drivers\DriverInterface;
 use App\Drivers\DriverResults\PayLinkInterface;
 use App\Drivers\LocalDriverInterface;
 use App\Drivers\LocalPaymentDriverInterface;
+use App\Drivers\SberinsDriver;
 use App\Exceptions\Drivers\DriverExceptionInterface;
 use App\Exceptions\Services\DriverServiceException;
 use App\Helpers\Helper;
@@ -360,6 +361,7 @@ class DriverService
     public function acceptPayment(Contract $contract, PaymentService $payService, Payment $payment): array
     {
         $company = $contract->company;
+
         try {
             $driver = $this->getDriverByCode($company->code);
             if ($driver instanceof LocalPaymentDriverInterface) {
@@ -369,22 +371,33 @@ class DriverService
                 if ($status !== Contract::STATUS_CONFIRMED) {
                     throw new DriverServiceException('Полис не оплачен.', Response::HTTP_PAYMENT_REQUIRED);
                 }
-                $contract->status = Contract::STATUS_CONFIRMED;
-            }
-            if ($driver instanceof LocalDriverInterface) {
-                $params = [
-                    'product_code' => 'mortgage',
-                    'program_code' => $contract->program->programCode,
-                    'bso_owner_code' => $company->code,
-                    'bso_receiver_code' => 'STRAHOVKA',
-                    'count' => 1,
-                ];
-                Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
-                $res = Helper::getPolicyNumber($params);
-                $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
             }
 
+            $contract->refresh();
+
+            if ($driver instanceof LocalDriverInterface) {
+                if (!($contract->number ?? null)) {
+                    $params = [
+                        'contract_id' => $contract->ext_id,
+                        'product_code' => 'mortgage',
+                        'program_code' => $contract->program->programCode,
+                        'bso_owner_code' => $company->code,
+                        'bso_receiver_code' => 'STRAHOVKA',
+                        'count' => 1,
+                    ];
+                    Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
+                    $res = Helper::getPolicyNumber($params);
+                    $bsoNumber = $res->data->bso_numbers[0];
+                    $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
+                }
+            }
         } catch (Throwable $throwable) {
+            $resUwin = Helper::getUwinContractId($contract);
+
+            if ($resUwin) {
+                $contract->uw_contract_id = $resUwin->contractId ?? null;
+            }
+
             throw (new DriverServiceException(
                 'Ошибка при подтверждении платежа.', HttpResponse::HTTP_BAD_REQUEST
             ))->addLogData(
@@ -394,8 +407,17 @@ class DriverService
             );
         }
 
+        $contract->status = Contract::STATUS_CONFIRMED;
         $this->statusConfirmed($contract);
         $contract->save();
+
+        if (isset($bsoNumber) && isset($driver) && get_class($driver) == SberinsDriver::class) {
+            Helper::acceptPolicyNumber([
+                'bso_number' => $bsoNumber,
+                'contract_id' => $contract->ext_id,
+            ]);
+        }
+
         Log::info("Contract with ID {$contract->id} was saved.");
 
         return [

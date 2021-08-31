@@ -30,6 +30,7 @@ class ContractResource extends \Illuminate\Http\Resources\Json\JsonResource
             'premium' => $this->premium,
             'status' => $this->status,
             'subject' => $this->subject->getValueAttribute(),
+            'uwContractId' => $this->uw_contract_id,
             'objects' => InsuranceObject::contractObjects($this->id)
         ];
     }
