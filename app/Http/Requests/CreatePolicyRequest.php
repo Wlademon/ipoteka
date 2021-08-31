@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
  *     required={"programCode", "activeFrom", "remainingDebt", "mortgageAgreementNumber", "isOwnership", "object", "subject"},
  *     schema="CreatePolicyRequest",
  *     @OA\Property(property="programCode", type="string", example="RENSINS_MORTGAGE_002_01", description="Код программы страхования"),
+ *     @OA\Property(property="contractId", type="integer", example="123456789", description="Идентификатор договора"),
  *     @OA\Property(property="ownerCode", type="string", example="STRAHOVKA", description="Код канала, откуда идут запросы для методов"),
  *     @OA\Property(property="activeFrom", type="date", example="2021-07-18", description="Дата начала действия договора страхования"),
  *     @OA\Property(property="activeTo", type="date", example="2022-07-17", description="Дата окончания действия договора страхования"),

@@ -174,9 +174,7 @@ class DriverService
         $model->fill($data);
         $program = Program::whereProgramCode($data['programCode'])->with('company')->firstOrFail();
         try {
-
             $result = $this->getDriverByCode($program->company->code)->createPolicy($model, $data);
-
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
                 'При получении полиса возникла ошибка.', Response::HTTP_NOT_ACCEPTABLE
