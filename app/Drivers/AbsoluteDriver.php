@@ -107,7 +107,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         $validator = Validator::make($decodeResponse, $validateFields);
 
         if (!$validator->validated()) {
-            ValidationException::withMessages($validator->errors()->messages());
+            throw ValidationException::withMessages($validator->errors()->messages());
         }
 
         return $decodeResponse;
