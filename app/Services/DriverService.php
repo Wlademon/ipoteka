@@ -190,7 +190,6 @@ class DriverService
             $policeData = collect($data);
             $objects = collect($policeData->only(['objects'])->get('objects'));
             $model->premium = $result->getPremiumSum();
-            $model->ext_id = time();
             $model->saveOrFail();
             $subject = (new Subject())->fill(['value' => $policeData->get('subject')]);
             $subject->contract()->associate($model);
