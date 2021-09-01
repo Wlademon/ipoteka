@@ -26,7 +26,7 @@ class PayLinks implements Arrayable
      * @param string $successUrl
      * @param string $failUrl
      */
-    public function __construct($successUrl, $failUrl)
+    public function __construct(string $successUrl, string $failUrl)
     {
         $this->successUrl = $successUrl;
         $this->failUrl = $failUrl;
@@ -52,7 +52,7 @@ class PayLinks implements Arrayable
     /**
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'fail' => $this->failUrl,

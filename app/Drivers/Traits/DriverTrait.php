@@ -11,6 +11,11 @@ use Exception;
 use Illuminate\Support\Facades\Mail;
 use stdClass;
 
+/**
+ * Trait DriverTrait
+ *
+ * @package App\Drivers\Traits
+ */
 trait DriverTrait
 {
     /**
@@ -101,7 +106,7 @@ trait DriverTrait
      *
      * @return bool
      */
-    protected function isFilePoliceExitst(Contract $contract, &$filenameWithPath = ''): bool
+    protected function isFilePoliceExitst(Contract $contract, string &$filenameWithPath = ''): bool
     {
         if (!$filenameWithPath) {
             $filename = self::gefaultFileName($contract);
@@ -117,7 +122,7 @@ trait DriverTrait
      *
      * @return string
      */
-    protected static function createFilePath(Contract $contract, $objectId)
+    protected static function createFilePath(Contract $contract, string $objectId)
     {
         $filePathObject = self::gefaultFileName($contract);
         $filePathObjectArray = explode('.', $filePathObject);

@@ -100,7 +100,7 @@ class MerchantServices
      * @return \Illuminate\Support\Collection
      * @throws \SoapFault
      */
-    public function getContractId($orderId): Collection
+    public function getContractId(string $orderId): Collection
     {
         $options = [
             'soap_version' => SOAP_1_1,
@@ -126,7 +126,7 @@ class MerchantServices
                     'secure' => $header,
                 ]
             );
-            $result = $soap->__SoapCall('getContractId', $request, null, $header);
+            $result = $soap->__soapCall('getContractId', $request, null, $header);
 
             Log::info(
                 __METHOD__ . ' Идентификатор сделки получен',
@@ -150,7 +150,7 @@ class MerchantServices
      * @return array
      * @throws \SoapFault
      */
-    public function getContractSigned($orderId, $contractId): array
+    public function getContractSigned(string $orderId, array $contractId): array
     {
         $options = [
             'soap_version' => SOAP_1_1,
@@ -174,7 +174,7 @@ class MerchantServices
                         'secure' => $header,
                     ]
                 );
-                $result = $soap->__SoapCall(
+                $result = $soap->__soapCall(
                     'GetContractSigned',
                     [
                         'GetContractSignedRequest' => $request,
@@ -233,7 +233,7 @@ class MerchantServices
                     'secure' => $header,
                 ]
             );
-            $result = $soap->__SoapCall('getOrderStatus', $request, null, $header);
+            $result = $soap->__soapCall('getOrderStatus', $request, null, $header);
             Log::info(
                 __METHOD__ . ' Получение статуса',
                 [
@@ -280,7 +280,7 @@ class MerchantServices
                     'request' => $request,
                 ]
             );
-            $result = $soap->__SoapCall('registerOrder', $request, null, $this->getHeaderForSoap());
+            $result = $soap->__soapCall('registerOrder', $request, null, $this->getHeaderForSoap());
             Log::info(
                 __METHOD__ . ' Получение ссылки на оплату: заказ зарегистрирован',
                 [

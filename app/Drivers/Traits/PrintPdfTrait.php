@@ -21,7 +21,7 @@ trait PrintPdfTrait
      * @param $path
      * @return string
      */
-    public static function generateBase64($path): string
+    public static function generateBase64(string $path): string
     {
         return base64_encode(file_get_contents($path));
     }
@@ -32,7 +32,7 @@ trait PrintPdfTrait
      * @param string $filename PDF filename with path
      * @return string
      */
-    protected static function generatePdf(Contract $contract, $sample = false, $filename = ''): string
+    protected static function generatePdf(Contract $contract, bool $sample = false, string $filename = ''): string
     {
         $template = mb_strtolower($contract->program->programCode);
 
@@ -87,7 +87,7 @@ trait PrintPdfTrait
      * @return string
      * @throws \Exception
      */
-    public static function setWatermark($pathPdf, $pathWatermark, $resultPath): string
+    public static function setWatermark(string $pathPdf, string $pathWatermark, string $resultPath): string
     {
         $watermark = new WatermarkService($pathPdf, true);
         $watermark->setStyle(Watermark::STYLE_IMG_COLORLESS)->setOpacity(.4);

@@ -4,10 +4,16 @@ namespace App\Printers;
 
 use RuntimeException;
 
+/**
+ * Trait Base64Trait
+ *
+ * @package App\Printers
+ */
 trait Base64Trait
 {
     /**
-     * @param string $content
+     * @param  string  $content
+     *
      * @return bool
      */
     public function isBase64(string $content): bool
@@ -18,12 +24,13 @@ trait Base64Trait
             $content = trim($data[1]);
         }
         $content = str_replace(['\r'], '', $content);
-        if (! preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $content)) {
+        if (
+            !preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $content) ||
+            !$decoded = base64_decode($content, true)
+        ) {
             return false;
         }
-        if (! $decoded = base64_decode($content, true)) {
-            return false;
-        }
+
         return base64_encode($decoded) === $content;
     }
 

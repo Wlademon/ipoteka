@@ -37,11 +37,8 @@ class ReninsClientService
      *
      * @throws ReninsException
      */
-    public function __construct(Repository $repository, string $prefix = '')
+    public function __construct(string $host, string $login, string $pass)
     {
-        $host = $repository->get($prefix . 'host');
-        $login = $repository->get($prefix . 'login');
-        $pass = $repository->get($prefix . 'pass');
         if (!$host) {
             throw new ReninsException('Not set Renisans host.');
         }

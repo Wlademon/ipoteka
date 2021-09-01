@@ -37,7 +37,7 @@ class AlfaAuth
      * @return mixed
      * @throws AlphaException
      */
-    public function getToken(Client $client)
+    public function getToken(Client $client): string
     {
         $params = [
             'username' => $this->username,

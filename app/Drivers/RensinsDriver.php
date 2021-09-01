@@ -25,6 +25,7 @@ use Throwable;
 
 /**
  * Class RensinsDriver
+ *
  * @package App\Drivers
  */
 class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
@@ -36,30 +37,24 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     use ZipTrait;
 
     const CREDIT_CITY = 'Москва';
-
-    const ISSUE_PREPARATION = 'ISSUE_PREPARATION';
-    const PAYMENT_PREPARATION = 'PAYMENT_PREPARATION';
-    const PAYMENT_WAITING = 'PAYMENT_WAITING';
     const ISSUE_SUCCESSFUL = 'ISSUE_SUCCESSFUL';
-
     /** @var ReninsClientService */
     protected ReninsClientService $httpClient;
-
     protected ?Program $program = null;
 
     /**
      * RensinsDriver constructor.
-     * @param Repository $repository
-     * @param string $prefix
-     * @throws ReninsException
+     *
+     * @param  ReninsClientService  $service
      */
-    public function __construct(Repository $repository, string $prefix = '')
+    public function __construct(ReninsClientService $service)
     {
-        $this->httpClient = new ReninsClientService($repository, $prefix);
+        $this->httpClient = $service;
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
+     *
      * @return CalculatedInterface
      * @throws ReninsException
      */
@@ -69,19 +64,33 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
         $lifeRisks = [];
         if ($this->isLive($data)) {
             $result = $this->httpClient->calculate($this->collectCalcData($data, true));
-            $objects = Arr::get($result, 'calcPolicyResult.calcResults.0.policy.insuranceObjects.objects');
+            $objects = Arr::get(
+                $result,
+                'calcPolicyResult.calcResults.0.policy.insuranceObjects.objects'
+            );
             $risks = Arr::first(Arr::pluck(Arr::pluck($objects, 'riskInfo'), 'risks'));
-            $lifeRisks = Arr::where($risks, function($value, $key) {
-                return in_array(Arr::get($value, 'name'), ['Инвалидность', 'Смерть']);
-            });
+            $lifeRisks = Arr::where(
+                $risks,
+                function ($value, $key)
+                {
+                    return in_array(Arr::get($value, 'name'), ['Инвалидность', 'Смерть']);
+                }
+            );
         }
         if ($this->isProperty($data)) {
             $result = $this->httpClient->calculate($this->collectCalcData($data, false));
-            $objects = Arr::get($result, 'calcPolicyResult.calcResults.0.policy.insuranceObjects.objects');
+            $objects = Arr::get(
+                $result,
+                'calcPolicyResult.calcResults.0.policy.insuranceObjects.objects'
+            );
             $risks = Arr::first(Arr::pluck(Arr::pluck($objects, 'riskInfo'), 'risks'));
-            $propRisks = Arr::where($risks, function($value, $key) {
-                return Arr::get($value, 'name') === 'Страхование имущества';
-            });
+            $propRisks = Arr::where(
+                $risks,
+                function ($value, $key)
+                {
+                    return Arr::get($value, 'name') === 'Страхование имущества';
+                }
+            );
         }
 
         $propSum = array_sum(Arr::pluck($propRisks, 'insPrem'));
@@ -91,8 +100,9 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param array $data
-     * @param bool $Life
+     * @param  array  $data
+     * @param  bool   $Life
+     *
      * @return Arrayable
      */
     protected function collectCalcData(array $data, bool $Life = false): Arrayable
@@ -112,8 +122,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                 [
                     [
                         'name' => 'Смерть',
-                        'insured' => 'true'
-                    ]
+                        'insured' => 'true',
+                    ],
                 ],
                 '_zastr1'
             );
@@ -127,8 +137,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                 [
                     [
                         'name' => 'Страхование имущества',
-                        'insured' => 'true'
-                    ]
+                        'insured' => 'true',
+                    ],
                 ],
                 '_DIOS_2'
             );
@@ -138,7 +148,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
+     *
      * @return string|null
      */
     public function getBankBIKByParams(array $data): ?string
@@ -155,6 +166,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
 
     /**
      * @param $programCode
+     *
      * @return Program
      */
     public function getProgram(string $programCode): Program
@@ -167,7 +179,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
+     *
      * @return bool
      */
     protected function isLive(array $data): bool
@@ -182,7 +195,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param array $data
+     * @param  array  $data
+     *
      * @return bool
      */
     protected function isProperty(array $data): bool
@@ -195,9 +209,9 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
         return $isProperty;
     }
 
-
     /**
-     * @param Contract $contract
+     * @param  Contract  $contract
+     *
      * @return array
      * @throws Throwable
      */
@@ -208,7 +222,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                 $result = $this->httpClient->getStatus(
                     collect(
                         [
-                            'policyID' => $contract->objects()->firstOrFail()->integration_id
+                            'policyID' => $contract->objects()->firstOrFail()->integration_id,
                         ]
                     )
                 );
@@ -239,11 +253,15 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
             $objects = Arr::get($result, 'policy.insuranceObjects.objects');
 
             $risks = Arr::first(Arr::pluck($objects, 'riskInfo.risks'), null, []);
-            $lifeRisks = Arr::where($risks, function($value, $key) {
-                return in_array(Arr::get($value, 'name'), ['Инвалидность', 'Смерть']);
-            });
-            $policyIdLife = Arr::get($result,'policy.ID');
-            $policyNumberLife = Arr::get($result,'policy.number');
+            $lifeRisks = Arr::where(
+                $risks,
+                function ($value, $key)
+                {
+                    return in_array(Arr::get($value, 'name'), ['Инвалидность', 'Смерть']);
+                }
+            );
+            $policyIdLife = Arr::get($result, 'policy.ID');
+            $policyNumberLife = Arr::get($result, 'policy.number');
             $lifeSum = array_sum(Arr::pluck($lifeRisks, 'insPrem'));
             $this->httpClient->issue(collect(['policyID' => $policyIdLife]));
         }
@@ -252,11 +270,15 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
             $result = $this->httpClient->import($createData);
             $objects = Arr::get($result, 'policy.insuranceObjects.objects');
             $risks = Arr::first(Arr::pluck($objects, 'riskInfo.risks'), null, []);
-            $propRisks = Arr::where($risks, function($value, $key) {
-                return Arr::get($value, 'name') === 'Страхование имущества';
-            });
-            $policyIdProperty = Arr::get($result,'policy.ID');
-            $policyNumberProperty = Arr::get($result,'policy.number');
+            $propRisks = Arr::where(
+                $risks,
+                function ($value, $key)
+                {
+                    return Arr::get($value, 'name') === 'Страхование имущества';
+                }
+            );
+            $policyIdProperty = Arr::get($result, 'policy.ID');
+            $policyNumberProperty = Arr::get($result, 'policy.number');
             $propSum = array_sum(Arr::pluck($propRisks, 'insPrem'));
             $this->httpClient->issue(collect(['policyID' => $policyIdProperty]));
         }
@@ -273,10 +295,11 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param Contract $contract
-     * @param array $data
-     * @param float $paySum
-     * @param bool $life
+     * @param  Contract  $contract
+     * @param  array     $data
+     * @param  float     $paySum
+     * @param  bool      $life
+     *
      * @return ReninsCreateCollector
      */
     protected function collectCreateData(
@@ -301,11 +324,11 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                 [
                     [
                         'name' => 'Смерть',
-                        'insured' => 'true'
+                        'insured' => 'true',
                     ],
                     [
                         'name' => 'Инвалидность',
-                        'insured' => 'true'
+                        'insured' => 'true',
                     ],
                 ],
                 '_zastr1'
@@ -323,8 +346,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                 [
                     [
                         'name' => 'Страхование имущества',
-                        'insured' => 'true'
-                    ]
+                        'insured' => 'true',
+                    ],
                 ],
                 '_DIOS_2'
             );
@@ -334,7 +357,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param Contract $contract
+     * @param  Contract  $contract
+     *
      * @return array
      * @throws ReninsException
      */
@@ -377,7 +401,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                 collect(
                     [
                         'calcID' => $object->integration_id,
-                        'type' => 'Печать'
+                        'type' => 'Печать',
                     ]
                 )
             );
@@ -386,9 +410,12 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
 
             $dirFiles = self::unpackZip($path);
             $files = Storage::allFiles($dirFiles);
-            $file = collect($files)->first(function($file) {
-                return stripos(last(explode(DIRECTORY_SEPARATOR, $file)), 'polis') !== false;
-            });
+            $file = collect($files)->first(
+                function ($file)
+                {
+                    return stripos(last(explode(DIRECTORY_SEPARATOR, $file)), 'polis') !== false;
+                }
+            );
             throw_if(!$file, new ReninsException('Police file not set.'));
             $actualFilePath = self::createFilePath($contract, $object->id);
             File::move(storage_path('app/' . $file), public_path($actualFilePath));
@@ -400,11 +427,12 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param Contract $contract
-     * @param $objectId
+     * @param  Contract  $contract
+     * @param  string    $objectId
+     *
      * @return string
      */
-    protected static function createFilePath(Contract $contract, $objectId): string
+    protected static function createFilePath(Contract $contract, string $objectId): string
     {
         $filePathObject = self::gefaultFileName($contract);
         $filePathObjectArray = explode('.', $filePathObject);
@@ -420,6 +448,6 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
      */
     public function payAccept(Contract $contract): void
     {
-        return;
+
     }
 }

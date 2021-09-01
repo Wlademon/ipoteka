@@ -230,23 +230,22 @@ class ReninsCalcCollector implements Arrayable
      */
     protected function toTime($date): ?string
     {
+        $result = null;
         if (is_numeric($date)) {
-            return Carbon::createFromTimestamp($date)->format(self::TIME_FORMAT);
-        }
-        if (is_string($date)) {
-            return Carbon::parse($date)->format(self::TIME_FORMAT);
-        }
-        if ($date instanceof DateTime) {
-            return $date->format(self::TIME_FORMAT);
+            $result = Carbon::createFromTimestamp($date)->format(self::TIME_FORMAT);
+        } elseif (is_string($date)) {
+            $result = Carbon::parse($date)->format(self::TIME_FORMAT);
+        } elseif ($date instanceof DateTime) {
+            $result = $date->format(self::TIME_FORMAT);
         }
 
-        return null;
+        return $result;
     }
 
     /**
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'productType' => 'Страхование имущества',

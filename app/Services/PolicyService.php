@@ -6,6 +6,11 @@ use App\Http\Requests\Request;
 use Exception;
 use App\Models\Contract;
 
+/**
+ * Class PolicyService
+ *
+ * @package App\Services
+ */
 class PolicyService extends Service
 {
     /**

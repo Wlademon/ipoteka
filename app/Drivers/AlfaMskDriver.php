@@ -53,31 +53,29 @@ class AlfaMskDriver implements DriverInterface
     /**
      * AlfaMskDriver constructor.
      *
-     * @param  Repository  $repository
-     * @param  string      $prefix
+     * @param  Client            $client
+     * @param  AlfaAuth          $alfaAuth
+     * @param  MerchantServices  $merchantService
+     * @param  string            $host
+     * @param  int               $numberIterations
      *
-     * @throws Throwable
+     * @throws AlphaException
      */
-    public function __construct(Repository $repository, string $prefix = '')
-    {
-        $this->client = new Client();
-        if (!$repository->get($prefix . 'host', false)) {
+    public function __construct(
+        Client $client,
+        AlfaAuth $alfaAuth,
+        MerchantServices $merchantService,
+        string $host,
+        int $numberIterations = 5
+    ) {
+        if (!$host) {
             throw new AlphaException('Not set host property');
         }
-        if (
-        !($repository->get($prefix . 'auth.username') && $repository->get($prefix . 'auth.pass') &&
-          $repository->get($prefix . 'auth.auth_url'))
-        ) {
-            throw new AlphaException('Not set auth data');
-        }
-        $this->numberIterations = $repository->get($prefix . 'numberIterations', 5);
-        $this->auth = new AlfaAuth(
-            $repository->get($prefix . 'auth.username'),
-            $repository->get($prefix . 'auth.pass'),
-            $repository->get($prefix . 'auth.auth_url')
-        );
-        $this->host = $repository->get($prefix . 'host');
-        $this->merchantServices = new MerchantServices($repository->get($prefix . 'merchan_host'));
+        $this->client = $client;
+        $this->numberIterations = $numberIterations;
+        $this->auth = $alfaAuth;
+        $this->host = $host;
+        $this->merchantServices = $merchantService;
     }
 
     /**
@@ -168,12 +166,14 @@ class AlfaMskDriver implements DriverInterface
     }
 
     /**
-     * @param $authToken
-     * @param $contractList
+     * @param  string  $authToken
+     * @param  array   $contractList
+     *
      * @return array
+     * @throws AlphaException
      * @throws Throwable
      */
-    protected function createSingleAccount($authToken, $contractList): array
+    protected function createSingleAccount(string $authToken, array $contractList): array
     {
         try {
             $data = [
@@ -437,7 +437,7 @@ class AlfaMskDriver implements DriverInterface
      * @return mixed
      * @throws AlphaException
      */
-    protected function getStatusContract($authToken, $upid, $message)
+    protected function getStatusContract(string $authToken, string $upid, string $message)
     {
         sleep(5);
         $i = 0;
@@ -543,7 +543,10 @@ class AlfaMskDriver implements DriverInterface
                     Log::error($throwable->getMessage());
                 }
 
-                if ($statusOrder->get('orderStatus') === Contract::STATUS_CONFIRMED) {
+                if (
+                    isset($statusOrder) &&
+                    $statusOrder->get('orderStatus') === Contract::STATUS_CONFIRMED
+                ) {
                     $contract->status = Contract::STATUS_CONFIRMED;
                     $contract->saveOrFail();
                 }

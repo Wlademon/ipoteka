@@ -62,28 +62,49 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     /**
      * AbsoluteDriver constructor.
      *
-     * @param  Repository  $repository
-     * @param  string      $prefix
+     * @param  Client          $client
+     * @param  PaymentService  $paymentService
+     * @param  string          $baseUrl
+     * @param  string          $clientId
+     * @param  string          $clientSecret
+     * @param  string          $pdfpath
+     * @param  string          $grantType
+     * @param  string          $calculateLifePath
+     * @param  string          $calculatePropertyPath
+     * @param  string          $lifeAgreementPath
+     * @param  string          $propertyAgreementPath
+     * @param  string          $printPolicyPath
+     * @param  string          $releasedPolicyPath
      */
-    public function __construct(Repository $repository, string $prefix = '')
-    {
-        $this->baseUrl = $repository->get($prefix . 'base_Url');
-        $this->ClientID = $repository->get($prefix . 'client_id');
-        $this->ClientSecret = $repository->get($prefix . 'client_secret');
-        $this->pdfpath = $repository->get($prefix . 'pdf.path');
-        $this->grantType = $repository->get($prefix . 'grant_type');
-        $this->calculateLifePath = $repository->get($prefix . 'calculate_life_path');
-        $this->calculatePropertyPath = $repository->get($prefix . 'calculate_property_path');
-        $this->lifeAgreementPath = $repository->get($prefix . 'life_agreement_path');
-        $this->propertyAgreementPath = $repository->get($prefix . 'property_agreement_path');
-        $this->printPolicyPath = $repository->get($prefix . 'print_policy_path');
-        $this->releasedPolicyPath = $repository->get($prefix . 'released_policy_path');
+    public function __construct(
+        Client $client,
+        PaymentService $paymentService,
+        string $baseUrl,
+        string $clientId,
+        string $clientSecret,
+        string $pdfpath,
+        string $grantType,
+        string $calculateLifePath,
+        string $calculatePropertyPath,
+        string $lifeAgreementPath,
+        string $propertyAgreementPath,
+        string $printPolicyPath,
+        string $releasedPolicyPath
+    ) {
+        $this->baseUrl = $baseUrl;
+        $this->ClientID = $clientId;
+        $this->ClientSecret = $clientSecret;
+        $this->pdfpath = $pdfpath;
+        $this->grantType = $grantType;
+        $this->calculateLifePath = $calculateLifePath;
+        $this->calculatePropertyPath = $calculatePropertyPath;
+        $this->lifeAgreementPath = $lifeAgreementPath;
+        $this->propertyAgreementPath = $propertyAgreementPath;
+        $this->printPolicyPath = $printPolicyPath;
+        $this->releasedPolicyPath = $releasedPolicyPath;
 
-        $this->client = App::make(Client::class);
-        $this->paymentService = App::make(
-            PaymentService::class,
-            ['host' => $repository->get($prefix . 'pay_host')]
-        );
+        $this->client = $client;
+        $this->paymentService = $paymentService;
     }
 
     /**
