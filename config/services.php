@@ -14,6 +14,14 @@ return [
     |
     */
 
+    'bishop' => [
+        'host' => env('BISHOP_HOST', 'https://bishop.strahovka.ru'),
+    ],
+
+    'uw' => [
+        'host' => env('UW_HOST', 'http://uw.stage.strahovka.ru'),
+    ],
+
     'mailgun' => [
         'domain' => env('MAILGUN_DOMAIN'),
         'secret' => env('MAILGUN_SECRET'),

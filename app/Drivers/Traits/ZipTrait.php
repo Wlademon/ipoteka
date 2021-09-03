@@ -3,11 +3,12 @@
 namespace App\Drivers\Traits;
 
 use App\Exceptions\Drivers\ReninsException;
-use Storage;
+use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 
 /**
  * Trait ZipTrait
+ *
  * @package App\Drivers\Traits
  */
 trait ZipTrait
@@ -16,6 +17,7 @@ trait ZipTrait
 
     /**
      * @param $file
+     *
      * @return string
      * @throws \Throwable
      */
@@ -23,7 +25,7 @@ trait ZipTrait
     {
         $zip = new ZipArchive();
         if ($zip->open(storage_path($file), ZipArchive::CHECKCONS) !== true) {
-            throw new ReninsException('Can\'t open ZIP-file!');
+            throw new ReninsException(__METHOD__, 'Can\'t open ZIP-file!');
         }
         $dirFile = static::$tempPathZip . uniqid(date('Y_m_d_H_i_s'), false) . '/';
         Storage::makeDirectory($dirFile);

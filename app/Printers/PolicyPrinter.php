@@ -5,10 +5,7 @@ namespace App\Printers;
 
 use App\Models\Contract;
 use Barryvdh\DomPDF\Facade as PDF;
-use Dompdf\Dompdf;
-use Dompdf\Options;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\View;
 
 /**
  * Class PolicyPrinter
@@ -33,7 +30,11 @@ class PolicyPrinter
         $this->pdfPaths = array_map(
             function ($path) {
                 if (!is_dir($path)) {
-                    mkdir($path, 0777, true);
+                    if (!mkdir($path, 0777, true) && !is_dir($path)) {
+                        throw new \RuntimeException(
+                            sprintf('Directory "%s" was not created', $path)
+                        );
+                    }
                 }
                 return realpath($path);
             },

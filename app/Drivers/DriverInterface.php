@@ -10,6 +10,7 @@ use App\Services\PayService\PayLinks;
 
 /**
  * Interface DriverInterface
+ *
  * @package App\Drivers
  */
 interface DriverInterface
@@ -17,7 +18,8 @@ interface DriverInterface
     /**
      * Подсчет стоимости и премии полиса
      *
-     * @param array $data Данные для расчета стоимости полиса
+     * @param  array  $data  Данные для расчета стоимости полиса
+     *
      * @return CalculatedInterface
      */
     public function calculate(array $data): CalculatedInterface;
@@ -25,8 +27,9 @@ interface DriverInterface
     /**
      * Получить ссылку на оплату
      *
-     * @param Contract $contract
-     * @param PayLinks $payLinks
+     * @param  Contract  $contract
+     * @param  PayLinks  $payLinks
+     *
      * @return PayLinkInterface
      */
     public function getPayLink(Contract $contract, PayLinks $payLinks): PayLinkInterface;
@@ -34,7 +37,8 @@ interface DriverInterface
     /**
      * Стартовая функция создания полиса
      *
-     * @param array $data Данные для создания договора по полису
+     * @param  array  $data  Данные для создания договора по полису
+     *
      * @return CreatedPolicyInterface
      */
     public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface;
@@ -42,32 +46,45 @@ interface DriverInterface
     /**
      * Функция печати полиса
      *
-     * @param Contract $contract
-     * @param bool $sample Шаблон
-     * @param bool $reset Перепечатать
-     * @param string|null $filePath Путь сохранения файла
+     * @param  Contract     $contract
+     * @param  bool         $sample    Шаблон
+     * @param  bool         $reset     Перепечатать
+     * @param  string|null  $filePath  Путь сохранения файла
+     *
      * @return string|array Файл в формате base64
      */
-    public function printPolicy(Contract $contract, bool $sample, bool $reset, ?string $filePath = null);
+    public function printPolicy(
+        Contract $contract,
+        bool $sample,
+        bool $reset,
+        ?string $filePath = null
+    );
 
     /**
      * Функция вызываемая после оплаты полиса
      *
-     * @param Contract $contract
+     * @param  Contract  $contract
      */
     public function payAccept(Contract $contract): void;
 
     /**
      * Отправка полиса на почту
      *
-     * @param Contract $contract
+     * @param  Contract  $contract
+     *
      * @return string Сообщение
      */
     public function sendPolice(Contract $contract): string;
 
     /**
-     * @param Contract $contract
+     * @param  Contract  $contract
+     *
      * @return array
      */
     public function getStatus(Contract $contract): array;
+
+    /**
+     * @return string
+     */
+    public static function code(): string;
 }

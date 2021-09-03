@@ -18,10 +18,9 @@ use App\Exceptions\Drivers\ReninsException;
 use App\Models\Contract;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
-use File;
 use GuzzleHttp\Client;
-use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -39,16 +38,13 @@ class AlfaMskDriver implements DriverInterface
     }
     use PrintPdfTrait;
 
-    const POST_POLICY_URL = '/mortgage/partner/calc';
-    const POST_POLICY_CREATE_URL = '/mortgage/partner/calcAndSave';
-    const GET_POLICY_STATUS_URL = '/mortgage/partner/contractStatus';
-    const POST_PAYMENT_RECEIPT = '/payment/receipt/common';
     protected string $host;
     protected Client $client;
     protected int $managerId = 0;
     protected AlfaAuth $auth;
     protected int $numberIterations = 5;
     protected MerchantServices $merchantServices;
+    protected array $actions;
 
     /**
      * AlfaMskDriver constructor.
@@ -66,6 +62,7 @@ class AlfaMskDriver implements DriverInterface
         AlfaAuth $alfaAuth,
         MerchantServices $merchantService,
         string $host,
+        array $actions,
         int $numberIterations = 5
     ) {
         if (!$host) {
@@ -76,6 +73,7 @@ class AlfaMskDriver implements DriverInterface
         $this->auth = $alfaAuth;
         $this->host = $host;
         $this->merchantServices = $merchantService;
+        $this->actions = $actions;
     }
 
     /**
@@ -94,7 +92,7 @@ class AlfaMskDriver implements DriverInterface
             ]
         );
         $result = $this->client->post(
-            $this->host . self::POST_POLICY_URL,
+            $this->host . Arr::get($this->actions, 'POST_POLICY_URL'),
             [
                 'headers' => [
                     'Authorization' => "Bearer {$authToken}",
@@ -182,12 +180,12 @@ class AlfaMskDriver implements DriverInterface
             Log::info(
                 __METHOD__ . ' Создание единого аккаунта',
                 [
-                    'url' => $this->host . self::POST_PAYMENT_RECEIPT,
+                    'url' => $this->host . Arr::get($this->actions, 'POST_PAYMENT_RECEIPT'),
                     'request' => $data,
                 ]
             );
             $result = $this->client->post(
-                $this->host . self::POST_PAYMENT_RECEIPT,
+                $this->host . Arr::get($this->actions, 'POST_PAYMENT_RECEIPT'),
                 [
                     'headers' => [
                         'Authorization' => "Bearer {$authToken}",
@@ -196,15 +194,18 @@ class AlfaMskDriver implements DriverInterface
                 ]
             );
         } catch (Throwable $e) {
-            Log::error(__METHOD__ . ' Ошибка при создании единого аккаунта', [
-                'headers' => [
-                    'Authorization' => "Bearer {$authToken}",
-                ],
-                'json' => $data,
-                'message' => $e->getMessage(),
-                'code' => $e->getCode(),
-                'class' => get_class($e)
-            ]);
+            Log::error(
+                __METHOD__ . ' Ошибка при создании единого аккаунта',
+                [
+                    'headers' => [
+                        'Authorization' => "Bearer {$authToken}",
+                    ],
+                    'json' => $data,
+                    'message' => $e->getMessage(),
+                    'code' => $e->getCode(),
+                    'class' => get_class($e),
+                ]
+            );
             throw new AlphaException($e->getMessage());
         }
 
@@ -233,7 +234,7 @@ class AlfaMskDriver implements DriverInterface
 
     /**
      * @param  Contract  $contract
-     * @param  PayLinks   $payLinks
+     * @param  PayLinks  $payLinks
      *
      * @return PayLinkInterface
      * @throws AlphaException
@@ -384,7 +385,7 @@ class AlfaMskDriver implements DriverInterface
     {
         try {
             $postResult = $this->client->post(
-                $this->host . self::POST_POLICY_CREATE_URL,
+                $this->host . Arr::get($this->actions, 'POST_POLICY_CREATE_URL'),
                 [
                     'headers' => [
                         'Authorization' => "Bearer {$authToken}",
@@ -451,7 +452,7 @@ class AlfaMskDriver implements DriverInterface
             $i++;
             try {
                 $getResult = $this->client->get(
-                    $this->host . self::GET_POLICY_STATUS_URL,
+                    $this->host . Arr::get($this->actions, 'GET_POLICY_STATUS_URL'),
                     [
                         'headers' => [
                             'Authorization' => "Bearer {$authToken}",
@@ -471,8 +472,7 @@ class AlfaMskDriver implements DriverInterface
             $contracts = Arr::only($response, ['lifeContract', 'propertyContract']);
             $contractIds = array_filter(Arr::pluck($contracts, 'contractId'));
             usleep(500000);
-        } while ((count($contracts) !== count($contractIds)) ||
-                 ($i < ((int)$this->numberIterations)));
+        } while (count($contracts) !== count($contractIds) || $i < $this->numberIterations);
 
         if (count($contracts) !== count($contractIds)) {
             throw new AlphaException('Misstake contractId');
@@ -568,5 +568,10 @@ class AlfaMskDriver implements DriverInterface
                 'Платеж не выполнен.', HttpResponse::HTTP_UNPROCESSABLE_ENTITY
             );
         }
+    }
+
+    public static function code(): string
+    {
+        return 'alfa_msk';
     }
 }

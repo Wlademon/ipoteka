@@ -15,12 +15,11 @@ use App\Drivers\Traits\ZipTrait;
 use App\Exceptions\Drivers\ReninsException;
 use App\Models\Contract;
 use App\Models\Program;
-use Arr;
-use File;
-use Illuminate\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
-use Log;
-use Storage;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 /**
@@ -188,7 +187,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
         $isLife = $this->getProgram($data['programCode'])->is_life;
 
         if ($isLife && empty($data['objects']['life'])) {
-            throw new ReninsException('Не заполнены данные для страхования жизни.');
+            throw new ReninsException(__METHOD__, 'Не заполнены данные для страхования жизни.');
         }
 
         return $isLife;
@@ -203,7 +202,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     {
         $isProperty = $this->getProgram($data['programCode'])->is_property;
         if ($isProperty && empty($data['objects']['property'])) {
-            throw new ReninsException('Не заполнены данные для страхования имущества.');
+            throw new ReninsException(__METHOD__, 'Не заполнены данные для страхования имущества.');
         }
 
         return $isProperty;
@@ -387,7 +386,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
         ?string $filePath = null
     ) {
         if ($contract->status !== Contract::STATUS_CONFIRMED) {
-            throw new ReninsException('Status is not confirmed!');
+            throw new ReninsException(__METHOD__, 'Status is not confirmed!');
         }
         $filesOut = [];
         $objects = $contract->objects;
@@ -405,7 +404,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                     ]
                 )
             );
-            throw_if(!$url, ReninsException::class, ['message' => 'Url not get!']);
+            throw_if(!$url, new ReninsException(__METHOD__, 'Url not get!'));
             $path = $this->httpClient->getFile($url);
 
             $dirFiles = self::unpackZip($path);
@@ -416,7 +415,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                     return stripos(last(explode(DIRECTORY_SEPARATOR, $file)), 'polis') !== false;
                 }
             );
-            throw_if(!$file, new ReninsException('Police file not set.'));
+            throw_if(!$file, new ReninsException(__METHOD__, 'Файл полиса не установлен.'));
             $actualFilePath = self::createFilePath($contract, $object->id);
             File::move(storage_path('app/' . $file), public_path($actualFilePath));
 
@@ -448,6 +447,10 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
      */
     public function payAccept(Contract $contract): void
     {
+    }
 
+    public static function code(): string
+    {
+        return 'rensins';
     }
 }

@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
-    return ['last_api_version' => env('API_VERSION')];
+    return ['last_api_version' => config('app.api_version')];
 });
 
 Route::group(['prefix' => 'v1'], function () {

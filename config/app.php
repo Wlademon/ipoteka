@@ -229,4 +229,6 @@ return [
 
     ],
 
+    'api_version' => env('API_VERSION')
+
 ];

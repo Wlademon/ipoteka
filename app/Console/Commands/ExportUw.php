@@ -5,8 +5,13 @@ namespace App\Console\Commands;
 use App\Helpers\Helper;
 use App\Models\Contract;
 use Illuminate\Console\Command;
-use Log;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * Class ExportUw
+ *
+ * @package App\Console\Commands
+ */
 class ExportUw extends Command
 {
     /**
@@ -34,8 +39,6 @@ class ExportUw extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
     public function handle()
     {

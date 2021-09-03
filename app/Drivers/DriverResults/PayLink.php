@@ -2,8 +2,13 @@
 
 namespace App\Drivers\DriverResults;
 
-use Arr;
+use Illuminate\Support\Arr;
 
+/**
+ * Class PayLink
+ *
+ * @package App\Drivers\DriverResults
+ */
 class PayLink implements PayLinkInterface
 {
     protected $data = [];
@@ -13,6 +18,11 @@ class PayLink implements PayLinkInterface
         $this->data = compact(['orderId', 'url', 'invoiceNum']);
     }
 
+    /**
+     * Get the instance as an array.
+     *
+     * @return array
+     */
     public function toArray()
     {
         return $this->data;

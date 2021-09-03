@@ -116,7 +116,7 @@ class Handler extends ExceptionHandler
             $response['errors'] = \Arr::get($error, 'errors');
         }
 
-        if (env('APP_DEBUG')) {
+        if (config('app.debug')) {
             Log::debug(
                 sprintf(
                     "%s - %s (%d)\nIn file %s on line %d\n%s",

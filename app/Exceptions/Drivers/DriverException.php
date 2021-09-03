@@ -37,9 +37,14 @@ abstract class DriverException extends Exception implements DriverExceptionInter
      * @param  Throwable|null  $exception
      * @param  string          $message
      */
-    protected function log(?Throwable $exception, string $message)
+    protected function log(?Throwable $exception, string $message = '')
     {
         $context = [];
+        if (config('app.debug')) {
+            $context['file'] = $this->getFile();
+            $context['line'] = $this->getLine();
+            $context['trace'] = $this->getTraceAsString();
+        }
         if ($exception instanceof RequestException) {
             $context['request'] = $exception->getRequest();
             $context['response'] = $exception->hasResponse() ? $exception->getResponse() : null;

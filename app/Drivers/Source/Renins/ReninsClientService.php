@@ -18,15 +18,9 @@ use Throwable;
  */
 class ReninsClientService
 {
-    const URL_CALCULATE = '/IpotekaAPI/1.0.0/calculate';
-    const URL_PRINT = '/IpotekaAPI/1.0.0/print';
-    const URL_SAVE = '/IpotekaAPI/1.0.0/save';
-    const URL_PAY = '/IpotekaAPI/1.0.0/getPaymentLink';
-    const URL_ISSUE = '/IpotekaAPI/1.0.0/issue';
-    const URL_STATUS = '/IpotekaAPI/1.0.0/getIssueProcessStatus';
-    const URL_IMPORT = '/IpotekaAPI/1.0.0/import';
     const ISSUE_ERROR = 'ISSUE_ERROR';
-    const TEMP_PATH = 'temp/';
+    protected string $tempPath;
+    protected array $actions;
     protected HttpClientService $client;
 
     /**
@@ -37,27 +31,11 @@ class ReninsClientService
      *
      * @throws ReninsException
      */
-    public function __construct(string $host, string $login, string $pass)
+    public function __construct(HttpClientService $clientService, array $actions, string $tempPath)
     {
-        if (!$host) {
-            throw new ReninsException('Not set Renisans host.');
-        }
-        \Log::debug("Get renins token, host: $host, login: $login, pass: $pass");
-        $token = TokenService::getToken($host, $login, $pass);
-        if (!$token) {
-            throw new ReninsException('Not set Renisans token.');
-        }
-        \Log::debug("Renins token received, token: $token");
-        $this->client = HttpClientService::create(
-            $host,
-            [
-                'curl' => [CURLOPT_SSL_VERIFYPEER => false],
-                'verify' => false,
-                'headers' => [
-                    'Authorization' => "Bearer $token",
-                ],
-            ],
-        );
+        $this->actions = $actions;
+        $this->client = $clientService;
+        $this->tempPath = $tempPath;
     }
 
     /**
@@ -70,12 +48,14 @@ class ReninsClientService
     protected function send(Arrayable $data, string $url): ?array
     {
         try {
-            $result = $this->client->sendJson($url, $data->toArray());
+            $result = $this->client->withToken()->sendJson($url, $data->toArray());
         } catch (Throwable $throwable) {
-            throw new ReninsException($throwable->getMessage());
+            throw new ReninsException(
+                __METHOD__, $throwable->getMessage() . gettype($this->client)
+            );
         }
         if ($this->client->getLastError()) {
-            throw new ReninsException($this->client->getLastError());
+            throw new ReninsException(__METHOD__, $this->client->getLastError());
         }
 
         return $result;
@@ -95,9 +75,9 @@ class ReninsClientService
                 'request' => $data->toArray(),
             ]
         );
-        $result = $this->send($data, self::URL_CALCULATE);
+        $result = $this->send($data, Arr::get($this->actions, 'URL_CALCULATE'));
         if ($errors = Arr::get($result, 'calcPolicyResult.calcResults.errors')) {
-            throw new ReninsException(json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
         }
         \Log::info(
             __METHOD__ . ' расчет полиса завершен',
@@ -123,9 +103,9 @@ class ReninsClientService
                 'request' => $data->toArray(),
             ]
         );
-        $result = $this->send($data, self::URL_IMPORT);
+        $result = $this->send($data, Arr::get($this->actions, 'URL_IMPORT'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
         }
         \Log::info(
             __METHOD__ . ' сохранение полиса завершено',
@@ -151,9 +131,9 @@ class ReninsClientService
                 'request' => $data->toArray(),
             ]
         );
-        $result = $this->send($data, self::URL_ISSUE);
+        $result = $this->send($data, Arr::get($this->actions, 'URL_ISSUE'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
         }
         \Log::info(
             __METHOD__ . '  оформление полиса завершено',
@@ -179,9 +159,9 @@ class ReninsClientService
                 'request' => $data->toArray(),
             ]
         );
-        $result = $this->send($data, self::URL_PAY);
+        $result = $this->send($data, Arr::get($this->actions, 'URL_PAY'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
         }
         \Log::info(
             __METHOD__ . ' ссылка на оплату получена',
@@ -207,12 +187,12 @@ class ReninsClientService
                 'request' => $data->toArray(),
             ]
         );
-        $result = $this->send($data, self::URL_STATUS);
+        $result = $this->send($data, Arr::get($this->actions, 'URL_STATUS'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
         }
         if (($state = Arr::get($result, 'state')) === self::ISSUE_ERROR) {
-            throw new ReninsException(json_encode($result, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__, json_encode($result, JSON_UNESCAPED_UNICODE));
         }
         \Log::info(
             __METHOD__ . ' статус получен',
@@ -238,9 +218,9 @@ class ReninsClientService
                 'request' => $data->toArray(),
             ]
         );
-        $result = $this->send($data, self::URL_PRINT);
+        $result = $this->send($data, Arr::get($this->actions, 'URL_PRINT'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
         }
         \Log::info(
             __METHOD__ . ' ссылка на полис получена',
@@ -274,18 +254,18 @@ class ReninsClientService
                 ]
             ))->get($url);
             $content = $response->getBody()->getContents();
-            throw_if($response->getStatusCode() !== 200, ReninsException::class, [$content]);
-            $path = self::TEMP_PATH . uniqid(date('Y_m_d_H_i_s'), false) . '.zip';
+            throw_if($response->getStatusCode() !== 200, new ReninsException(__METHOD__, $content));
+            $path = $this->tempPath . uniqid(date('Y_m_d_H_i_s'), false) . '.zip';
             Storage::put(
                 $path,
                 $content
             );
             throw_if(
                 !file_exists(storage_path('app/' . $path)),
-                new ReninsException('File not saved.')
+                new ReninsException(__METHOD__, 'File not saved.')
             );
         } catch (Throwable $throwable) {
-            throw new ReninsException($throwable->getMessage());
+            throw new ReninsException(__METHOD__, $throwable->getMessage());
         }
         \Log::info(__METHOD__ . ' файл получен и сохранен: ' . storage_path('app/' . $path));
 

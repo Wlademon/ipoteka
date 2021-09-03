@@ -2,10 +2,11 @@
 
 namespace App\Drivers\Source\Renins;
 
-use Arr;
+use Illuminate\Support\Arr;
 
 /**
  * Class ReninsCreateCollector
+ *
  * @package App\Drivers\Source\Renins
  */
 class ReninsCreateCollector extends ReninsCalcCollector
@@ -83,7 +84,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
                 'name' => 'Занимается экстремальными видами спорта из списка',
                 'code' => 'dogovor.extremSport',
                 'type' => 'Строка',
-                'stringValue' => 'нет'
+                'stringValue' => 'нет',
             ],
             [
                 'name' => 'Условия труда связаны с повышенным риском для жизни и здоровья',
@@ -107,8 +108,8 @@ class ReninsCreateCollector extends ReninsCalcCollector
     }
 
     /**
-     * @param $dateStart
-     * @param float $sum
+     * @param         $dateStart
+     * @param  float  $sum
      */
     public function setPayPlan(string $dateStart, float $sum): void
     {
@@ -116,15 +117,15 @@ class ReninsCreateCollector extends ReninsCalcCollector
             'number' => 1,
             'date' => $this->toTime($dateStart),
             'sum' => $sum,
-            'currency' => self::CURRENCY
+            'currency' => self::CURRENCY,
         ];
     }
 
     /**
-     * @param string $state
-     * @param string $city
-     * @param string $street
-     * @param string $house
+     * @param  string  $state
+     * @param  string  $city
+     * @param  string  $street
+     * @param  string  $house
      */
     public function setPropertyAddress(
         string $state,
@@ -138,19 +139,21 @@ class ReninsCreateCollector extends ReninsCalcCollector
             'type' => 'Строка',
             'stringValue' => implode(
                 ', ',
-                array_filter([
-                     self::COUNTRY,
-                     $state,
-                     $city,
-                     'ул.' . $street,
-                     'д.' . $house,
-                ])
+                array_filter(
+                    [
+                        self::COUNTRY,
+                        $state,
+                        $city,
+                        'ул.' . $street,
+                        'д.' . $house,
+                    ]
+                )
             ),
         ];
     }
 
     /**
-     * @param string $kladr
+     * @param  string  $kladr
      */
     public function setKladr(string $kladr): void
     {
@@ -163,8 +166,8 @@ class ReninsCreateCollector extends ReninsCalcCollector
     }
 
     /**
-     * @param string $dateStart
-     * @param string $dateEnd
+     * @param  string  $dateStart
+     * @param  string  $dateEnd
      */
     public function setContractStartEnd(string $dateStart, string $dateEnd): void
     {
@@ -173,7 +176,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
     }
 
     /**
-     * @param float $sum
+     * @param  float  $sum
      */
     public function setCreditSum(float $sum): void
     {
@@ -192,7 +195,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
     }
 
     /**
-     * @param string $number
+     * @param  string  $number
      */
     public function setCreditNumber(string $number): void
     {
@@ -205,7 +208,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
     }
 
     /**
-     * @param string $date
+     * @param  string  $date
      */
     public function setBirthDate(string $date): void
     {
@@ -213,12 +216,12 @@ class ReninsCreateCollector extends ReninsCalcCollector
             'name' => 'Дата рождения',
             'code' => 'dogovor.zastr1.fl.dataRogd',
             'type' => 'Дата',
-            'dateValue' => $this->toTime($date)
+            'dateValue' => $this->toTime($date),
         ];
     }
 
     /**
-     * @param string $date
+     * @param  string  $date
      */
     public function setBirthDateSubject(string $date): void
     {
@@ -229,7 +232,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
     }
 
     /**
-     * @param array $subject
+     * @param  array  $subject
      */
     public function setHumanInfo(array $subject): void
     {
@@ -253,33 +256,38 @@ class ReninsCreateCollector extends ReninsCalcCollector
             'factAddress' => [
                 'country' => self::COUNTRY,
                 'postIndex' => self::POST_INDEX_MOSCOW,
-                'region' => trim(str_replace(
-                    [
-                        'Республика',
-                        'республика',
-                        'рес',
-                        ' р.',
-                        'Область',
-                        'область',
-                        'обл',
-                        ' о.',
-                        'Край',
-                        'край',
-                        'край',
-                        ' к.',
-                    ],
-                    '',
-                    Arr::get($subject, 'state')
-                ), ".\n\r, \t\0"),
+                'region' => trim(
+                    str_replace(
+                        [
+                            'Республика',
+                            'республика',
+                            'рес',
+                            ' р.',
+                            'Область',
+                            'область',
+                            'обл',
+                            ' о.',
+                            'Край',
+                            'край',
+                            'край',
+                            ' к.',
+                        ],
+                        '',
+                        Arr::get($subject, 'state')
+                    ),
+                    ".\n\r, \t\0"
+                ),
                 'addressText' => implode(
                     ', ',
-                    array_filter([
-                        self::POST_INDEX_MOSCOW,
-                        self::COUNTRY,
-                        Arr::get($subject, 'city'),
-                        'ул. '  . Arr::get($subject, 'street'),
-                        Arr::get($subject, 'house'),
-                    ])
+                    array_filter(
+                        [
+                            self::POST_INDEX_MOSCOW,
+                            self::COUNTRY,
+                            Arr::get($subject, 'city'),
+                            'ул. ' . Arr::get($subject, 'street'),
+                            Arr::get($subject, 'house'),
+                        ]
+                    )
                 ),
             ],
         ];
@@ -291,7 +299,7 @@ class ReninsCreateCollector extends ReninsCalcCollector
     public function toArray(): array
     {
         return [
-            'policy' => $this->data
+            'policy' => $this->data,
         ];
     }
 }

@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Helpers;
 
 use App\Exceptions\Services\PolicyServiceException;
@@ -19,7 +18,11 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Log;
 use Jenssegers\Agent\Agent;
 
-
+/**
+ * Class Helper
+ *
+ * @package App\Helpers
+ */
 class Helper
 {
     /** @var BaseModel[] $models */
@@ -27,6 +30,7 @@ class Helper
 
     /**
      * Получить список всех моделей
+     *
      * @return array
      */
     public static function getAllModels()
@@ -38,13 +42,15 @@ class Helper
         return self::$models;
     }
 
+    /**
+     * @param  array  $filePaths
+     */
     private static function addClassesFromPathsArray(array $filePaths)
     {
         foreach ($filePaths as $filePath) {
             $modelName = self::getClassFromFilePath($filePath);
             if (
-                $modelName != ''
-                && class_exists($modelName)
+                $modelName != '' && class_exists($modelName)
             ) {
                 self::$models[] = $modelName;
             }
@@ -54,21 +60,21 @@ class Helper
     /**
      * Получить имя класса по пути файла
      *
-     * @param string $path
+     * @param  string  $path
      *
      * @return string
      */
     public static function getClassFromFilePath($path)
     {
         $class = preg_replace('/.*app\\//', 'App/', $path);
-        $class = str_replace('/', '\\', $class);
-        $class = str_replace('.php', '', $class);
+        $class = str_replace(['/', '.php'], ['\\', ''], $class);
 
         return $class;
     }
 
     /**
      * @param $field
+     *
      * @return mixed
      */
     public static function getLocaleAttr($field)
@@ -91,8 +97,8 @@ class Helper
     /**
      * Получить обновляемые поля модели
      *
-     * @param array $currentModel
-     * @param array $newModel
+     * @param  array  $currentModel
+     * @param  array  $newModel
      *
      * @return array
      */
@@ -101,17 +107,19 @@ class Helper
         /** @var Model $currentModel */
         $updatedParams = [];
         foreach ($newModel as $param => $value) {
-            if ($param == '_token' || $param == 'updated_at') {
+            if ($param === '_token' || $param === 'updated_at') {
                 continue;
             }
-            if (is_array($value) && isset($currentModel[$param]) && is_array($currentModel[$param])) {
+            if (
+                is_array($value) && isset($currentModel[$param]) && is_array($currentModel[$param])
+            ) {
                 $innerParams = self::getUpdatesModelParams($currentModel[$param], $value);
                 if (count($innerParams) > 0) {
                     $updatedParams[$param] = $value;
                     continue;
                 }
             }
-            if ($param == 'password' || !is_string($param)) {
+            if ($param === 'password' || !is_string($param)) {
                 $updatedParams[$param] = $value;
                 continue;
             }
@@ -125,16 +133,18 @@ class Helper
 
     /**
      * Получить новый номер полиса
+     *
      * @param $params
+     *
      * @return mixed|void
      */
     public static function getPolicyNumber($params)
     {
-        if (config('app.env') === 'local' || config('app.env') === 'testing') {
+        if (in_array(config('app.env'), ['local', 'testing'])) {
             return json_decode(json_encode(['data' => ['bso_numbers' => ['Z6921/397/RU0000/20']]]));
         }
         $client = new Client();
-        $url = env('BISHOP_HOST', 'https://bishop.strahovka.ru') . '/bso';
+        $url = config('services.bishop.host') . '/bso';
 
         Log::info(__METHOD__ . '. Params - ', [$url, $params]);
         $httpStatusCode = Response::HTTP_BAD_REQUEST;
@@ -146,23 +156,29 @@ class Helper
                     'body' => json_encode($params),
                     'headers' => [
                         'Accept' => 'application/json',
-                        'Content-Type' => 'application/json'
+                        'Content-Type' => 'application/json',
                     ],
                 ]
             );
         } catch (GuzzleException $e) {
             $json = [];
             if ($e instanceof RequestException) {
-                if (!empty($e->getResponse())) {
+                if ($e->getResponse() !== null) {
                     $json = json_decode($e->getResponse()->getBody(), true);
                     $httpStatusCode = $e->getResponse()->getStatusCode();
                 }
             }
-            Log::error(__METHOD__ . '. Exception:', [$json, $e->getMessage(), $e->getTraceAsString()]);
+            Log::error(
+                __METHOD__ . '. Exception:',
+                [$json, $e->getMessage(), $e->getTraceAsString()]
+            );
 
             throw new PolicyServiceException($e->getMessage(), $httpStatusCode);
         } catch (Exception $e) {
-            Log::error(__METHOD__ . '. ERROR - Response: ', [$e->getCode(), $e->getMessage(), $e->getTraceAsString()]);
+            Log::error(
+                __METHOD__ . '. ERROR - Response: ',
+                [$e->getCode(), $e->getMessage(), $e->getTraceAsString()]
+            );
 
             throw new PolicyServiceException($e->getMessage(), $httpStatusCode);
         }
@@ -170,7 +186,9 @@ class Helper
         if ($response->getStatusCode() !== 200) {
             Log::error(__METHOD__ . '. ERROR - Response: ', [$response->getBody()]);
 
-            throw new PolicyServiceException('ERROR - Response: ' . json_encode($response->getBody()), $response->getStatusCode());
+            throw new PolicyServiceException(
+                'ERROR - Response: ' . json_encode($response->getBody()), $response->getStatusCode()
+            );
         }
         Log::info(__METHOD__ . '. Response', [json_decode($response->getBody())]);
 
@@ -179,16 +197,18 @@ class Helper
 
     /**
      * Подтвердить номер полиса
+     *
      * @param $params
+     *
      * @return mixed|void
      */
     public static function acceptPolicyNumber($params)
     {
-        if (config('app.env') == 'local' || config('app.env') == 'testing') {
+        if (in_array(config('app.env'), ['local', 'testing'])) {
             return true;
         }
         $client = new Client();
-        $url = env('BISHOP_HOST', 'https://bishop.strahovka.ru') . '/bso/accept';
+        $url = config('services.bishop.host') . '/bso/accept';
 
         Log::info(__METHOD__ . '. Params - ', [$url, $params]);
         $httpStatusCode = Response::HTTP_BAD_REQUEST;
@@ -200,42 +220,52 @@ class Helper
                     'body' => json_encode($params),
                     'headers' => [
                         'Accept' => 'application/json',
-                        'Content-Type' => 'application/json'
+                        'Content-Type' => 'application/json',
                     ],
                 ]
             );
         } catch (GuzzleException $e) {
             $json = [];
             if ($e instanceof RequestException) {
-                if (!empty($e->getResponse())) {
+                if ($e->getResponse() !== null) {
                     $json = json_decode($e->getResponse()->getBody(), true);
                     $httpStatusCode = $e->getResponse()->getStatusCode();
                 }
             }
-            Log::error(__METHOD__ . '. Exception:', [$json, $e->getMessage(), $e->getTraceAsString()]);
+            Log::error(
+                __METHOD__ . '. Exception:',
+                [$json, $e->getMessage(), $e->getTraceAsString()]
+            );
             throw new PolicyServiceException($e->getMessage(), $httpStatusCode);
         } catch (Exception $e) {
-            Log::error(__METHOD__ . '. ERROR - Response: ', [$e->getCode(), $e->getMessage(), $e->getTraceAsString()]);
+            Log::error(
+                __METHOD__ . '. ERROR - Response: ',
+                [$e->getCode(), $e->getMessage(), $e->getTraceAsString()]
+            );
             throw new PolicyServiceException($e->getMessage(), $httpStatusCode);
         }
 
         if ($response->getStatusCode() !== 200) {
             Log::error(__METHOD__ . '. ERROR - Response: ', [$response->getBody()]);
-            throw new PolicyServiceException('ERROR - Response: ' . json_encode($response->getBody()), $response->getStatusCode());
+            throw new PolicyServiceException(
+                'ERROR - Response: ' . json_encode($response->getBody()), $response->getStatusCode()
+            );
         }
         Log::info(__METHOD__ . '. Response', [json_decode($response->getBody())]);
+
         return json_decode($response->getBody());
     }
 
     /**
      * Экспорт полиса в Uwin - вернет номер ContractId
      *
-     * @param Contract $contract
+     * @param  Contract  $contract
+     *
      * @return mixed|void
      */
     public static function getUwinContractId(Contract $contract)
     {
-        if (config('app.env') == 'local' || config('app.env') == 'testing') {
+        if (in_array(config('app.env'), ['local', 'testing'])) {
             return json_decode(json_encode(['contractId' => '111111']));
         }
         $siteService = new SiteService();
@@ -247,9 +277,12 @@ class Helper
             if ($user) {
                 $uwUserData = [
                     'login' => Arr::get($user, 'login'),
-                    'subjectId' => Arr::get($user, 'subjectId')
+                    'subjectId' => Arr::get($user, 'subjectId'),
                 ];
-                $subject->value = json_encode(array_merge($subject->value, $uwUserData), JSON_UNESCAPED_UNICODE);
+                $subject->value = json_encode(
+                    array_merge($subject->value, $uwUserData),
+                    JSON_UNESCAPED_UNICODE
+                );
                 $subject->save();
             }
         }
@@ -257,8 +290,8 @@ class Helper
             if (!isset($obj->value['subjectId'])) {
                 Log::info(__METHOD__ . ". getUserData object", [$obj->value]);
                 $code = md5(
-                    $obj->value['lastName'] . $obj->value['firstName'] . ($obj->value['middleName'] ?? '') . $obj->value['birthDate'] . time(
-                    )
+                    $obj->value['lastName'] . $obj->value['firstName'] .
+                    ($obj->value['middleName'] ?? '') . $obj->value['birthDate'] . time()
                 );
                 $obj->value = json_encode(
                     array_merge($obj->value, ['email' => $code . '@strahovka.ru']),
@@ -272,14 +305,17 @@ class Helper
                         'login' => Arr::get($user, 'login'),
                         'subjectId' => Arr::get($user, 'subjectId'),
                     ];
-                    $obj->value = json_encode(array_merge($obj->value, $uwUserData), JSON_UNESCAPED_UNICODE);
+                    $obj->value = json_encode(
+                        array_merge($obj->value, $uwUserData),
+                        JSON_UNESCAPED_UNICODE
+                    );
                     $obj->save();
                 }
             }
         }
 
         $client = new Client();
-        $url = env('UW_HOST', 'http://uw.stage.strahovka.ru');
+        $url = config('services.uw.host');
 
         $params = [
             "product" => "LIFE",
@@ -294,7 +330,8 @@ class Helper
             "insuredSum" => $contract->insured_sum,
             "object" => $contract->objects_value,
             "subject" => $contract->subject_value,
-            'sberMerchantOrderNumber' => Payment::where('contract_id', $contract->id)->first()->invoiceNum,
+            'sberMerchantOrderNumber' => Payment::where('contract_id', $contract->id)->first(
+            )->invoiceNum,
 
         ];
 
@@ -307,7 +344,7 @@ class Helper
                     'body' => json_encode($params),
                     'headers' => [
                         'Accept' => 'application/json',
-                        'Content-Type' => 'application/json'
+                        'Content-Type' => 'application/json',
                     ],
                 ]
             );
@@ -324,9 +361,13 @@ class Helper
                 __METHOD__ . '. Exception:',
                 [$httpStatusCode, $json, $e->getMessage(), $e->getTraceAsString()]
             );
+
             return false;
         } catch (Exception $e) {
-            Log::error(__METHOD__ . '. ERROR - Response: ', [$e->getCode(), $e->getMessage(), $e->getTraceAsString()]);
+            Log::error(
+                __METHOD__ . '. ERROR - Response: ',
+                [$e->getCode(), $e->getMessage(), $e->getTraceAsString()]
+            );
 
             return false;
         }
@@ -359,15 +400,18 @@ class Helper
         if ($n == 1) {
             return $f1;
         }
+
         return $f5;
     }
 
     /**
      * Возвращает название месяца на кириллице по номеру месяца.
+     *
      * @param $num
+     *
      * @return string
      */
-    public static function getCyrMonth($num)
+    public static function getCyrMonth(int $num): string
     {
         $arr = [
             'январь',
@@ -381,13 +425,15 @@ class Helper
             'сентябрь',
             'октябрь',
             'ноябрь',
-            'декабрь'
+            'декабрь',
         ];
+
         return $arr[$num - 1];
     }
 
     /**
      * @param $request
+     *
      * @return mixed|string
      */
     public static function getTrafficSource($request)
@@ -402,17 +448,17 @@ class Helper
             $domain .= '.' . $request->cookie('X-Split');
         }
 
-        $traffic_source_params = array(
+        $traffic_source_params = [
             $domain,
             $request->cookie('utm_campaign'),
             $request->cookie('utm_source'),
             $request->cookie('utm_medium'),
             $request->cookie('utm_content'),
             $request->cookie('utm_term'),
-        );
+        ];
 
         $extra_params = array_filter(
-            array(
+            [
                 $request->cookie('afclick'),
                 $request->cookie('admitad_uid'),
                 $request->cookie('adsbalance_id'),
@@ -420,7 +466,7 @@ class Helper
                 $request->cookie('subid1'),
                 $request->cookie('subid2'),
                 $request->cookie('subid3'),
-            )
+            ]
         );
 
         $result = implode('//', $traffic_source_params) . '//';
@@ -438,12 +484,13 @@ class Helper
         return $result;
     }
 
+    /**
+     * @return bool
+     */
     static function isMobile()
     {
         $agent = new Agent();
-        if ($agent->isMobile() || $agent->isTablet()) {
-            return true;
-        }
-        return false;
+
+        return $agent->isMobile() || $agent->isTablet();
     }
 }

@@ -12,7 +12,7 @@ use App\Exceptions\Drivers\SberinsException;
 use App\Helpers\Helper;
 use App\Models\Contract;
 use App\Models\Program;
-use Arr;
+use Illuminate\Support\Arr;
 use Throwable;
 
 /**
@@ -43,7 +43,7 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
 
     /**
      * @param  Contract  $contract
-     * @param  array      $data
+     * @param  array     $data
      *
      * @return CreatedPolicyInterface
      * @throws \App\Exceptions\Services\PolicyServiceException
@@ -67,9 +67,9 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param  Contract  $contract
-     * @param  bool  $sample
-     * @param  bool  $reset
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  bool         $reset
      * @param  string|null  $filePath
      *
      * @return string
@@ -140,5 +140,10 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
             'bso_receiver_code' => 'STRAHOVKA',
             'count' => 1,
         ];
+    }
+
+    public static function code(): string
+    {
+        return 'sberins';
     }
 }

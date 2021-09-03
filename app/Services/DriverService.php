@@ -84,7 +84,7 @@ class DriverService
 
     /**
      * @param  Contract  $contract
-     * @param  PayLinks   $links
+     * @param  PayLinks  $links
      *
      * @return PayLinkInterface
      */
@@ -92,7 +92,7 @@ class DriverService
     {
         return $this->getDriverByCode($contract->program->company->code)->getPayLink(
             $contract,
-            $links,
+            $links
         );
     }
 
@@ -105,11 +105,11 @@ class DriverService
     public function calculate($data): array
     {
         try {
-
             $program = Program::whereProgramCode($data['programCode'])
                 ->with('company')
                 ->firstOrFail();
             $this->minStartValidator($program, $data);
+
             return $this->getDriverByCode($program->company->code)->calculate($data)->toArray();
         } catch (Throwable $throwable) {
             throw (new DriverServiceException(
@@ -243,7 +243,7 @@ class DriverService
     }
 
     /**
-     * @param  Contract    $contract
+     * @param  Contract     $contract
      * @param  bool         $sample
      * @param  bool         $reset
      * @param  string|null  $filePath
@@ -347,16 +347,20 @@ class DriverService
     }
 
     /**
-     * @param Contract $contract
-     * @param PaymentService $payService
-     * @param Payment $payment
+     * @param  Contract        $contract
+     * @param  PaymentService  $payService
+     * @param  Payment         $payment
+     *
      * @return array
      * @throws App\Exceptions\Services\LogExceptionInterface
      * @throws DriverServiceException
      * @internal param Contracts $contract
      */
-    public function acceptPayment(Contract $contract, PaymentService $payService, Payment $payment): array
-    {
+    public function acceptPayment(
+        Contract $contract,
+        PaymentService $payService,
+        Payment $payment
+    ): array {
         $company = $contract->company;
 
         try {
@@ -366,7 +370,10 @@ class DriverService
                 $status = $payService->orderStatus($payment);
                 Log::info("Status: {$status}");
                 if ($status !== Contract::STATUS_CONFIRMED) {
-                    throw new DriverServiceException('Полис не оплачен.', Response::HTTP_PAYMENT_REQUIRED);
+                    throw new DriverServiceException(
+                        'Полис не оплачен.',
+                        Response::HTTP_PAYMENT_REQUIRED
+                    );
                 }
             }
 
@@ -385,7 +392,9 @@ class DriverService
                     Log::info(__METHOD__ . ". getPolicyNumber with params:", [$params]);
                     $res = Helper::getPolicyNumber($params);
                     $bsoNumber = $res->data->bso_numbers[0];
-                    $contract->objects->first()->setAttribute('number', $res->data->bso_numbers[0])->save();
+                    $contract->objects->first()
+                        ->setAttribute('number', $res->data->bso_numbers[0])
+                        ->save();
                 }
             }
         } catch (Throwable $throwable) {
@@ -409,10 +418,12 @@ class DriverService
         $contract->save();
 
         if (isset($bsoNumber) && isset($driver) && get_class($driver) == SberinsDriver::class) {
-            Helper::acceptPolicyNumber([
-                'bso_number' => $bsoNumber,
-                'contract_id' => $contract->ext_id,
-            ]);
+            Helper::acceptPolicyNumber(
+                [
+                    'bso_number' => $bsoNumber,
+                    'contract_id' => $contract->ext_id,
+                ]
+            );
         }
 
         Log::info("Contract with ID {$contract->id} was saved.");

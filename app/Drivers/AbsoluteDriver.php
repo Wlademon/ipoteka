@@ -15,15 +15,12 @@ use App\Exceptions\Drivers\DriverException;
 use App\Models\Contract;
 use App\Services\PayService\PayLinks;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Config\Repository;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PaymentService;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
-use Throwable;
 
 /**
  * Class AbsoluteDriver
@@ -51,6 +48,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     protected string $propertyAgreementPath;
     protected string $printPolicyPath;
     protected string $releasedPolicyPath;
+    protected string $authPath;
     protected const ADDRESS_CODE_OBJECT = 2247;
     protected const ADDRESS_CODE_SUBJECT = 2246;
     protected const CONTACT_CODE_EMAIL = 2243;
@@ -69,12 +67,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
      * @param  string          $clientSecret
      * @param  string          $pdfpath
      * @param  string          $grantType
-     * @param  string          $calculateLifePath
-     * @param  string          $calculatePropertyPath
-     * @param  string          $lifeAgreementPath
-     * @param  string          $propertyAgreementPath
-     * @param  string          $printPolicyPath
-     * @param  string          $releasedPolicyPath
+     * @param  array           $actions
      */
     public function __construct(
         Client $client,
@@ -84,24 +77,20 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         string $clientSecret,
         string $pdfpath,
         string $grantType,
-        string $calculateLifePath,
-        string $calculatePropertyPath,
-        string $lifeAgreementPath,
-        string $propertyAgreementPath,
-        string $printPolicyPath,
-        string $releasedPolicyPath
+        array $actions
     ) {
         $this->baseUrl = $baseUrl;
         $this->ClientID = $clientId;
         $this->ClientSecret = $clientSecret;
         $this->pdfpath = $pdfpath;
         $this->grantType = $grantType;
-        $this->calculateLifePath = $calculateLifePath;
-        $this->calculatePropertyPath = $calculatePropertyPath;
-        $this->lifeAgreementPath = $lifeAgreementPath;
-        $this->propertyAgreementPath = $propertyAgreementPath;
-        $this->printPolicyPath = $printPolicyPath;
-        $this->releasedPolicyPath = $releasedPolicyPath;
+        $this->calculateLifePath = Arr::get($actions, 'calculate_life_path');
+        $this->calculatePropertyPath = Arr::get($actions, 'calculate_property_path');
+        $this->lifeAgreementPath = Arr::get($actions, 'life_agreement_path');
+        $this->propertyAgreementPath = Arr::get($actions, 'property_agreement_path');
+        $this->printPolicyPath = Arr::get($actions, 'print_policy_path');
+        $this->releasedPolicyPath = Arr::get($actions, 'released_policy_path');
+        $this->authPath = Arr::get($actions, 'auth_path');
 
         $this->client = $client;
         $this->paymentService = $paymentService;
@@ -126,24 +115,19 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
      */
     protected function getToken(): string
     {
-        $data = ['grant_type' => $this->grantType];
-        try {
-            $response = $this->client->request(
-                'POST',
-                $this->baseUrl . '/oauth/token',
-                [
-                    'auth' => [
-                        $this->ClientID,
-                        $this->ClientSecret,
-                    ],
-                    'form_params' => $data,
-                ]
-            );
-        } catch (Throwable $throwable) {
-            throw new AbsoluteDriverException(
-                __METHOD__, 'Ошибка получения токена', AbsoluteDriverException::DEFAULT_CODE, $throwable
-            );
-        }
+        $response = $this->request(
+            __METHOD__,
+            'POST',
+            $this->authPath,
+            null,
+            [
+                'auth' => [
+                    $this->ClientID,
+                    $this->ClientSecret,
+                ],
+                'form_params' => ['grant_type' => $this->grantType],
+            ]
+        );
 
         if (!$response->getStatusCode() == 200) {
             throw new AbsoluteDriverException(__METHOD__, 'Ошибка получения токена');
@@ -190,28 +174,11 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
      * @throws AbsoluteDriverException
      * @throws AbsoluteDriverValidationException
      */
-    public function post(array $data, string $path, array $validateFields)
+    public function post(string $method, array $data, string $path, array $validateFields)
     {
-        try {
-            $response = $this->client->post(
-                $this->baseUrl . $path,
-                [
-                    'headers' => [
-                        'Authorization' => "Bearer {$this->getAccessToken()}",
-                    ],
-                    'json' => $data,
-                ]
-            );
+        $response = $this->request($method, 'POST', $path, $data);
 
-            return self::decodeResponse($response, $validateFields);
-        } catch (GuzzleException $e) {
-            throw new AbsoluteDriverException(
-                __METHOD__,
-                "POST запрос исключение от {$path} {$e->getMessage()}",
-                DriverException::DEFAULT_CODE,
-                $e
-            );
-        }
+        return self::decodeResponse($response, $validateFields);
     }
 
     /**
@@ -222,30 +189,15 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
      * @throws AbsoluteDriverException
      * @throws AbsoluteDriverValidationException
      */
-    public function put(string $path, array $validateFields)
+    public function put(string $method, string $path, array $validateFields)
     {
-        try {
-            $response = $this->client->put(
-                $this->baseUrl . $path,
-                [
-                    'headers' => [
-                        'Authorization' => "Bearer {$this->getAccessToken()}",
-                    ],
-                ]
-            );
+        $response = $this->request($method, 'PUT', $path);
 
-            return self::decodeResponse($response, $validateFields);
-        } catch (GuzzleException $e) {
-            throw new AbsoluteDriverException(
-                __METHOD__,
-                "PUT запрос исключение от {$path} {$e->getMessage()}",
-                DriverException::DEFAULT_CODE,
-                $e
-            );
-        }
+        return self::decodeResponse($response, $validateFields);
     }
 
     /**
+     * @param  string  $method
      * @param  string  $path
      * @param  array   $validateFields
      *
@@ -254,23 +206,47 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
      * @throws AbsoluteDriverValidationException
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function get(string $path, array $validateFields)
+    public function get(string $method, string $path, array $validateFields)
     {
-        try {
-            $response = $this->client->get(
-                $this->baseUrl . $path,
-                [
-                    'headers' => [
-                        'Authorization' => "Bearer {$this->getAccessToken()}",
-                    ],
-                ]
-            );
+        $response = $this->request($method, 'GET', $path);
 
-            return self::decodeResponse($response, $validateFields);
+        return self::decodeResponse($response, $validateFields);
+    }
+
+    /**
+     * @param  string      $method
+     * @param  string      $methodRequest
+     * @param  string      $path
+     * @param  array|null  $data
+     * @param  array       $options
+     *
+     * @return ResponseInterface
+     * @throws AbsoluteDriverException
+     */
+    public function request(
+        string $method,
+        string $methodRequest,
+        string $path,
+        ?array $data = null,
+        array $options = []
+    ): ResponseInterface {
+        if (empty($options)) {
+            $options = [
+                'headers' => [
+                    'Authorization' => "Bearer {$this->getAccessToken()}",
+                ],
+            ];
+        }
+
+        if ($data) {
+            $options['json'] = $data;
+        }
+        try {
+            return $this->client->request($methodRequest, $this->baseUrl . $path, $options);
         } catch (GuzzleException $e) {
             throw new AbsoluteDriverException(
-                __METHOD__,
-                "GET запрос исключение от {$path} {$e->getMessage()}",
+                $method,
+                "{$methodRequest} запрос исключение от {$path} {$e->getMessage()}",
                 DriverException::DEFAULT_CODE,
                 $e
             );
@@ -341,14 +317,24 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 'sex' => self::getGender($data),
                 'birthday' => Arr::get($data, 'objects.life.birthDate'),
             ];
-            $resultQuery = $this->post($body, $this->calculateLifePath, $validateFileds);
+            $resultQuery = $this->post(
+                __METHOD__,
+                $body,
+                $this->calculateLifePath,
+                $validateFileds
+            );
             $life = Arr::get($resultQuery, 'result.data.premium_sum');
         }
         if (self::isProperty($data) || self::isPropertyAndLife($data)) {
             $body = [
                 'limit_sum' => Arr::get($data, 'remainingDebt'),
             ];
-            $resultQuery = $this->post($body, $this->calculatePropertyPath, $validateFileds);
+            $resultQuery = $this->post(
+                __METHOD__,
+                $body,
+                $this->calculatePropertyPath,
+                $validateFileds
+            );
             $property = Arr::get($resultQuery, 'result.data.premium_sum');
         }
         $result = [
@@ -506,7 +492,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 'result.*.data.*.policy_no' => 'required',
             ];
 
-            $response = $this->post($body, $path, $validateFields);
+            $response = $this->post(__METHOD__, $body, $path, $validateFields);
 
             $responseData = Arr::get($response, 'result.data');
             $life = Arr::get($responseData, 'premium_sum');
@@ -532,7 +518,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                 'result.*.data.*.isn' => 'required',
                 'result.*.data.*.policy_no' => 'required',
             ];
-            $response = $this->post($body, $path, $validateFields);
+            $response = $this->post(__METHOD__, $body, $path, $validateFields);
             $property = $response['result']['data']['premium_sum'];
             $policyIdProperty = $response['result']['data']['isn'];
             $policyNumberProperty = $response['result']['data']['policy_no'];
@@ -650,6 +636,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
                     'results.*.data.*.document.*.bytes' => 'required',
                 ];
                 $bytes = $this->get(
+                    __METHOD__,
                     $this->printPolicyPath . $isn,
                     $validateFields
                 )['result']['data']['document']['bytes'];
@@ -673,7 +660,12 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         ];
         $isnArray = $this->getPolicyIsn($contract);
         foreach ($isnArray as $isn) {
-            $this->put($this->releasedPolicyPath . $isn, $validateFields);
+            $this->put(__METHOD__, $this->releasedPolicyPath . $isn, $validateFields);
         }
+    }
+
+    public static function code(): string
+    {
+        return 'absolut_77';
     }
 }

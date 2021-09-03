@@ -5,13 +5,18 @@ namespace App\Drivers\Services;
 use App\Exceptions\Drivers\AlphaException;
 use DateTime;
 use Illuminate\Support\Collection;
-use Log;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use SoapClient;
 use SoapHeader;
 use SoapVar;
-use Storage;
 use Throwable;
 
+/**
+ * Class MerchantServices
+ *
+ * @package App\Drivers\Services
+ */
 class MerchantServices
 {
     const PARTNERS_INTERACTION = '/cxf/partner/PartnersInteraction?wsdl';
@@ -78,7 +83,7 @@ class MerchantServices
                     'secure' => $header,
                 ]
             );
-            $result = $soap->__SoapCall('getUPID', $request, null, $header);
+            $result = $soap->__soapCall('getUPID', $request, null, $header);
             Log::info(
                 __METHOD__ . ' UPID получен',
                 [
