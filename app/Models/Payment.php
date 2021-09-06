@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Drivers\DriverResults\PayLinkInterface;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Strahovka\LaravelFilterable\Filterable;
 
 /**
@@ -40,22 +41,22 @@ class Payment extends BaseModel
         'invoiceNum',
     ];
 
-    public function contract()
+    public function contract(): BelongsTo
     {
         return $this->belongsTo('App\Models\Contract', 'contract_id', 'id');
     }
 
-    public function getContractIdAttribute()
+    public function getContractIdAttribute(): ?int
     {
         return $this->attributes['contract_id'];
     }
 
-    public function getOrderIdAttribute()
+    public function getOrderIdAttribute(): ?string
     {
         return $this->attributes['order_id'];
     }
 
-    public function getInvoiceNumAttribute()
+    public function getInvoiceNumAttribute(): ?float
     {
         return $this->attributes['invoice_num'];
     }

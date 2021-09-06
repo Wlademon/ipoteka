@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Drivers\DriverResults\CreatedPolicyInterface;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Arr;
 
 /**
@@ -35,6 +36,11 @@ class InsuranceObject extends BaseModel
         'value' => 'array',
     ];
 
+    /**
+     * @param  false  $isImplode
+     *
+     * @return string|string[]
+     */
     public static function propertyTypes($isImplode = false)
     {
         $types = [self::PROPERY_TYPE_FIAT];
@@ -45,6 +51,11 @@ class InsuranceObject extends BaseModel
         return $types;
     }
 
+    /**
+     * @param  false  $isImplode
+     *
+     * @return string|string[]
+     */
     public static function types($isImplode = false)
     {
         $types = [self::TYPE_LIFE, self::TYPE_PROPERTY];
@@ -55,22 +66,36 @@ class InsuranceObject extends BaseModel
         return $types;
     }
 
-    public function contract()
+    /**
+     * @return BelongsTo
+     */
+    public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class, 'contract_id');
     }
 
-    public function setValueAttribute($value)
+    /**
+     * @param  array  $value
+     */
+    public function setValueAttribute(array $value): void
     {
         $this->attributes['value'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
-    public function getValueAttribute()
+    /**
+     * @return array
+     */
+    public function getValueAttribute(): array
     {
         return json_decode($this->attributes['value'], true);
     }
 
-    public function toArray()
+    /**
+     * Convert the model instance to an array.
+     *
+     * @return array
+     */
+    public function toArray(): array
     {
         $data = collect($this->attributes);
         $data = $data->merge($this->getAttribute('value'));
@@ -79,7 +104,12 @@ class InsuranceObject extends BaseModel
         return $data->toArray();
     }
 
-    public static function contractObjects($contractId)
+    /**
+     * @param $contractId
+     *
+     * @return array
+     */
+    public static function contractObjects(string $contractId): array
     {
         return self::query()->where('contract_id', '=', $contractId)->get()->keyBy('product')->map(
                 function (InsuranceObject $object)
@@ -93,7 +123,10 @@ class InsuranceObject extends BaseModel
             )->toArray();
     }
 
-    public function loadFromDriverResult(CreatedPolicyInterface $createdPolicy)
+    /**
+     * @param  CreatedPolicyInterface  $createdPolicy
+     */
+    public function loadFromDriverResult(CreatedPolicyInterface $createdPolicy): void
     {
         if ($this->product === self::TYPE_PROPERTY) {
             $this->number = $createdPolicy->getPropertyPolicyNumber();

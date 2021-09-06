@@ -27,7 +27,7 @@ use Throwable;
  *
  * @package App\Drivers
  */
-class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
+class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, OutPrintDriverInterface
 {
     use DriverTrait {
         DriverTrait::getStatus as getTStatus;
@@ -356,46 +356,19 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     }
 
     /**
-     * @param  Contract  $contract
-     *
-     * @return array
-     * @throws ReninsException
-     */
-    protected function getFilePolice(Contract $contract): array
-    {
-        $objects = $contract->objects;
-        $files = [];
-        foreach ($objects as $object) {
-            $filePathObject = self::createFilePath($contract, $object->id);
-            if (!$this->isFilePoliceExitst($contract, $filePathObject)) {
-                $this->printPolicy($contract, false, true);
-            }
-            $files[] = public_path($filePathObject);
-        }
-
-        return $files;
-    }
-
-    /**
      * @inheritDoc
      */
     public function printPolicy(
         Contract $contract,
         bool $sample,
-        bool $reset,
-        ?string $filePath = null
-    ) {
+        bool $reset
+    ): array {
         if ($contract->status !== Contract::STATUS_CONFIRMED) {
             throw new ReninsException(__METHOD__, 'Status is not confirmed!');
         }
         $filesOut = [];
         $objects = $contract->objects;
         foreach ($objects as $object) {
-            $filePathObject = self::createFilePath($contract, $object->id);
-            if ($this->isFilePoliceExitst($contract, $filePathObject)) {
-                $filesOut[] = self::generateBase64($filePathObject);
-                continue;
-            }
             $url = $this->httpClient->print(
                 collect(
                     [
@@ -416,30 +389,11 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
                 }
             );
             throw_if(!$file, new ReninsException(__METHOD__, 'Файл полиса не установлен.'));
-            $actualFilePath = self::createFilePath($contract, $object->id);
-            File::move(storage_path('app/' . $file), public_path($actualFilePath));
 
-            $filesOut[] = self::generateBase64(public_path($actualFilePath));
+            $filesOut[$object->id] = self::generateBase64(storage_path('app/' . $file));
         }
 
         return $filesOut;
-    }
-
-    /**
-     * @param  Contract  $contract
-     * @param  string    $objectId
-     *
-     * @return string
-     */
-    protected static function createFilePath(Contract $contract, string $objectId): string
-    {
-        $filePathObject = self::gefaultFileName($contract);
-        $filePathObjectArray = explode('.', $filePathObject);
-        $ext = array_pop($filePathObjectArray);
-        array_push($filePathObjectArray, $objectId, $ext);
-        $filePathObject = implode('.', $filePathObjectArray);
-
-        return $filePathObject;
     }
 
     /**
@@ -452,5 +406,10 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface
     public static function code(): string
     {
         return 'rensins';
+    }
+
+    public function getPoliceIds(Contract $contract): array
+    {
+        return $contract->objects->pluck('id')->all();
     }
 }

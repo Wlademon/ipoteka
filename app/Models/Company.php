@@ -4,6 +4,7 @@ namespace App\Models;
 
 
 use Illuminate\Database\Eloquent;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Strahovka\LaravelFilterable\Filterable;
 
 
@@ -48,32 +49,52 @@ class Company extends BaseModel
         'isActive',
     ];
 
-    public function contracts()
+    /**
+     * @return HasMany
+     */
+    public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);
     }
 
-    public function programs()
+    /**
+     * @return HasMany
+     */
+    public function programs(): HasMany
     {
         return $this->hasMany(Program::class);
     }
 
-    public function getCodeAttribute()
+    /**
+     * @return mixed
+     */
+    public function getCodeAttribute(): string
     {
         return $this->attributes['code'];
     }
 
-    public function getNameAttribute()
+    /**
+     * @return mixed
+     */
+    public function getNameAttribute(): string
     {
         return $this->attributes['name'];
     }
 
-    public function getIsActiveAttribute()
+    /**
+     * @return mixed
+     */
+    public function getIsActiveAttribute(): bool
     {
         return $this->attributes['is_active'];
     }
 
-    public function setIsActiveAttribute($val)
+    /**
+     * @param $val
+     *
+     * @return bool
+     */
+    public function setIsActiveAttribute(bool $val): bool
     {
         return $this->attributes['is_active'] = $val;
     }

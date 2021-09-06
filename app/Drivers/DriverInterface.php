@@ -44,23 +44,6 @@ interface DriverInterface
     public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface;
 
     /**
-     * Функция печати полиса
-     *
-     * @param  Contract     $contract
-     * @param  bool         $sample    Шаблон
-     * @param  bool         $reset     Перепечатать
-     * @param  string|null  $filePath  Путь сохранения файла
-     *
-     * @return string|array Файл в формате base64
-     */
-    public function printPolicy(
-        Contract $contract,
-        bool $sample,
-        bool $reset,
-        ?string $filePath = null
-    );
-
-    /**
      * Функция вызываемая после оплаты полиса
      *
      * @param  Contract  $contract

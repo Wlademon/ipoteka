@@ -31,7 +31,7 @@ use Throwable;
  *
  * @package App\Drivers
  */
-class AlfaMskDriver implements DriverInterface
+class AlfaMskDriver implements DriverInterface, OutPrintDriverInterface
 {
     use DriverTrait {
         DriverTrait::getStatus as getTStatus;
@@ -493,30 +493,20 @@ class AlfaMskDriver implements DriverInterface
     public function printPolicy(
         Contract $contract,
         bool $sample,
-        bool $reset,
-        ?string $filePath = null
-    ) {
+        bool $reset
+    ): array {
         $files = [];
         $merchantService = $this->merchantServices;
         $objects = $contract->objects;
         $objectIds = $objects->pluck('integration_id', 'id');
-        foreach ($objectIds as $id => $extId) {
-            $filePath = self::createFilePath($contract, $id);
-            if ($this->isFilePoliceExitst($contract, $filePath)) {
-                $files[] = self::generateBase64($filePath);
-                $objectIds->forget($id);
-            }
-        }
         if ($objectIds->count()) {
             $response = $merchantService->getContractSigned(
                 $contract->getOptionsAttribute()['upid'],
                 $objectIds->values()->all()
             );
             if ($response) {
-                foreach ($response as $extId => $item) {
-                    $filePath = self::createFilePath($contract, $objectIds->flip()->get($extId));
-                    File::move(storage_path('app/' . $item), public_path($filePath));
-                    $files[] = self::generateBase64($filePath);
+                foreach ($response as $id => $item) {
+                    $files[$id] = self::generateBase64(storage_path('app/' . $item));
                 }
             }
         }
@@ -573,5 +563,10 @@ class AlfaMskDriver implements DriverInterface
     public static function code(): string
     {
         return 'alfa_msk';
+    }
+
+    public function getPoliceIds(Contract $contract): array
+    {
+        return $contract->objects->pluck('id')->all();
     }
 }

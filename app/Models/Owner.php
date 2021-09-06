@@ -3,6 +3,7 @@
 namespace App\Models;
 
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Strahovka\LaravelFilterable\Filterable;
 
 /**
@@ -41,27 +42,42 @@ class Owner extends BaseModel
         'uwLogin',
     ];
 
-    public function programs()
+    /**
+     * @return BelongsToMany
+     */
+    public function programs(): BelongsToMany
     {
         return $this->belongsToMany(Program::class, 'owners_programs');
     }
 
-    public function getCodeAttribute()
+    /**
+     * @return string|null
+     */
+    public function getCodeAttribute(): ?string
     {
         return $this->attributes['code'];
     }
 
-    public function getNameAttribute()
+    /**
+     * @return string|null
+     */
+    public function getNameAttribute(): ?string
     {
         return $this->attributes['name'];
     }
 
-    public function getUwLoginAttribute()
+    /**
+     * @return string|null
+     */
+    public function getUwLoginAttribute(): ?string
     {
         return $this->attributes['uw_login'];
     }
 
-    public function setUwLoginAttribute($value)
+    /**
+     * @param  string  $value
+     */
+    public function setUwLoginAttribute(string $value): void
     {
         $this->attributes['uw_login'] = $value;
     }

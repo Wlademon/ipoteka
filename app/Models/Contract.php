@@ -122,18 +122,21 @@ class Contract extends BaseModel
         'uwContractId',
     ];
 
-    public function getCompanyCodeAttribute()
+    public function getCompanyCodeAttribute(): ?string
     {
         return $this->company->code ?? null;
     }
 
-    public function getProgramCodeAttribute()
+    public function getProgramCodeAttribute(): ?string
     {
 
         return $this->program->program_code ?? null;
     }
 
-    public function getMortgageAgreementNumberAttribute()
+    /**
+     * @return mixed|null
+     */
+    public function getMortgageAgreementNumberAttribute(): ?string
     {
         return $this->options['mortgageAgreementNumber'] ?? null;
     }
@@ -196,70 +199,112 @@ class Contract extends BaseModel
         return $query->where('owner_id', $ownerId);
     }
 
-    public function getRouteKeyName()
+    /**
+     * Get the route key for the model.
+     *
+     * @return string
+     */
+    public function getRouteKeyName(): string
     {
         return "id";
     }
 
-    public function getContractIdAttribute()
+    /**
+     * @return mixed
+     */
+    public function getContractIdAttribute(): string
     {
         return $this->attributes['ext_id'];
     }
 
-    public function setContractIdAttribute($value)
+    /**
+     * @param $value
+     */
+    public function setContractIdAttribute(string $value): void
     {
         $this->attributes['ext_id'] = $value;
     }
 
-    public function getPremiumAttribute()
+    /**
+     * @return float|null
+     */
+    public function getPremiumAttribute(): ?float
     {
         return $this->attributes['premium'];
     }
 
-    public function getRemainingDebtAttribute()
+    /**
+     * @return float|null
+     */
+    public function getRemainingDebtAttribute(): ?float
     {
         return $this->attributes['remainingDebt'];
     }
 
-    public function getProgramNameAttribute()
+    /**
+     * @return string
+     */
+    public function getProgramNameAttribute(): string
     {
         if (!$this->program) {
             return '';
         }
+
         return Str::lower($this->program->program_name);
     }
 
+    /**
+     * @return mixed
+     */
     public function getActiveFromAttribute()
     {
         return $this->attributes['active_from'];
     }
 
+    /**
+     * @return mixed
+     */
     public function getActiveToAttribute()
     {
         return $this->attributes['active_to'];
     }
 
+    /**
+     * @return mixed
+     */
     public function getSignedAtAttribute()
     {
         return $this->attributes['signed_at'];
     }
 
-    public function getPaymentStatusAttribute()
+    /**
+     * @return mixed
+     */
+    public function getPaymentStatusAttribute(): string
     {
         return $this->attributes['status'];
     }
 
-    public function getPolicyNumberAttribute()
+    /**
+     * @return mixed
+     */
+    public function getPolicyNumberAttribute(): string
     {
         return $this->attributes['number'];
     }
 
-    public function getUwContractIdAttribute()
+    /**
+     * @return mixed
+     */
+    public function getUwContractIdAttribute(): ?string
     {
         return $this->attributes['uw_contract_id'];
     }
 
-    public function getStatusTextAttribute()
+    /**
+     * @return string
+     */
+    public function getStatusTextAttribute(): string
     {
         if ($this->status == self::STATUS_CONFIRMED) {
             return 'оплачен';
@@ -268,48 +313,72 @@ class Contract extends BaseModel
         }
     }
 
+    /**
+     * @return mixed
+     */
     public function getSubjectValueAttribute()
     {
         return $this->subject->value;
     }
 
+    /**
+     * @return mixed
+     */
     public function getOptionsAttribute()
     {
         return json_decode($this->attributes['options'], true) ;
     }
 
-    public function setMortgageAgreementNumberAttribute($value)
+    /**
+     * @param $value
+     */
+    public function setMortgageAgreementNumberAttribute(string $value): void
     {
         $options = $this->getAttribute('options') ?: [];
-        $options['mortgageAgreementNumber'] = (string)$value;
+        $options['mortgageAgreementNumber'] = $value;
         $this->setAttribute('options', $options);
     }
 
-    public function setMortgageeBankAttribute($value)
+    /**
+     * @param  string  $value
+     */
+    public function setMortgageeBankAttribute(string $value): void
     {
         $options = $this->getAttribute('options') ?: [];
-        $options['mortgageeBank'] = (string)$value;
+        $options['mortgageeBank'] = $value;
         $this->setAttribute('options', $options);
     }
 
-    public function getMortgageeBankAttribute()
+    /**
+     * @return mixed|string
+     */
+    public function getMortgageeBankAttribute(): string
     {
         return $this->getAttribute('options')['mortgageeBank'] ?? '';
     }
 
-    public function setIsOwnershipAttribute($value)
+    /**
+     * @param  bool  $value
+     */
+    public function setIsOwnershipAttribute(bool $value): void
     {
         $options = $this->getAttribute('options') ?: [];
-        $options['isOwnership'] = (bool)$value;
+        $options['isOwnership'] = $value;
         $this->setAttribute('options', $options);
     }
 
+    /**
+     * @return bool
+     */
     public function getIsOwnershipAttribute(): bool
     {
         return (bool)($this->getAttribute('options')['isOwnership'] ?? false);
     }
 
-    public function setProgramCodeAttribute($value)
+    /**
+     * @param  string|null  $value
+     */
+    public function setProgramCodeAttribute(?string $value): void
     {
         if ($value) {
             $program = Program::query()
@@ -320,13 +389,19 @@ class Contract extends BaseModel
         }
     }
 
-    public function setActiveFromAttribute($val)
+    /**
+     * @param $val
+     */
+    public function setActiveFromAttribute($val): void
     {
         $this->attributes['active_from'] = $val;
         $this->setAttribute('signed_at', $val);
     }
 
-    public function setOptionsAttribute($value)
+    /**
+     * @param  array  $value
+     */
+    public function setOptionsAttribute(array $value): void
     {
         $this->attributes['options'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }

@@ -15,6 +15,7 @@ use App\Models\InsuranceObject;
 use App\Models\Payment;
 use App\Models\Program;
 use App\Models\Subject;
+use App\Printers\PolicyPrinter;
 use App\Services\PayService\PayLinks;
 use Carbon\Carbon;
 use Exception;
@@ -37,6 +38,12 @@ class DriverService
      * @var DriverInterface|null
      */
     private ?DriverInterface $driver = null;
+    private PolicyPrinter $printer;
+
+    public function __construct(PolicyPrinter $printer)
+    {
+        $this->printer = $printer;
+    }
 
     /**
      * @param  string|null  $driver
@@ -266,27 +273,11 @@ class DriverService
                 __METHOD__
             );
         }
-        try {
-            return $this->getDriverByCode($contract->program->company->code)->printPolicy(
-                $contract,
-                $sample,
-                $reset,
-                $filePath
-            );
-        } catch (Throwable $throwable) {
-            if ($throwable instanceof DriverExceptionInterface) {
-                $code = HttpResponse::HTTP_NOT_ACCEPTABLE;
-            } else {
-                $code = HttpResponse::HTTP_INTERNAL_SERVER_ERROR;
-            }
-            throw (new DriverServiceException(
-                'При получении бланка полиса произошла ошибка.', $code
-            ))->addLogData(
-                __METHOD__,
-                $throwable->getMessage(),
-                $throwable->getCode()
-            );
-        }
+        return $this->printer->print(
+            $this->getDriverByCode($contract->program->company->code),
+            $contract,
+            $sample
+        );
     }
 
     /**
@@ -301,6 +292,7 @@ class DriverService
             $code = HttpResponse::HTTP_INTERNAL_SERVER_ERROR;
             try {
                 $driver = $this->getDriverByCode($contract->program->company->code);
+                $this->printPdf($contract, false);
                 if ($driver->sendPolice($contract)) {
                     return ['message' => 'Email was sent to ' . $contract->subject_value['email']];
                 }

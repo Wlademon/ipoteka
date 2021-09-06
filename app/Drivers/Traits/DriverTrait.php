@@ -95,7 +95,7 @@ trait DriverTrait
      *
      * @return string
      */
-    public static function gefaultFileName(Contract $contract)
+    public static function gefaultFileName(Contract $contract): string
     {
         return config('mortgage.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
     }
@@ -122,7 +122,7 @@ trait DriverTrait
      *
      * @return string
      */
-    protected static function createFilePath(Contract $contract, string $objectId)
+    protected static function createFilePath(Contract $contract, string $objectId): string
     {
         $filePathObject = self::gefaultFileName($contract);
         $filePathObjectArray = explode('.', $filePathObject);

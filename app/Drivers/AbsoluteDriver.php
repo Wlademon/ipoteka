@@ -27,7 +27,7 @@ use Psr\Http\Message\ResponseInterface;
  *
  * @package App\Drivers
  */
-class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
+class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, OutPrintDriverInterface
 {
     use DriverTrait;
 
@@ -545,27 +545,6 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         );
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function generatePDF(string $bytes, string $filename): string
-    {
-        $pdf = base64_decode($bytes);
-        Storage::put($this->getFileName($filename), $pdf);
-
-        return self::generateBase64($this->getFileName($filename));
-    }
-
-    /**
-     * @param  string  $isn
-     *
-     * @return bool
-     */
-    public function policyExist(string $isn): bool
-    {
-        return Storage::exists($this->getFileName($isn));
-    }
-
     public function getPolicyIsn(Contract $contract): array
     {
         $products = $this->getProducts($contract);
@@ -578,27 +557,6 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
         }
 
         return $response;
-    }
-
-    /**
-     * @param  string  $path
-     *
-     * @return string
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
-     */
-    public static function generateBase64(string $path): string
-    {
-        return base64_encode(Storage::get($path));
-    }
-
-    /**
-     * @param  string  $filename
-     *
-     * @return string
-     */
-    public function getFileName(string $filename): string
-    {
-        return $this->pdfpath . $filename . '.pdf';
     }
 
     /**
@@ -616,34 +574,27 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     public function printPolicy(
         Contract $contract,
         bool $sample,
-        bool $reset,
-        ?string $filePath = null
-    ) {
+        bool $reset
+    ): array {
         $isnArray = $this->getPolicyIsn($contract);
         if (empty($isnArray)) {
             throw new AbsoluteDriverException('ISN для этого контракта не найден');
         }
+        $result = [];
         foreach ($isnArray as $isn) {
-            if ($this->policyExist($isn)) {
-                $result[] = [
-                    self::generateBase64($this->getFileName($isn)),
-                ];
-            } else {
-                $validateFields = [
-                    'result' => 'required',
-                    'results.*.data' => 'required',
-                    'results.*.data.*.document' => 'required',
-                    'results.*.data.*.document.*.bytes' => 'required',
-                ];
-                $bytes = $this->get(
-                    __METHOD__,
-                    $this->printPolicyPath . $isn,
-                    $validateFields
-                )['result']['data']['document']['bytes'];
-                $result[] = [
-                    $this->generatePDF($bytes, $isn),
-                ];
-            }
+            $validateFields = [
+                'result' => 'required',
+                'results.*.data' => 'required',
+                'results.*.data.*.document' => 'required',
+                'results.*.data.*.document.*.bytes' => 'required',
+            ];
+            $policeData = $this->get(
+                __METHOD__,
+                $this->printPolicyPath . $isn,
+                $validateFields
+            );
+            $bytes = Arr::get($policeData, 'result.data.document.bytes');
+            $result[$isn] = $bytes;
         }
 
         return $result;
@@ -667,5 +618,10 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface
     public static function code(): string
     {
         return 'absolut_77';
+    }
+
+    public function getPoliceIds(Contract $contract): array
+    {
+        return $this->getPolicyIsn($contract);
     }
 }

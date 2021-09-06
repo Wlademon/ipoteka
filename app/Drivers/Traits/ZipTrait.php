@@ -4,6 +4,7 @@ namespace App\Drivers\Traits;
 
 use App\Exceptions\Drivers\ReninsException;
 use Illuminate\Support\Facades\Storage;
+use Throwable;
 use ZipArchive;
 
 /**
@@ -19,7 +20,7 @@ trait ZipTrait
      * @param $file
      *
      * @return string
-     * @throws \Throwable
+     * @throws Throwable
      */
     public static function unpackZip(string $file): string
     {

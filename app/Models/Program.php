@@ -3,6 +3,9 @@
 namespace App\Models;
 use App\Filters\ProgramFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Strahovka\LaravelFilterable\Filterable;
 
 
@@ -77,55 +80,49 @@ class Program extends BaseModel
         'matrix',
     ];
 
-    public function scopeFilter(Builder $query, ProgramFilter $filters){
+    /**
+     * @param  Builder        $query
+     * @param  ProgramFilter  $filters
+     *
+     * @return Builder
+     * @throws \Strahovka\LaravelFilterable\Exceptions\MissingBuilderInstance
+     */
+    public function scopeFilter(Builder $query, ProgramFilter $filters): Builder
+    {
         return $filters->apply($query);
     }
 
-    /**
-     * Get the company.
-     */
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class, 'company_id', 'id');
     }
 
-    public function contracts()
+    public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);
     }
 
-    public function owners()
+    public function owners(): BelongsToMany
     {
         return $this->belongsToMany(Owner::class, 'owners_programs');
     }
 
-    public function scopeActive($query)
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', 1);
     }
 
-    /**
-     * @param $query
-     * @param $companyId
-     * @return mixed
-     */
-    public function scopeOfCompany($query, $companyId)
+    public function scopeOfCompany(Builder $query, string $companyId): Builder
     {
         return $query->where('company_id', $companyId);
     }
 
-    /**
-     * @return string
-     */
-    public function getCompanyIdAttribute()
+    public function getCompanyIdAttribute(): ?int
     {
         return $this->attributes['company_id'];
     }
 
-    /**
-     * @return string
-     */
-    public function getCompanyCodeAttribute()
+    public function getCompanyCodeAttribute(): string
     {
         if ($this->company) {
             return $this->company->code;
@@ -133,10 +130,7 @@ class Program extends BaseModel
         return '';
     }
 
-    /**
-     * @return string
-     */
-    public function getCompanyNameAttribute()
+    public function getCompanyNameAttribute(): string
     {
         if ($this->company) {
             return $this->company->name;
@@ -146,9 +140,9 @@ class Program extends BaseModel
 
     /**
      * Writes Object JSON to field (for Laravel 5.8)
-     * @param $value
+     * @param array $value
      */
-    public function setConditionsAttribute($value)
+    public function setConditionsAttribute(array $value): void
     {
         $this->attributes['conditions'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
@@ -157,7 +151,7 @@ class Program extends BaseModel
      * Writes Object JSON to field (for Laravel 5.8)
      * @param $value
      */
-    public function setMatrixAttribute($value)
+    public function setMatrixAttribute(array $value): void
     {
         $this->attributes['matrix'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
@@ -166,7 +160,7 @@ class Program extends BaseModel
      * Writes Subject JSON to field (for Laravel 5.8)
      * @param $value
      */
-    public function setRisksAttribute($value)
+    public function setRisksAttribute(array $value): void
     {
         $this->attributes['risks'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
@@ -175,7 +169,7 @@ class Program extends BaseModel
      * Writes Object JSON to field (for Laravel 5.8)
      * @param $value
      */
-    public function setIssuesAttribute($value)
+    public function setIssuesAttribute(array $value): void
     {
         $this->attributes['issues'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
@@ -183,7 +177,7 @@ class Program extends BaseModel
     /**
      * @return array
      */
-    public function getConditionsAttribute()
+    public function getConditionsAttribute(): array
     {
         return json_decode($this->attributes['conditions'], true);
     }
@@ -191,7 +185,7 @@ class Program extends BaseModel
     /**
      * @return array
      */
-    public function getMatrixAttribute()
+    public function getMatrixAttribute(): array
     {
         return json_decode($this->attributes['matrix'], true);
     }
@@ -199,7 +193,7 @@ class Program extends BaseModel
     /**
      * @return array
      */
-    public function getRisksAttribute()
+    public function getRisksAttribute(): array
     {
         return json_decode($this->attributes['risks'], true);
     }
@@ -207,12 +201,12 @@ class Program extends BaseModel
     /**
      * @return array
      */
-    public function getIssuesAttribute()
+    public function getIssuesAttribute(): array
     {
         return json_decode($this->attributes['issues'], true);
     }
 
-    public function getOwnerCodeAttribute()
+    public function getOwnerCodeAttribute(): string
     {
         return isset($this->owners) ? $this->owners->code : '';
     }

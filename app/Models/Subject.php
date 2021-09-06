@@ -3,6 +3,8 @@
 namespace App\Models;
 
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 /**
  * App\Models\Payment
  *
@@ -23,24 +25,22 @@ class Subject extends BaseModel
         'value',
     ];
 
-    public function contract()
+    public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class, 'contract_id');
     }
 
-    public function setValueAttribute($value)
+    public function setValueAttribute(array $value): void
     {
         $this->attributes['value'] = json_encode($value, JSON_UNESCAPED_UNICODE);
     }
 
-    public function getValueAttribute()
+    public function getValueAttribute(): array
     {
         return json_decode($this->attributes['value'], true);
     }
 
-
-
-    public function toArray()
+    public function toArray(): array
     {
         $data = collect($this->attributes);
         $data = $data->merge($this->getAttribute('value'));

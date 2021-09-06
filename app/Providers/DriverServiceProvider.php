@@ -9,6 +9,7 @@ use App\Drivers\SberinsDriver;
 use App\Drivers\Services\MerchantServices;
 use App\Drivers\Source\Alpha\AlfaAuth;
 use App\Drivers\Source\Renins\ReninsClientService;
+use App\Printers\PolicyPrinter;
 use App\Services\DriverService;
 use App\Services\HttpClientService;
 use App\Services\PaymentService;
@@ -129,5 +130,9 @@ class DriverServiceProvider extends ServiceProvider
                 return new PayService(new SoapWrapper());
             }
         );
+
+        $this->app->singleton(PolicyPrinter::class, function ($app) {
+            return new PolicyPrinter(config('ns.pdf'));
+        });
     }
 }

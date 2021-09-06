@@ -35,6 +35,14 @@ class BaseModel extends Model
 
     protected $hidden = ['created_at', 'updated_at', 'deleted_at'];
 
+    /**
+     * Fill the model with an array of attributes.
+     *
+     * @param  array  $attributes
+     * @return $this
+     *
+     * @throws \Illuminate\Database\Eloquent\MassAssignmentException
+     */
     public function fill(array $attributes)
     {
         $totallyGuarded = $this->totallyGuarded();
@@ -55,11 +63,20 @@ class BaseModel extends Model
         return $this;
     }
 
+    /**
+     * Save the model to the database.
+     *
+     * @param  array  $options
+     * @return bool
+     */
     public function save(array $options = [])
     {
         return parent::save($options);
     }
 
+    /**
+     * @return string
+     */
     public static function getTableName()
     {
         /** @var BaseModel $model */
@@ -67,36 +84,52 @@ class BaseModel extends Model
         return $model->getTable();
     }
 
+    /**
+     * @param  array  $field
+     *
+     * @return mixed|null
+     */
     public function getLocaleAttr(array $field)
     {
         return Helper::getLocaleAttr($field);
     }
 
     // Allow for camelCased attribute access
+
+    /**
+     * Get an attribute from the model.
+     *
+     * @param  string  $key
+     * @return mixed
+     */
     public function getAttribute($key)
     {
         if (array_key_exists($key, $this->relations) || method_exists($this, $key)) {
             return parent::getAttribute($key);
-        } else {
-            return parent::getAttribute(Str::snake($key));
         }
+
+        return parent::getAttribute(Str::snake($key));
     }
 
-    public function setAttribute($key, $value)
-    {
-        return parent::setAttribute($key, $value);
-    }
-
+    /**
+     * @return mixed
+     */
     public function getCreatedAtAttribute()
     {
         return $this->attributes['created_at'];
     }
 
+    /**
+     * @return mixed
+     */
     public function getUpdatedAtAttribute()
     {
         return $this->attributes['updated_at'];
     }
 
+    /**
+     * @return mixed
+     */
     public function getDeletedAtAttribute()
     {
         return $this->attributes['deleted_at'];
