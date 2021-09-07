@@ -4,6 +4,7 @@ namespace App\Drivers\Source\Alpha;
 
 use App\Exceptions\Drivers\AlphaException;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Class AlfaAuth
@@ -44,7 +45,7 @@ class AlfaAuth
             'password' => $this->pass,
             'grant_type' => self::GRANT_TYPE,
         ];
-        \Log::debug(
+        Log::debug(
             __METHOD__ . ' получение токена',
             [
                 'url' => $this->url,
@@ -61,7 +62,7 @@ class AlfaAuth
             throw new AlphaException('Error auth');
         }
         $response = $result->getBody()->getContents();
-        \Log::debug(
+        Log::debug(
             __METHOD__ . ' токен получен',
             [
                 'response' => $response,
