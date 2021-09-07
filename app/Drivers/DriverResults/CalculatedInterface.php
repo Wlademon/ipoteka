@@ -4,6 +4,11 @@ namespace App\Drivers\DriverResults;
 
 use Illuminate\Contracts\Support\Arrayable;
 
+/**
+ * Interface CalculatedInterface
+ *
+ * @package App\Drivers\DriverResults
+ */
 interface CalculatedInterface extends Arrayable
 {
     public function getContractId(): ?int;

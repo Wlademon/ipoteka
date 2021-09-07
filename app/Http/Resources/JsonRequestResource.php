@@ -5,6 +5,11 @@ namespace App\Http\Resources;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Class JsonRequestResource
+ *
+ * @package App\Http\Resources
+ */
 class JsonRequestResource extends JsonResource
 {
     /**
@@ -13,7 +18,7 @@ class JsonRequestResource extends JsonResource
      * @param mixed  $data
      * @return array
      */
-    public function toArray($data)
+    public function toArray($data): array
     {
         return [
             'success' => true,

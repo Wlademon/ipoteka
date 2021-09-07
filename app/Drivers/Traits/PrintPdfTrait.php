@@ -12,13 +12,14 @@ use setasign\Fpdi\Fpdi;
 
 /**
  * Trait PrintPdfTrait
+ *
  * @package App\Drivers\Traits
  */
 trait PrintPdfTrait
 {
-
     /**
      * @param $path
+     *
      * @return string
      */
     public static function generateBase64(string $path): string
@@ -27,31 +28,38 @@ trait PrintPdfTrait
     }
 
     /**
-     * @param Contract $contract
-     * @param $sample boolean
-     * @param string $filename PDF filename with path
+     * @param  Contract  $contract
+     * @param            $sample    boolean
+     * @param  string    $filename  PDF filename with path
+     *
      * @return string
      */
-    protected static function generatePdf(Contract $contract, bool $sample = false, string $filename = ''): string
-    {
+    protected static function generatePdf(
+        Contract $contract,
+        bool $sample = false,
+        string $filename = ''
+    ): string {
         $template = mb_strtolower($contract->program->programCode);
 
         $sportCats = [];
 
         /** @var PDF $pdf */
-        $pdf = PDF::setOptions([
-            'logOutputFile' => storage_path('logs/ns-generate-pdf.htm'),
-            'tempDir' => storage_path(config('ns.pdf.tmp')),
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-        ])->loadView(
+        $pdf = PDF::setOptions(
+            [
+                'logOutputFile' => storage_path('logs/ns-generate-pdf.htm'),
+                'tempDir' => storage_path(config('ns.pdf.tmp')),
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+            ]
+        )->loadView(
             "templates.$template",
             compact('contract', 'sample', 'sportCats')
         );
 
         if (!$filename) {
             $sampleText = $sample ? '_sample' : '';
-            $filename = public_path() . '/' . config('ns.pdf.path') . sha1($contract->id . $contract->number) . $sampleText . '.pdf';
+            $filename = public_path() . '/' . config('ns.pdf.path') .
+                        sha1($contract->id . $contract->number) . $sampleText . '.pdf';
         }
         $dir = substr($filename, 0, strrpos($filename, DIRECTORY_SEPARATOR) + 1);
         if (!file_exists($dir)) {
@@ -65,8 +73,9 @@ trait PrintPdfTrait
     }
 
     /**
-     * @param string $path
-     * @param string $content
+     * @param  string  $path
+     * @param  string  $content
+     *
      * @return bool
      */
     protected static function saveFileFromContent(string $path, string $content): bool
@@ -77,6 +86,7 @@ trait PrintPdfTrait
                 throw new RuntimeException("Directory '$dir' was not created");
             }
         }
+
         return (bool)file_put_contents($path, $content);
     }
 
@@ -84,11 +94,15 @@ trait PrintPdfTrait
      * @param $pathPdf
      * @param $pathWatermark
      * @param $resultPath
+     *
      * @return string
      * @throws \Exception
      */
-    public static function setWatermark(string $pathPdf, string $pathWatermark, string $resultPath): string
-    {
+    public static function setWatermark(
+        string $pathPdf,
+        string $pathWatermark,
+        string $resultPath
+    ): string {
         $watermark = new WatermarkService($pathPdf, true);
         $watermark->setStyle(Watermark::STYLE_IMG_COLORLESS)->setOpacity(.4);
         $pdf = $watermark->withImage($pathWatermark, $resultPath);

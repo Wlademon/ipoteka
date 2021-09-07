@@ -32,11 +32,16 @@ class PayLinkResult implements PayLinkInterface
     }
 
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
             'url' => $this->url,
             'orderId' => $this->orderId,
         ];
+    }
+
+    public function getInvoiceNum(): string
+    {
+        return '';
     }
 }

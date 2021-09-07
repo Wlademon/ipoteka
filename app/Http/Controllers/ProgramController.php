@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Class ProgramController
+ *
+ * @package App\Http\Controllers
+ */
 class ProgramController extends BaseController
 {
     public function __construct(ProgramFilter $filter)

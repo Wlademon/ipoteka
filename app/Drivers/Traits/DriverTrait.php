@@ -79,7 +79,7 @@ trait DriverTrait
      *
      * @return string
      */
-    protected function getFilePolice(Contract $contract)
+    protected function getFilePolice(Contract $contract): string
     {
         $filename = config('mortgage.pdf.path') . sha1($contract->id . $contract->number) . '.pdf';
         $filenameWithPath = public_path() . '/' . $filename;
@@ -102,7 +102,7 @@ trait DriverTrait
 
     /**
      * @param  Contract  $contract
-     * @param  string     $filenameWithPath
+     * @param  string    $filenameWithPath
      *
      * @return bool
      */
@@ -117,8 +117,8 @@ trait DriverTrait
     }
 
     /**
-     * @param  Contract  $contract
-     * @param             $objectId
+     * @param  Contract   $contract
+     * @param  string     $objectId
      *
      * @return string
      */
@@ -135,37 +135,38 @@ trait DriverTrait
 
     /**
      * @param  Contract  $contract
-     * @param  PayLinks   $links
+     * @param  PayLinks  $links
      *
      * @return PayLink
      * @throws \Illuminate\Contracts\Container\BindingResolutionException|\App\Exceptions\Services\PaymentServiceException
      */
     public function getPayLink(Contract $contract, PayLinks $links): PayLink
     {
-        $response = app()->make(PaymentService::class)->payLink($contract, [
-            'success' => config('mortgage.str_host') . $links->getSuccessUrl(),
-            'fail' => config('mortgage.str_host') . $links->getFailUrl(),
-        ]);
+        $response = app()->make(PaymentService::class)->payLink(
+            $contract,
+            [
+                'success' => config('mortgage.str_host') . $links->getSuccessUrl(),
+                'fail' => config('mortgage.str_host') . $links->getFailUrl(),
+            ]
+        );
 
         return new PayLink(
-            $response['orderId'],
-            $response['url'],
-            $response['invoiceNum']
+            $response['orderId'], $response['url'], $response['invoiceNum']
         );
     }
 
     /**
-     * @param  Contract  $contract
-     * @param  bool  $sample
-     * @param  bool  $reset
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  bool         $reset
      * @param  string|null  $filePath
      *
-     * @return string|array
+     * @return array
      */
     public abstract function printPolicy(
         Contract $contract,
         bool $sample,
         bool $reset,
         ?string $filePath = null
-    );
+    ): array;
 }

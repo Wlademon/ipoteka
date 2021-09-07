@@ -23,7 +23,7 @@ class PayLink implements PayLinkInterface
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return $this->data;
     }

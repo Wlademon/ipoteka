@@ -3,7 +3,11 @@
 
 namespace App\Drivers\DriverResults;
 
-
+/**
+ * Class CreatedPolicy
+ *
+ * @package App\Drivers\DriverResults
+ */
 class CreatedPolicy implements CreatedPolicyInterface
 {
 
@@ -35,7 +39,12 @@ class CreatedPolicy implements CreatedPolicyInterface
         $this->propertyPolicyId = $propertyPolicyId;
     }
 
-    public function toArray()
+    /**
+     * Get the instance as an array.
+     *
+     * @return array
+     */
+    public function toArray(): array
     {
         return [
             'contractId'           => $this->contractId,
@@ -50,15 +59,15 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @return int|null
      */
-    public function getContractId(): int
+    public function getContractId(): ?int
     {
         return $this->contractId;
     }
 
     /**
-     * @param $contractId int|null
+     * @param $contractId int
      */
-    public function setContractId(int $contractId)
+    public function setContractId(int $contractId): void
     {
         $this->contractId = $contractId;
     }
@@ -79,7 +88,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $lifePremium float|null
      */
-    public function setLifePremium(float $lifePremium)
+    public function setLifePremium(float $lifePremium): void
     {
         $this->lifePremium = $lifePremium;
     }
@@ -95,7 +104,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $propertyPremium float|null
      */
-    public function setPropertyPremium(float $propertyPremium)
+    public function setPropertyPremium(float $propertyPremium): void
     {
         $this->propertyPremium = $propertyPremium;
     }
@@ -111,7 +120,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $lifePolicyNumber string
      */
-    public function setLifePolicyNumber(string $lifePolicyNumber)
+    public function setLifePolicyNumber(string $lifePolicyNumber): void
     {
         $this->lifePolicyNumber = $lifePolicyNumber;
     }
@@ -128,7 +137,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $propertyPolicyNumber string|null
      */
-    public function setPropertyPolicyNumber(string $propertyPolicyNumber)
+    public function setPropertyPolicyNumber(string $propertyPolicyNumber): void
     {
         $this->propertyPolicyNumber = $propertyPolicyNumber;
     }
@@ -141,7 +150,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $lifePolicyNumber string|null
      */
-    public function setPropertyPolicyId(string $propertyPolicyId)
+    public function setPropertyPolicyId(string $propertyPolicyId): void
     {
         $this->propertyPolicyId = $propertyPolicyId;
     }
@@ -154,7 +163,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     /**
      * @param $lifePolicyId string|null
      */
-    public function setLifePolicyId(string $lifePolicyId)
+    public function setLifePolicyId(string $lifePolicyId): void
     {
         $this->lifePolicyId = $lifePolicyId;
     }

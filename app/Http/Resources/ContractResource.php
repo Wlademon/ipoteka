@@ -12,8 +12,13 @@ use App\Models\InsuranceObject;
  */
 class ContractResource extends \Illuminate\Http\Resources\Json\JsonResource
 {
-
-    public function toArray($request)
+    /**
+     * Transform the resource into an array.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return array
+     */
+    public function toArray($request): array
     {
         return [
             'id' => $this->id,

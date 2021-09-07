@@ -10,13 +10,18 @@ use Illuminate\Contracts\Support\Arrayable;
  */
 interface CreatedPolicyInterface extends Arrayable
 {
-    public function setContractId(int $value);
+    /**
+     * @param  int  $value
+     *
+     * @return mixed
+     */
+    public function setContractId(int $value): void;
 
     /**
      * Идентификатор сделки
      * @return int
      */
-    public function getContractId(): int;
+    public function getContractId(): ?int;
 
     /**
      * Общая премия по договору

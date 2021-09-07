@@ -4,4 +4,12 @@ namespace App\Exceptions\Services;
 
 use Throwable;
 
-interface ServiceExceptionInterface extends Throwable { }
+/**
+ * Interface ServiceExceptionInterface
+ *
+ * @package App\Exceptions\Services
+ */
+interface ServiceExceptionInterface extends Throwable
+{
+
+}

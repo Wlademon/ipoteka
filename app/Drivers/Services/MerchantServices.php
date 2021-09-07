@@ -214,7 +214,7 @@ class MerchantServices
      * @return \Illuminate\Support\Collection
      * @throws \SoapFault
      */
-    public function getOrderStatus($orderId): Collection
+    public function getOrderStatus(string $orderId): Collection
     {
         $options = [
             'soap_version' => SOAP_1_1,

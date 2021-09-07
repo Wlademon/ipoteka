@@ -2,8 +2,14 @@
 
 namespace App\Exceptions\Services;
 
+use Exception;
+
 /**
  * Class SiteServiceExceprion
+ *
  * @package App\Exceptions\Services
  */
-class SiteServiceException extends \Exception implements ServiceExceptionInterface { }
+class SiteServiceException extends Exception implements ServiceExceptionInterface
+{
+
+}

@@ -20,17 +20,13 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
+/**
+ * Class Handler
+ *
+ * @package App\Exceptions
+ */
 class Handler extends ExceptionHandler
 {
-    /**
-     * A list of the exception types that are not reported.
-     *
-     * @var array
-     */
-    protected $dontReport = [
-        //
-    ];
-
     /**
      * A list of the inputs that are never flashed for validation exceptions.
      *
@@ -101,7 +97,7 @@ class Handler extends ExceptionHandler
      * @param Exception $e
      * @return JsonResponse|Response|\Symfony\Component\HttpFoundation\Response
      */
-    public function render($request, Throwable $e)
+    public function render($request, Throwable $e): JsonResponse
     {
         $response = [
             'success' => false

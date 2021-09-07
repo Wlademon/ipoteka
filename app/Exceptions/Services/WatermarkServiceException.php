@@ -6,4 +6,7 @@ namespace App\Exceptions\Services;
  * Class SiteServiceExceprion
  * @package App\Exceptions\Services
  */
-class WatermarkServiceException extends \Exception implements ServiceExceptionInterface { }
+class WatermarkServiceException extends \Exception implements ServiceExceptionInterface
+{
+
+}

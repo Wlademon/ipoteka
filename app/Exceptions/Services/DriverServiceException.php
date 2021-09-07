@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace App\Exceptions\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -12,7 +13,7 @@ use Throwable;
  *
  * @package App\Exceptions\Services
  */
-class DriverServiceException extends \Exception implements ServiceExceptionInterface, LogExceptionInterface
+class DriverServiceException extends Exception implements ServiceExceptionInterface, LogExceptionInterface
 {
     public ?string $method;
     public ?string $o_message;

@@ -4,6 +4,11 @@ namespace App\Exceptions\Services;
 
 use Throwable;
 
+/**
+ * Interface LogExceptionInterface
+ *
+ * @package App\Exceptions\Services
+ */
 interface LogExceptionInterface extends Throwable
 {
     public function addLogData(

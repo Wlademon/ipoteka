@@ -2,11 +2,14 @@
 
 namespace App\Exceptions\Services;
 
+use Exception;
+
 /**
  * Class PolicyServiceException
+ *
  * @package App\Exceptions\Services
  */
-class PolicyServiceException extends \Exception implements ServiceExceptionInterface
+class PolicyServiceException extends Exception implements ServiceExceptionInterface
 {
 
 }

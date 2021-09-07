@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Class JsonRequestCollectionResource
+ *
+ * @package App\Http\Resources
+ */
 class JsonRequestCollectionResource extends JsonResource
 {
     const MAX_LIMIT = 1000;
@@ -21,7 +26,7 @@ class JsonRequestCollectionResource extends JsonResource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function toArray($request)
+    public function toArray($request): array
     {
         $limit = $request->get('limit', $this->limit);
         if ($limit > self::MAX_LIMIT) {

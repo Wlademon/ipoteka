@@ -4,6 +4,11 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
+/**
+ * Class ProgramResource
+ *
+ * @package App\Http\Resources
+ */
 class ProgramResource extends JsonResource
 {
     /**
@@ -12,7 +17,7 @@ class ProgramResource extends JsonResource
      * @param  \Illuminate\Http\Request  $request
      * @return array
      */
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
             'companyCode' => $this->company_code,
