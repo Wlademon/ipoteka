@@ -20,7 +20,7 @@ class PolicyPrinter
     /**
      * @var array
      */
-    private $pdfPaths;
+    private array $pdfPaths;
 
     /**
      * PolicyPrinter constructor.
@@ -30,13 +30,11 @@ class PolicyPrinter
     {
         $this->pdfPaths = $pdfPaths;
         $this->pdfPaths = array_map(
-            function ($path) {
-                if (!is_dir($path)) {
-                    if (!mkdir($path, 0777, true) && !is_dir($path)) {
-                        throw new \RuntimeException(
-                            sprintf('Directory "%s" was not created', $path)
-                        );
-                    }
+            static function ($path) {
+                if (!is_dir($path) && !mkdir($path, 0777, true) && !is_dir($path)) {
+                    throw new \RuntimeException(
+                        sprintf('Directory "%s" was not created', $path)
+                    );
                 }
                 return realpath($path);
             },
@@ -45,8 +43,9 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contract $contract
-     * @param string|null $filename
+     * @param  Contract  $contract
+     * @param  bool      $sample
+     *
      * @return string
      */
     protected function printPolicy(Contract $contract, bool $sample = false): string
@@ -83,7 +82,7 @@ class PolicyPrinter
      *
      * @return array|string[]
      */
-    protected function printPolicyFromDriver(DriverInterface $driver, Contract $contract, bool $sample = false)
+    protected function printPolicyFromDriver(DriverInterface $driver, Contract $contract, bool $sample = false): array
     {
         if ($driver instanceof OutPrintDriverInterface) {
             $filesBase64 = $driver->printPolicy($contract, $sample, false);
@@ -132,8 +131,10 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contract $contract
-     * @param bool $sample
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  string|null  $suffix
+     *
      * @return string
      */
     public function getFilenameWithDir(Contract $contract, bool $sample = false, ?string $suffix = null): ?string
@@ -142,8 +143,10 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contract $contract
-     * @param bool $sample
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  string|null  $suffix
+     *
      * @return string
      */
     public function getFilename(Contract $contract, bool $sample = false, ?string $suffix = null): string
@@ -154,8 +157,10 @@ class PolicyPrinter
     /**
      * @note предварительно настроить публичные ссылки и хранилище!!
      *
-     * @param Contract $contract
-     * @param bool $sample
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  string|null  $suffix
+     *
      * @return string|null
      */
     public function getPolicyLink(Contract $contract, bool $sample = false, ?string $suffix = null): ?string
@@ -166,8 +171,10 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contract $contract
-     * @param bool $sample
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  string|null  $suffix
+     *
      * @return bool
      */
     public function isPolicyExists(Contract $contract, bool $sample = false, ?string $suffix = null): bool
@@ -176,8 +183,10 @@ class PolicyPrinter
     }
 
     /**
-     * @param Contract $contract
-     * @param bool $sample
+     * @param  Contract     $contract
+     * @param  bool         $sample
+     * @param  string|null  $suffix
+     *
      * @return string|null
      */
     public function getBase64Policy(Contract $contract, bool $sample = false, ?string $suffix = null): ?string

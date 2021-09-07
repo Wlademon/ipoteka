@@ -4,6 +4,11 @@ namespace App\Filters;
 
 use Strahovka\LaravelFilterable\Generic\Filter;
 
+/**
+ * Class ContractFilter
+ *
+ * @package App\Filters
+ */
 class ContractFilter extends Filter
 {
     /**
@@ -32,7 +37,7 @@ class ContractFilter extends Filter
      *
      * @return void
      */
-    protected function settings()
+    protected function settings(): void
     {
 		//
 	}

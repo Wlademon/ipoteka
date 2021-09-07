@@ -37,7 +37,8 @@ interface DriverInterface
     /**
      * Стартовая функция создания полиса
      *
-     * @param  array  $data  Данные для создания договора по полису
+     * @param  Contract  $contract
+     * @param  array     $data  Данные для создания договора по полису
      *
      * @return CreatedPolicyInterface
      */

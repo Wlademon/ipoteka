@@ -14,6 +14,7 @@ use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
@@ -108,8 +109,8 @@ class Handler extends ExceptionHandler
             'errorCode' => $error['errorCode'],
         ]);
 
-        if (\Arr::get($error, 'errors')) {
-            $response['errors'] = \Arr::get($error, 'errors');
+        if (Arr::get($error, 'errors')) {
+            $response['errors'] = Arr::get($error, 'errors');
         }
 
         if (config('app.debug')) {
@@ -139,8 +140,15 @@ class Handler extends ExceptionHandler
      */
     protected function resolveHandler(Throwable $exception): callable
     {
+        $handler = $this->handlers[get_class($exception)] ?? static function (Throwable $e) {
+                return [
+                    'statusCode' => (400 < $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode()),
+                    'error' => $e->getMessage(),
+                    'errorCode' => $e->getCode(),
+                ];
+            };
         if ($exception instanceof DriverExceptionInterface) {
-            return function (DriverExceptionInterface $e) {
+            $handler = static function (DriverExceptionInterface $e) {
                 $code = (400 < $e->getCode() ? Response::HTTP_NOT_ACCEPTABLE : $e->getCode());
                 return [
                     'statusCode' => $code,
@@ -150,7 +158,7 @@ class Handler extends ExceptionHandler
             };
         }
         if ($exception instanceof LogExceptionInterface) {
-            return function (LogExceptionInterface $e) {
+            $handler = static function (LogExceptionInterface $e) {
                 $e->log();
                 $code = $e->getCode();
                 return [
@@ -161,7 +169,7 @@ class Handler extends ExceptionHandler
             };
         }
         if ($exception instanceof ServiceExceptionInterface) {
-            return function (ServiceExceptionInterface $e) {
+            $handler = static function (ServiceExceptionInterface $e) {
                 $code = $e->getCode();
                 return [
                     'statusCode' => $code,
@@ -171,12 +179,6 @@ class Handler extends ExceptionHandler
             };
         }
 
-        return $this->handlers[get_class($exception)] ?? function (Throwable $e) {
-                return [
-                    'statusCode' => (400 < $e->getCode() ? Response::HTTP_INTERNAL_SERVER_ERROR : $e->getCode()),
-                    'error' => $e->getMessage(),
-                    'errorCode' => $e->getCode(),
-                ];
-            };
+        return $handler;
     }
 }

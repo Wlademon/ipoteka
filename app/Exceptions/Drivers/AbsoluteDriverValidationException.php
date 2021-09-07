@@ -18,7 +18,7 @@ class AbsoluteDriverValidationException extends DriverException
      *
      * @return static
      */
-    public static function withMessages(string $method, array $messages)
+    public static function withMessages(string $method, array $messages): AbsoluteDriverValidationException
     {
         $exception = ValidationException::withMessages($messages);
 

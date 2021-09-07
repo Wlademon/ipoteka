@@ -29,7 +29,7 @@ class BaseModel extends Model
 {
     use SoftDeletes;
 
-    const NAME = 'основная';
+    public const NAME = 'основная';
 
     public static $snakeAttributes = true;
 
@@ -77,10 +77,10 @@ class BaseModel extends Model
     /**
      * @return string
      */
-    public static function getTableName()
+    public static function getTableName(): string
     {
         /** @var BaseModel $model */
-        $model = with(new static);
+        $model = with(new static());
         return $model->getTable();
     }
 

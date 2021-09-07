@@ -27,9 +27,9 @@ trait DriverTrait
     {
         $status = 'undefined';
         if (isset($contract->status)) {
-            if ($contract->status == Contract::STATUS_DRAFT) {
+            if ($contract->status === Contract::STATUS_DRAFT) {
                 $status = 'Draft';
-            } elseif ($contract->status == Contract::STATUS_CONFIRMED) {
+            } elseif ($contract->status === Contract::STATUS_CONFIRMED) {
                 $status = 'Confirmed';
             }
         }
@@ -106,7 +106,7 @@ trait DriverTrait
      *
      * @return bool
      */
-    protected function isFilePoliceExitst(Contract $contract, string &$filenameWithPath = ''): bool
+    protected function isFilePoliceExist(Contract $contract, string &$filenameWithPath = ''): bool
     {
         if (!$filenameWithPath) {
             $filename = self::gefaultFileName($contract);
@@ -128,9 +128,8 @@ trait DriverTrait
         $filePathObjectArray = explode('.', $filePathObject);
         $ext = array_pop($filePathObjectArray);
         array_push($filePathObjectArray, $objectId, $ext);
-        $filePathObject = implode('.', $filePathObjectArray);
 
-        return $filePathObject;
+        return implode('.', $filePathObjectArray);
     }
 
     /**
@@ -154,19 +153,4 @@ trait DriverTrait
             $response['orderId'], $response['url'], $response['invoiceNum']
         );
     }
-
-    /**
-     * @param  Contract     $contract
-     * @param  bool         $sample
-     * @param  bool         $reset
-     * @param  string|null  $filePath
-     *
-     * @return array
-     */
-    public abstract function printPolicy(
-        Contract $contract,
-        bool $sample,
-        bool $reset,
-        ?string $filePath = null
-    ): array;
 }

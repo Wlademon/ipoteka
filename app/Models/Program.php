@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use App\Filters\ProgramFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -8,43 +9,40 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Strahovka\LaravelFilterable\Filterable;
 
-
 /**
  * App\Models\Program
  *
  *
  *
- * @property int $id
- * @property string $companyId
- * @property string $programCode
- * @property string $programUwCode
- * @property string $programName
- * @property string $description
- * @property array $risks
- * @property array $issues
- * @property array|object $conditions
- * @property array $matrix
- * @property float $insuredSum
- * @property string $isChild
- * @property string $isAdult
- * @property string $isFamily
- * @property string $isActive
- * @property string $ownerCode
+ * @property int                             $id
+ * @property string                          $companyId
+ * @property string                          $programCode
+ * @property string                          $programUwCode
+ * @property string                          $programName
+ * @property string                          $description
+ * @property array                           $risks
+ * @property array                           $issues
+ * @property array|object                    $conditions
+ * @property array                           $matrix
+ * @property float                           $insuredSum
+ * @property string                          $isChild
+ * @property string                          $isAdult
+ * @property string                          $isFamily
+ * @property string                          $isActive
+ * @property string                          $ownerCode
  * @property \Illuminate\Support\Carbon|null $createdAt
  * @property \Illuminate\Support\Carbon|null $updatedAt
  * @property \Illuminate\Support\Carbon|null $deletedAt
- * @property-read \App\Models\Company|null $company
- * @property-read string $companyCode
- * @property-read string $companyName
+ * @property-read \App\Models\Company|null   $company
+ * @property-read string                     $companyCode
+ * @property-read string                     $companyName
  * @mixin \Eloquent
  */
-
 class Program extends BaseModel
 {
     use Filterable;
 
-    const NAME = 'Продукты СК';
-
+    public const NAME = 'Продукты СК';
     protected $fillable = [
         'company_id',
         'program_code',
@@ -59,9 +57,8 @@ class Program extends BaseModel
         'is_recommended',
         'is_active',
         'program_uw_code',
-        'matrix'
+        'matrix',
     ];
-
     protected $casts = [
         'is_property' => 'boolean',
         'is_life' => 'boolean',
@@ -73,23 +70,22 @@ class Program extends BaseModel
         'issues' => 'array',
         'risks' => 'array',
         'programCode' => 'string',
-        'matrix' => 'array'
+        'matrix' => 'array',
     ];
-
     protected $hidden = [
         'matrix',
     ];
 
     /**
      * @param  Builder        $query
-     * @param  ProgramFilter  $filters
+     * @param  ProgramFilter  $filter
      *
      * @return Builder
      * @throws \Strahovka\LaravelFilterable\Exceptions\MissingBuilderInstance
      */
-    public function scopeFilter(Builder $query, ProgramFilter $filters): Builder
+    public function scopeFilter(Builder $query, ProgramFilter $filter): Builder
     {
-        return $filters->apply($query);
+        return $filter->apply($query);
     }
 
     public function company(): BelongsTo
@@ -124,86 +120,108 @@ class Program extends BaseModel
 
     public function getCompanyCodeAttribute(): string
     {
-        if ($this->company) {
-            return $this->company->code;
-        }
-        return '';
+        return $this->company->code ?? '';
     }
 
     public function getCompanyNameAttribute(): string
     {
-        if ($this->company) {
-            return $this->company->name;
-        }
-        return '';
+        return $this->company->name ?? '';
     }
 
     /**
      * Writes Object JSON to field (for Laravel 5.8)
-     * @param array $value
+     *
+     * @param  array  $value
+     *
+     * @throws \JsonException
      */
     public function setConditionsAttribute(array $value): void
     {
-        $this->attributes['conditions'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+        $this->attributes['conditions'] = json_encode(
+            $value,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        );
     }
 
     /**
      * Writes Object JSON to field (for Laravel 5.8)
-     * @param $value
+     *
+     * @param  array  $value
+     *
+     * @throws \JsonException
      */
     public function setMatrixAttribute(array $value): void
     {
-        $this->attributes['matrix'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+        $this->attributes['matrix'] = json_encode(
+            $value,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        );
     }
 
     /**
      * Writes Subject JSON to field (for Laravel 5.8)
-     * @param $value
+     *
+     * @param  array  $value
+     *
+     * @throws \JsonException
      */
     public function setRisksAttribute(array $value): void
     {
-        $this->attributes['risks'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+        $this->attributes['risks'] = json_encode(
+            $value,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        );
     }
 
     /**
      * Writes Object JSON to field (for Laravel 5.8)
-     * @param $value
+     *
+     * @param  array  $value
+     *
+     * @throws \JsonException
      */
     public function setIssuesAttribute(array $value): void
     {
-        $this->attributes['issues'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+        $this->attributes['issues'] = json_encode(
+            $value,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        );
     }
 
     /**
      * @return array
+     * @throws \JsonException
      */
     public function getConditionsAttribute(): array
     {
-        return json_decode($this->attributes['conditions'], true);
+        return json_decode($this->attributes['conditions'], true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
      * @return array
+     * @throws \JsonException
      */
     public function getMatrixAttribute(): array
     {
-        return json_decode($this->attributes['matrix'], true);
+        return json_decode($this->attributes['matrix'], true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
      * @return array
+     * @throws \JsonException
      */
     public function getRisksAttribute(): array
     {
-        return json_decode($this->attributes['risks'], true);
+        return json_decode($this->attributes['risks'], true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
      * @return array
+     * @throws \JsonException
      */
     public function getIssuesAttribute(): array
     {
-        return json_decode($this->attributes['issues'], true);
+        return json_decode($this->attributes['issues'], true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function getOwnerCodeAttribute(): string

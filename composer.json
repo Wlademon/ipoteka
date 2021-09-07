@@ -32,7 +32,8 @@
 	"swagger-api/swagger-ui": "^3.50",
 	"ext-json": "*",
 	"ext-soap": "*",
-	"ext-zip": "*"
+	"ext-zip": "*",
+	"ext-fileinfo": "*"
   },
   "config": {
 	"optimize-autoloader": true,

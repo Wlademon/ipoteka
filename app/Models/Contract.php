@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Eloquent;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Str;
 use Strahovka\LaravelFilterable\Filterable;
 
@@ -20,6 +23,7 @@ use Strahovka\LaravelFilterable\Filterable;
  * @property string $statusText
  * @property int $insured_sum
  * @property float $premium
+ * @property int $ext_id
  * @property int $integration_id
  * @property array|null $calcCoeff
  * @property \Illuminate\Support\Carbon|null $active_from
@@ -44,9 +48,9 @@ class Contract extends BaseModel
 {
     use Filterable;
 
-    const STATUS_DRAFT = 1;
-    const STATUS_CONFIRMED = 2;
-    const TYPE_NS = 5;
+    public const STATUS_DRAFT = 1;
+    public const STATUS_CONFIRMED = 2;
+    public const TYPE_NS = 5;
 
     protected $casts = [
         'options' => 'json',
@@ -144,7 +148,7 @@ class Contract extends BaseModel
     /**
      * Set belongsTo Program Model.
      */
-    public function program()
+    public function program(): BelongsTo
     {
         return $this->belongsTo(Program::class);
     }
@@ -152,7 +156,7 @@ class Contract extends BaseModel
     /**
      * Set belongsTo Company Model.
      */
-    public function company()
+    public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
@@ -160,7 +164,7 @@ class Contract extends BaseModel
     /**
      * Set hasMany Payment Model.
      */
-    public function payment()
+    public function payment(): HasMany
     {
         return $this->hasMany(Payment::class, 'contract_id', 'id');
     }
@@ -168,7 +172,7 @@ class Contract extends BaseModel
     /**
      * Set belongsTo Owner Model.
      */
-    public function owner()
+    public function owner(): BelongsTo
     {
         return $this->belongsTo(Owner::class);
     }
@@ -176,7 +180,7 @@ class Contract extends BaseModel
     /**
      * Set hasMany Objects Model.
      */
-    public function objects()
+    public function objects(): HasMany
     {
         return $this->hasMany(InsuranceObject::class, 'contract_id');
     }
@@ -184,7 +188,7 @@ class Contract extends BaseModel
     /**
      * Set hasMany Objects Model.
      */
-    public function subject()
+    public function subject(): HasOne
     {
         return $this->hasOne(Subject::class, 'contract_id');
     }
@@ -218,7 +222,7 @@ class Contract extends BaseModel
     }
 
     /**
-     * @param $value
+     * @param  string  $value
      */
     public function setContractIdAttribute(string $value): void
     {
@@ -306,7 +310,7 @@ class Contract extends BaseModel
      */
     public function getStatusTextAttribute(): string
     {
-        if ($this->status == self::STATUS_CONFIRMED) {
+        if ($this->status === self::STATUS_CONFIRMED) {
             return 'оплачен';
         } else {
             return 'ожидает оплаты';
@@ -323,14 +327,15 @@ class Contract extends BaseModel
 
     /**
      * @return mixed
+     * @throws \JsonException
      */
     public function getOptionsAttribute()
     {
-        return json_decode($this->attributes['options'], true) ;
+        return json_decode($this->attributes['options'], true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
-     * @param $value
+     * @param  string  $value
      */
     public function setMortgageAgreementNumberAttribute(string $value): void
     {
@@ -400,10 +405,15 @@ class Contract extends BaseModel
 
     /**
      * @param  array  $value
+     *
+     * @throws \JsonException
      */
     public function setOptionsAttribute(array $value): void
     {
-        $this->attributes['options'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+        $this->attributes['options'] = json_encode(
+            $value,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        );
     }
 
 }

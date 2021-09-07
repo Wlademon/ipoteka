@@ -4,10 +4,15 @@ namespace App\Services\Watermark;
 
 use Ajaxray\PHPWatermark\CommandBuilders\PDFCommandBuilder;
 
+/**
+ * Class PdfBuilder
+ *
+ * @package App\Services\Watermark
+ */
 class PdfBuilder extends PDFCommandBuilder
 {
 
-    public $transparent = false;
+    public bool $transparent = false;
 
     /**
      * Build the imagemagick shell command for watermarking with Image
@@ -17,7 +22,7 @@ class PdfBuilder extends PDFCommandBuilder
      * @param array $options
      * @return string
      */
-    public function getImageMarkCommand($markerImage, $output, array $options)
+    public function getImageMarkCommand($markerImage, $output, array $options): string
     {
         [$source, $destination] = $this->prepareContext($output, $options);
         $marker = escapeshellarg($markerImage);
@@ -30,6 +35,9 @@ class PdfBuilder extends PDFCommandBuilder
         return "convert $marker $transparent $opacity  miff:- | convert -density 100 $source null: - -$anchor -$offset -quality 100 -compose multiply -layers composite $destination";
     }
 
+    /**
+     * @return string
+     */
     protected function getTransparent(): string
     {
         if ($this->transparent) {
@@ -40,13 +48,16 @@ class PdfBuilder extends PDFCommandBuilder
     }
 
     /**
-     * @param $transparent mixed
+     * @param  bool  $isTransparent
      */
-    public function setTransparent($is = true): void
+    public function setTransparent(bool $isTransparent = true): void
     {
-        $this->transparent = $is;
+        $this->transparent = $isTransparent;
     }
 
+    /**
+     * @return string
+     */
     private function getMarkerOpacity(): string
     {
         $opacity = $this->getOpacity() * 100;

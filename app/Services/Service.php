@@ -2,13 +2,17 @@
 
 namespace App\Services;
 
-
+/**
+ * Class Service
+ *
+ * @package App\Services
+ */
 abstract class Service
 {
-    protected $error = null;
-    protected $errorCode;
+    protected ?string $error = null;
+    protected ?int $errorCode;
 
-    protected $pdfPath = 'ns/pdf/';
+    protected string $pdfPath = 'ns/pdf/';
 
     /**
      * @return String|null
@@ -21,7 +25,7 @@ abstract class Service
     /**
      * @return Int|null
      */
-    protected function getErrorCode()
+    protected function getErrorCode(): ?int
     {
         return $this->errorCode;
     }

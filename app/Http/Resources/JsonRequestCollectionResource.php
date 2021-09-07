@@ -14,7 +14,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class JsonRequestCollectionResource extends JsonResource
 {
-    const MAX_LIMIT = 1000;
+    public const MAX_LIMIT = 1000;
     /** @var Model|Builder */
     public $resource;
     protected int $limit = 10;

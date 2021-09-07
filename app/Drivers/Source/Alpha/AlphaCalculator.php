@@ -12,12 +12,10 @@ use Illuminate\Support\Carbon;
  */
 class AlphaCalculator
 {
-    const BILDING_TYPE = 'FLAT';
-    const SALE_TYPE_SECOND = 'SECOND';
-
-    const GENDER_MAN = 'M';
-    const GENDER_FEMALE = 'F';
-
+    public const BILDING_TYPE = 'FLAT';
+    public const SALE_TYPE_SECOND = 'SECOND';
+    public const GENDER_MAN = 'M';
+    public const GENDER_FEMALE = 'F';
 
     protected array $data = [];
 

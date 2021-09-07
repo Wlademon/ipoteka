@@ -31,15 +31,12 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
 {
     use DriverTrait;
 
-    /**
-     * @inheritDoc
-     */
     protected string $baseUrl;
     protected ?string $accessToken = null;
     protected string $ClientID;
     protected string $ClientSecret;
     protected PaymentService $paymentService;
-    protected string $pdfpath;
+    protected string $pdfPath;
     protected string $grantType;
     protected Client $client;
     protected string $calculateLifePath;
@@ -65,7 +62,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
      * @param  string          $baseUrl
      * @param  string          $clientId
      * @param  string          $clientSecret
-     * @param  string          $pdfpath
+     * @param  string          $pdfPath
      * @param  string          $grantType
      * @param  array           $actions
      */
@@ -75,14 +72,14 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
         string $baseUrl,
         string $clientId,
         string $clientSecret,
-        string $pdfpath,
+        string $pdfPath,
         string $grantType,
         array $actions
     ) {
         $this->baseUrl = $baseUrl;
         $this->ClientID = $clientId;
         $this->ClientSecret = $clientSecret;
-        $this->pdfpath = $pdfpath;
+        $this->pdfPath = $pdfPath;
         $this->grantType = $grantType;
         $this->calculateLifePath = Arr::get($actions, 'calculate_life_path');
         $this->calculatePropertyPath = Arr::get($actions, 'calculate_property_path');
@@ -98,7 +95,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
 
     /**
      * @return string
-     * @throws AbsoluteDriverException
+     * @throws AbsoluteDriverException|\JsonException
      */
     protected function getAccessToken(): string
     {
@@ -112,6 +109,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
     /**
      * @return string
      * @throws AbsoluteDriverException
+     * @throws \JsonException
      */
     protected function getToken(): string
     {
@@ -129,11 +127,16 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
             ]
         );
 
-        if (!$response->getStatusCode() == 200) {
+        if ($response->getStatusCode() !== 200) {
             throw new AbsoluteDriverException(__METHOD__, 'Ошибка получения токена');
         }
 
-        $decodeResponse = json_decode($response->getBody()->getContents(), true);
+        $decodeResponse = json_decode(
+            $response->getBody()->getContents(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
 
         if (!Arr::has($decodeResponse, 'access_token')) {
             throw new AbsoluteDriverException(__METHOD__, 'В ответе нет access_token');
@@ -148,11 +151,16 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
      *
      * @return mixed
      * @throws AbsoluteDriverValidationException
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws \Illuminate\Validation\ValidationException|\JsonException
      */
     public static function decodeResponse(ResponseInterface $response, array $validateFields)
     {
-        $decodeResponse = json_decode($response->getBody()->getContents(), true);
+        $decodeResponse = json_decode(
+            $response->getBody()->getContents(),
+            true,
+            512,
+            JSON_THROW_ON_ERROR
+        );
         $validator = Validator::make($decodeResponse, $validateFields);
 
         if (!$validator->validated()) {
@@ -182,12 +190,15 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
     }
 
     /**
+     * @param  string  $method
      * @param  string  $path
      * @param  array   $validateFields
      *
      * @return mixed
      * @throws AbsoluteDriverException
      * @throws AbsoluteDriverValidationException
+     * @throws \Illuminate\Validation\ValidationException
+     * @throws \JsonException
      */
     public function put(string $method, string $path, array $validateFields)
     {
@@ -204,7 +215,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
      * @return mixed
      * @throws AbsoluteDriverException
      * @throws AbsoluteDriverValidationException
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws \Illuminate\Validation\ValidationException|\JsonException
      */
     public function get(string $method, string $path, array $validateFields)
     {
@@ -290,7 +301,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
      */
     public static function getGender(array $data): string
     {
-        return Arr::get($data, 'objects.life.gender') == 0 ? 'М' : 'Ж';
+        return Arr::get($data, 'objects.life.gender') === 0 ? 'М' : 'Ж';
     }
 
     /**
@@ -304,7 +315,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
     {
         $life = 0;
         $property = 0;
-        $validateFileds = [
+        $validateFields = [
             'result' => 'required',
             'result.*.data' => 'required',
             'result.*.data.*.premium_sum' => 'required',
@@ -321,7 +332,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
                 __METHOD__,
                 $body,
                 $this->calculateLifePath,
-                $validateFileds
+                $validateFields
             );
             $life = Arr::get($resultQuery, 'result.data.premium_sum');
         }
@@ -333,7 +344,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
                 __METHOD__,
                 $body,
                 $this->calculatePropertyPath,
-                $validateFileds
+                $validateFields
             );
             $property = Arr::get($resultQuery, 'result.data.premium_sum');
         }
@@ -392,7 +403,9 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
     }
 
     /**
-     * @inheritDoc
+     * @param  array  $data
+     *
+     * @return string
      */
     public static function getSubjectAddress(array $data): string
     {
@@ -446,7 +459,7 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
                 'lastname' => Arr::get($data, 'subject.lastName'),
                 'firstname' => Arr::get($data, 'subject.firstName'),
                 'parentname' => Arr::get($data, 'subject.middleName'),
-                'sex' => Arr::get($data, 'subject.gender') == 0 ? 'М' : 'Ж',
+                'sex' => Arr::get($data, 'subject.gender') === 0 ? 'М' : 'Ж',
                 'birthday' => Arr::get($data, 'subject.birthDate'),
                 'address' => [
                     [
@@ -529,15 +542,15 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
             'priceProperty' => $property,
         ];
         $options['isn'] = [
-            'isnLife' => isset($policyIdLife) ? $policyIdLife : null,
-            'isnProperty' => isset($policyIdProperty) ? $policyIdProperty : null,
+            'isnLife' => $policyIdLife ?? null,
+            'isnProperty' => $policyIdProperty ?? null,
         ];
         $contract->options = $options;
 
         return new CreatedPolicy(
             null,
-            isset($policyIdLife) ? $policyIdLife : null,
-            isset($policyIdProperty) ? $policyIdProperty : null,
+            $policyIdLife ?? null,
+            $policyIdProperty ?? null,
             $life ?? null,
             $property ?? null,
             $policyNumberLife ?? null,
@@ -560,16 +573,15 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
     }
 
     /**
-     * @param  Contract     $contract
-     * @param  bool         $sample
-     * @param  bool         $reset
-     * @param  string|null  $filePath
+     * @param  Contract  $contract
+     * @param  bool      $sample
+     * @param  bool      $reset
      *
      * @return array
      * @throws AbsoluteDriverException
      * @throws AbsoluteDriverValidationException
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
      * @throws \Illuminate\Validation\ValidationException
+     * @throws \JsonException
      */
     public function printPolicy(
         Contract $contract,
@@ -615,11 +627,19 @@ class AbsoluteDriver implements DriverInterface, LocalPaymentDriverInterface, Ou
         }
     }
 
+    /**
+     * @return string
+     */
     public static function code(): string
     {
         return 'absolut_77';
     }
 
+    /**
+     * @param  Contract  $contract
+     *
+     * @return array
+     */
     public function getPoliceIds(Contract $contract): array
     {
         return $this->getPolicyIsn($contract);

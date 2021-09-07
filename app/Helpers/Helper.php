@@ -26,16 +26,16 @@ use Jenssegers\Agent\Agent;
 class Helper
 {
     /** @var BaseModel[] $models */
-    private static $models = [];
+    private static array $models = [];
 
     /**
      * Получить список всех моделей
      *
      * @return array
      */
-    public static function getAllModels()
+    public static function getAllModels(): array
     {
-        if (count(self::$models) == 0) {
+        if (count(self::$models) === 0) {
             self::addClassesFromPathsArray(glob(base_path() . '/app/Models/*.php'));
         }
 
@@ -45,12 +45,12 @@ class Helper
     /**
      * @param  array  $filePaths
      */
-    private static function addClassesFromPathsArray(array $filePaths)
+    private static function addClassesFromPathsArray(array $filePaths): void
     {
         foreach ($filePaths as $filePath) {
             $modelName = self::getClassFromFilePath($filePath);
             if (
-                $modelName != '' && class_exists($modelName)
+                $modelName !== '' && class_exists($modelName)
             ) {
                 self::$models[] = $modelName;
             }
@@ -64,12 +64,11 @@ class Helper
      *
      * @return string
      */
-    public static function getClassFromFilePath($path)
+    public static function getClassFromFilePath(string $path): string
     {
         $class = preg_replace('/.*app\\//', 'App/', $path);
-        $class = str_replace(['/', '.php'], ['\\', ''], $class);
 
-        return $class;
+        return str_replace(['/', '.php'], ['\\', ''], $class);
     }
 
     /**
@@ -102,7 +101,7 @@ class Helper
      *
      * @return array
      */
-    public static function getUpdatesModelParams(array $currentModel, array $newModel)
+    public static function getUpdatesModelParams(array $currentModel, array $newModel): array
     {
         /** @var Model $currentModel */
         $updatedParams = [];
@@ -123,7 +122,7 @@ class Helper
                 $updatedParams[$param] = $value;
                 continue;
             }
-            if (!isset($currentModel[$param]) || $newModel[$param] !== $currentModel[$param]) {
+            if (!isset($currentModel[$param]) || $value !== $currentModel[$param]) {
                 $updatedParams[$param] = $value;
             }
         }
@@ -132,16 +131,24 @@ class Helper
     }
 
     /**
-     * Получить новый номер полиса
-     *
      * @param $params
      *
-     * @return mixed|void
+     * @return mixed
+     * @throws PolicyServiceException
+     * @throws \JsonException
      */
     public static function getPolicyNumber($params)
     {
         if (in_array(config('app.env'), ['local', 'testing'])) {
-            return json_decode(json_encode(['data' => ['bso_numbers' => ['Z6921/397/RU0000/20']]]));
+            return json_decode(
+                json_encode(
+                    ['data' => ['bso_numbers' => ['Z6921/397/RU0000/20']]],
+                    JSON_THROW_ON_ERROR
+                ),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
         }
         $client = new Client();
         $url = config('services.bishop.host') . '/bso';
@@ -153,7 +160,7 @@ class Helper
             $response = $client->post(
                 $url,
                 [
-                    'body' => json_encode($params),
+                    'body' => json_encode($params, JSON_THROW_ON_ERROR),
                     'headers' => [
                         'Accept' => 'application/json',
                         'Content-Type' => 'application/json',
@@ -162,11 +169,9 @@ class Helper
             );
         } catch (GuzzleException $e) {
             $json = [];
-            if ($e instanceof RequestException) {
-                if ($e->getResponse() !== null) {
-                    $json = json_decode($e->getResponse()->getBody(), true);
-                    $httpStatusCode = $e->getResponse()->getStatusCode();
-                }
+            if (($e instanceof RequestException) && $e->getResponse() !== null) {
+                $json = json_decode($e->getResponse()->getBody(), true, 512, JSON_THROW_ON_ERROR);
+                $httpStatusCode = $e->getResponse()->getStatusCode();
             }
             Log::error(
                 __METHOD__ . '. Exception:',
@@ -187,12 +192,23 @@ class Helper
             Log::error(__METHOD__ . '. ERROR - Response: ', [$response->getBody()]);
 
             throw new PolicyServiceException(
-                'ERROR - Response: ' . json_encode($response->getBody()), $response->getStatusCode()
+                'ERROR - Response: ' . json_encode($response->getBody(), JSON_THROW_ON_ERROR),
+                $response->getStatusCode()
             );
         }
-        Log::info(__METHOD__ . '. Response', [json_decode($response->getBody())]);
+        Log::info(
+            __METHOD__ . '. Response',
+            [
+                json_decode(
+                    $response->getBody(),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                ),
+            ]
+        );
 
-        return json_decode($response->getBody());
+        return json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -201,6 +217,7 @@ class Helper
      * @param $params
      *
      * @return mixed|void
+     * @throws PolicyServiceException|\JsonException
      */
     public static function acceptPolicyNumber($params)
     {
@@ -217,7 +234,7 @@ class Helper
             $response = $client->post(
                 $url,
                 [
-                    'body' => json_encode($params),
+                    'body' => json_encode($params, JSON_THROW_ON_ERROR),
                     'headers' => [
                         'Accept' => 'application/json',
                         'Content-Type' => 'application/json',
@@ -226,11 +243,14 @@ class Helper
             );
         } catch (GuzzleException $e) {
             $json = [];
-            if ($e instanceof RequestException) {
-                if ($e->getResponse() !== null) {
-                    $json = json_decode($e->getResponse()->getBody(), true);
-                    $httpStatusCode = $e->getResponse()->getStatusCode();
-                }
+            if (($e instanceof RequestException) && $e->getResponse() !== null) {
+                $json = json_decode(
+                    $e->getResponse()->getBody(),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                );
+                $httpStatusCode = $e->getResponse()->getStatusCode();
             }
             Log::error(
                 __METHOD__ . '. Exception:',
@@ -248,12 +268,23 @@ class Helper
         if ($response->getStatusCode() !== 200) {
             Log::error(__METHOD__ . '. ERROR - Response: ', [$response->getBody()]);
             throw new PolicyServiceException(
-                'ERROR - Response: ' . json_encode($response->getBody()), $response->getStatusCode()
+                'ERROR - Response: ' . json_encode($response->getBody(), JSON_THROW_ON_ERROR),
+                $response->getStatusCode()
             );
         }
-        Log::info(__METHOD__ . '. Response', [json_decode($response->getBody())]);
+        Log::info(
+            __METHOD__ . '. Response',
+            [
+                json_decode(
+                    $response->getBody(),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                ),
+            ]
+        );
 
-        return json_decode($response->getBody());
+        return json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -262,17 +293,23 @@ class Helper
      * @param  Contract  $contract
      *
      * @return mixed|void
+     * @throws \JsonException
      */
     public static function getUwinContractId(Contract $contract)
     {
         if (in_array(config('app.env'), ['local', 'testing'])) {
-            return json_decode(json_encode(['contractId' => '111111']));
+            return json_decode(
+                json_encode(['contractId' => '111111'], JSON_THROW_ON_ERROR),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
         }
         $siteService = new SiteService();
 
         $subject = $contract->subject;
         if (!isset($subject->value['subjectId'])) {
-            Log::info(__METHOD__ . ". getUserData subject", [$subject->value]);
+            Log::info(__METHOD__ . '. getUserData subject', [$subject->value]);
             $user = $siteService->getUserData($subject->value);
             if ($user) {
                 $uwUserData = [
@@ -281,21 +318,21 @@ class Helper
                 ];
                 $subject->value = json_encode(
                     array_merge($subject->value, $uwUserData),
-                    JSON_UNESCAPED_UNICODE
+                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
                 );
                 $subject->save();
             }
         }
         foreach ($contract->objects as $obj) {
             if (!isset($obj->value['subjectId'])) {
-                Log::info(__METHOD__ . ". getUserData object", [$obj->value]);
+                Log::info(__METHOD__ . '. getUserData object', [$obj->value]);
                 $code = md5(
                     $obj->value['lastName'] . $obj->value['firstName'] .
                     ($obj->value['middleName'] ?? '') . $obj->value['birthDate'] . time()
                 );
                 $obj->value = json_encode(
                     array_merge($obj->value, ['email' => $code . '@strahovka.ru']),
-                    JSON_UNESCAPED_UNICODE
+                    JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
                 );
                 $obj->save();
                 $user = $siteService->getUserData($obj->value);
@@ -307,7 +344,7 @@ class Helper
                     ];
                     $obj->value = json_encode(
                         array_merge($obj->value, $uwUserData),
-                        JSON_UNESCAPED_UNICODE
+                        JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
                     );
                     $obj->save();
                 }
@@ -318,18 +355,18 @@ class Helper
         $url = config('services.uw.host');
 
         $params = [
-            "product" => "LIFE",
-            "companyCode" => $contract->companyCode,
-            "programCode" => $contract->program->programCode,
-            "programUwCode" => $contract->program->programUwCode,
-            "policyNumber" => $contract->number,
-            "trafficSource" => $contract->trafficSource,
-            "beginDate" => $contract->active_from,
-            "endDate" => $contract->active_to,
-            "premium" => $contract->premium,
-            "insuredSum" => $contract->insured_sum,
-            "object" => $contract->objects_value,
-            "subject" => $contract->subject_value,
+            'product' => 'LIFE',
+            'companyCode' => $contract->companyCode,
+            'programCode' => $contract->program->programCode,
+            'programUwCode' => $contract->program->programUwCode,
+            'policyNumber' => $contract->number,
+            'trafficSource' => $contract->trafficSource,
+            'beginDate' => $contract->active_from,
+            'endDate' => $contract->active_to,
+            'premium' => $contract->premium,
+            'insuredSum' => $contract->insured_sum,
+            'object' => $contract->objects_value,
+            'subject' => $contract->subject_value,
             'sberMerchantOrderNumber' => Payment::where('contract_id', $contract->id)->first(
             )->invoiceNum,
 
@@ -341,7 +378,7 @@ class Helper
             $response = $client->post(
                 $url . '/import_contract.php',
                 [
-                    'body' => json_encode($params),
+                    'body' => json_encode($params, JSON_THROW_ON_ERROR),
                     'headers' => [
                         'Accept' => 'application/json',
                         'Content-Type' => 'application/json',
@@ -351,11 +388,14 @@ class Helper
         } catch (GuzzleException $e) {
             $json = [];
             $httpStatusCode = Response::HTTP_BAD_REQUEST;
-            if ($e instanceof RequestException) {
-                if ($e->getResponse()) {
-                    $json = json_decode($e->getResponse()->getBody(), true);
-                    $httpStatusCode = $e->getResponse()->getStatusCode();
-                }
+            if (($e instanceof RequestException) && $e->getResponse()) {
+                $json = json_decode(
+                    $e->getResponse()->getBody(),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                );
+                $httpStatusCode = $e->getResponse()->getStatusCode();
             }
             Log::error(
                 __METHOD__ . '. Exception:',
@@ -378,9 +418,19 @@ class Helper
             return false;
         }
 
-        Log::info(__METHOD__ . '. Response', [json_decode($response->getBody())]);
+        Log::info(
+            __METHOD__ . '. Response',
+            [
+                json_decode(
+                    $response->getBody(),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                ),
+            ]
+        );
 
-        return json_decode($response->getBody());
+        return json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -389,15 +439,15 @@ class Helper
      */
     public static function morph($n, $f1, $f2, $f5)
     {
-        $n = abs(intval($n)) % 100;
+        $n = abs((int)$n) % 100;
         if ($n > 10 && $n < 20) {
             return $f5;
         }
-        $n = $n % 10;
+        $n %= 10;
         if ($n > 1 && $n < 5) {
             return $f2;
         }
-        if ($n == 1) {
+        if ($n === 1) {
             return $f1;
         }
 
@@ -407,7 +457,7 @@ class Helper
     /**
      * Возвращает название месяца на кириллице по номеру месяца.
      *
-     * @param $num
+     * @param  int  $num
      *
      * @return string
      */
@@ -434,7 +484,7 @@ class Helper
     /**
      * @param $request
      *
-     * @return mixed|string
+     * @return array|string|string[]
      */
     public static function getTrafficSource($request)
     {
@@ -487,7 +537,7 @@ class Helper
     /**
      * @return bool
      */
-    static function isMobile()
+    public static function isMobile(): bool
     {
         $agent = new Agent();
 

@@ -30,14 +30,23 @@ class Subject extends BaseModel
         return $this->belongsTo(Contract::class, 'contract_id');
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function setValueAttribute(array $value): void
     {
-        $this->attributes['value'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+        $this->attributes['value'] = json_encode(
+            $value,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        );
     }
 
+    /**
+     * @throws \JsonException
+     */
     public function getValueAttribute(): array
     {
-        return json_decode($this->attributes['value'], true);
+        return json_decode($this->attributes['value'], true, 512, JSON_THROW_ON_ERROR);
     }
 
     public function toArray(): array

@@ -4,18 +4,20 @@ namespace App\Http\Resources;
 
 use App\Models\Contract;
 use App\Models\InsuranceObject;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
  * Class ContractResource
  * @package App\Http\Resources
  * @mixin Contract
  */
-class ContractResource extends \Illuminate\Http\Resources\Json\JsonResource
+class ContractResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  Request  $request
      * @return array
      */
     public function toArray($request): array

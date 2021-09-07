@@ -28,7 +28,7 @@ abstract class BaseController extends Controller
 
     /** @var  BaseModel|Eloquent|Builder $model */
     protected $model;
-    protected $search = '';
+    protected string $search = '';
     protected $locale;
     protected $filter;
 

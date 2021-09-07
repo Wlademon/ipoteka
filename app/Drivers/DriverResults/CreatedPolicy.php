@@ -65,11 +65,11 @@ class CreatedPolicy implements CreatedPolicyInterface
     }
 
     /**
-     * @param $contractId int
+     * @param  int  $value
      */
-    public function setContractId(int $contractId): void
+    public function setContractId(int $value): void
     {
-        $this->contractId = $contractId;
+        $this->contractId = $value;
     }
 
     public function getPremiumSum(): float
@@ -86,7 +86,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     }
 
     /**
-     * @param $lifePremium float|null
+     * @param $lifePremium float
      */
     public function setLifePremium(float $lifePremium): void
     {
@@ -102,7 +102,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     }
 
     /**
-     * @param $propertyPremium float|null
+     * @param $propertyPremium float
      */
     public function setPropertyPremium(float $propertyPremium): void
     {
@@ -135,7 +135,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     }
 
     /**
-     * @param $propertyPolicyNumber string|null
+     * @param $propertyPolicyNumber string
      */
     public function setPropertyPolicyNumber(string $propertyPolicyNumber): void
     {
@@ -148,7 +148,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     }
 
     /**
-     * @param $lifePolicyNumber string|null
+     * @param  string  $propertyPolicyId
      */
     public function setPropertyPolicyId(string $propertyPolicyId): void
     {
@@ -161,7 +161,7 @@ class CreatedPolicy implements CreatedPolicyInterface
     }
 
     /**
-     * @param $lifePolicyId string|null
+     * @param $lifePolicyId string
      */
     public function setLifePolicyId(string $lifePolicyId): void
     {

@@ -18,8 +18,8 @@ use Illuminate\Support\Facades\Log;
  */
 class PaymentService
 {
-    const BANK_CODE = 'Sber';
-    const STATUS_MAP = [
+    public const BANK_CODE = 'Sber';
+    public const STATUS_MAP = [
         'Paid' => Contract::STATUS_CONFIRMED,
         'Pending' => Contract::STATUS_DRAFT,
         'Cancel' => 0,
@@ -40,14 +40,17 @@ class PaymentService
     }
 
     /**
-     * @param Contract $contract
-     * @param array $urls
+     * @param  Contract    $contract
+     * @param  array       $urls
+     * @param  array|null  $itemArray
+     *
      * @return array
      * @throws PaymentServiceException
+     * @throws \JsonException
      */
     public function payLink(Contract $contract, array $urls, ?array $itemArray = null): array
     {
-        if ($itemsArray = null){
+        if ($itemArray === null){
             $items = [
                     'id' => $contract->id,
                     'name' => "Оплата за полис №{$contract->ext_id}",
@@ -61,6 +64,7 @@ class PaymentService
                     ]
             ];
         } else {
+            $items = [];
             foreach ($itemArray as $item) {
                 $items[] = [
                     'id' => $item['isn'],
@@ -109,8 +113,9 @@ class PaymentService
 
     /**
      * @param Payment $payment
+     *
      * @return int
-     * @throws PaymentServiceException
+     * @throws PaymentServiceException|\JsonException
      */
     public function orderStatus(Payment $payment): int
     {
@@ -127,8 +132,9 @@ class PaymentService
      * @param string $uri
      * @param array $options
      * @param string|null $context
+     *
      * @return array
-     * @throws PaymentServiceException
+     * @throws PaymentServiceException|\JsonException
      */
     protected function request(string $method, string $uri, array $options, ?string $context) : array
     {
@@ -140,13 +146,20 @@ class PaymentService
             if ($e instanceof RequestException && $e->hasResponse()) {
                 Log::error(
                     "{$context} ошибка запроса: {$e->getResponse()->getStatusCode()}",
-                    [json_decode((string)$e->getResponse()->getBody(), true)]
+                    [
+                        json_decode(
+                            (string)$e->getResponse()->getBody(),
+                            true,
+                            512,
+                            JSON_THROW_ON_ERROR
+                        )
+                    ]
                 );
             }
             throw new PaymentServiceException($e->getMessage(), Response::HTTP_BAD_REQUEST);
         }
 
-        return json_decode((string) $resp->getBody(), true, 128);
+        return json_decode((string)$resp->getBody(), true, 128, JSON_THROW_ON_ERROR);
     }
 
     /**

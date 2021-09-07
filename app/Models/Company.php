@@ -26,7 +26,7 @@ class Company extends BaseModel
 {
     use Filterable;
 
-    const NAME = 'Список страховых компаний';
+    public const NAME = 'Список страховых компаний';
 
     protected $fillable = [
         'code',
@@ -90,7 +90,7 @@ class Company extends BaseModel
     }
 
     /**
-     * @param $val
+     * @param  bool $val
      *
      * @return bool
      */

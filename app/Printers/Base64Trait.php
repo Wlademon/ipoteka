@@ -23,7 +23,7 @@ trait Base64Trait
             $data = explode(',', $data[1]);
             $content = trim($data[1]);
         }
-        $content = str_replace(['\r'], '', $content);
+        $content = str_replace('\r', '', $content);
         if (
             !preg_match('%^[a-zA-Z0-9/+]*={0,2}$%', $content) ||
             !$decoded = base64_decode($content, true)

@@ -4,6 +4,11 @@ namespace App\Filters;
 
 use Strahovka\LaravelFilterable\Filter;
 
+/**
+ * Class DateFilter
+ *
+ * @package App\Filters
+ */
 class DateFilter extends Filter
 {
     public function filterMap(): array
@@ -15,16 +20,28 @@ class DateFilter extends Filter
         ];
     }
 
-	public function created($flag = null)
+    /**
+     *
+     * @return mixed
+     */
+    public function created()
     {
         return $this->builder->withTrashed()->whereNotNull('created_at');
     }
 
-    public function updated($flag = null)
+    /**
+     * @return mixed
+     */
+    public function updated()
     {
         return $this->builder->withTrashed()->whereNotNull('updated_at');
     }
 
+    /**
+     * @param  null  $flag
+     *
+     * @return mixed
+     */
     public function deleted($flag = null)
     {
         if ($flag === true) {

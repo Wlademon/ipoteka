@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Drivers\DriverResults\PayLinkInterface;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Strahovka\LaravelFilterable\Filterable;
+use App\Models\Contract;
 
 /**
  * App\Models\Payment
@@ -23,7 +24,7 @@ class Payment extends BaseModel
 {
     use Filterable;
 
-    const NAME = 'Платежи';
+    public const NAME = 'Платежи';
     protected $fillable = [
         'contract_id',
         'order_id',
@@ -43,7 +44,7 @@ class Payment extends BaseModel
 
     public function contract(): BelongsTo
     {
-        return $this->belongsTo('App\Models\Contract', 'contract_id', 'id');
+        return $this->belongsTo(Contract::class, 'contract_id', 'id');
     }
 
     public function getContractIdAttribute(): ?int
@@ -61,6 +62,9 @@ class Payment extends BaseModel
         return $this->attributes['invoice_num'];
     }
 
+    /**
+     * @throws \Throwable
+     */
     public static function savePayment(PayLinkInterface $payLink, Contract $contract): void
     {
         $payment = self::query()->where('contract_id', '=', $contract->id)->updateOrCreate(

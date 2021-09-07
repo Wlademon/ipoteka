@@ -7,6 +7,11 @@ use App\Services\PaymentService;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 
+/**
+ * Class AppServiceProvider
+ *
+ * @package App\Providers
+ */
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -24,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
         $conf = config('mortgage');
         $this->app->singleton(PaymentService::class, fn($app) => new PaymentService($conf['mercuriusHost']));

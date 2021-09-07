@@ -4,6 +4,11 @@ namespace App\Filters;
 
 use Strahovka\LaravelFilterable\Generic\Filter;
 
+/**
+ * Class PaymentFilter
+ *
+ * @package App\Filters
+ */
 class PaymentFilter extends Filter
 {
     /**
@@ -20,7 +25,7 @@ class PaymentFilter extends Filter
      *
      * @return void
      */
-    protected function settings()
+    protected function settings(): void
     {
 		//
 	}

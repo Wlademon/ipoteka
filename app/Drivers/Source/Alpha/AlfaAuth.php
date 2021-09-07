@@ -12,7 +12,7 @@ use GuzzleHttp\Client;
  */
 class AlfaAuth
 {
-    const GRANT_TYPE = 'password';
+    public const GRANT_TYPE = 'password';
     protected string $username;
     protected string $pass;
     protected string $url;
@@ -35,7 +35,7 @@ class AlfaAuth
      * @param  Client  $client
      *
      * @return mixed
-     * @throws AlphaException
+     * @throws AlphaException|\GuzzleHttp\Exception\GuzzleException|\JsonException
      */
     public function getToken(Client $client): string
     {
@@ -68,6 +68,6 @@ class AlfaAuth
             ]
         );
 
-        return json_decode($response, true);
+        return json_decode($response, true, 512, JSON_THROW_ON_ERROR);
     }
 }

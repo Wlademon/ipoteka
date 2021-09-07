@@ -121,7 +121,9 @@ class ReninsCalcCollector implements Arrayable
     }
 
     /**
-     * @param $phone
+     * @param  string  $phone
+     *
+     * @return string|null
      */
     public static function getFormatPhone(string $phone): ?string
     {
@@ -135,9 +137,8 @@ class ReninsCalcCollector implements Arrayable
         }
 
         array_shift($matches);
-        $phone = sprintf('+%s (%s) %s-%s-%s', ...$matches);
 
-        return $phone;
+        return sprintf('+%s (%s) %s-%s-%s', ...$matches);
     }
 
     /**

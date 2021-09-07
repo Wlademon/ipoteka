@@ -13,16 +13,15 @@ use Illuminate\Support\Arr;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
- * @property-read Contract                  $contracts
+ * @property-read Contract                   $contracts
  * @mixin \Eloquent
  */
 class InsuranceObject extends BaseModel
 {
     protected $table = 'objects';
-
-    const TYPE_PROPERTY = 'property';
-    const TYPE_LIFE = 'life';
-    const PROPERY_TYPE_FIAT = 'flat';
+    public const TYPE_PROPERTY = 'property';
+    public const TYPE_LIFE = 'life';
+    public const PROPERTY_TYPE_FIAT = 'flat';
     protected $fillable = [
         'contract_id',
         'value',
@@ -41,9 +40,9 @@ class InsuranceObject extends BaseModel
      *
      * @return string|string[]
      */
-    public static function propertyTypes($isImplode = false)
+    public static function propertyTypes(bool $isImplode = false)
     {
-        $types = [self::PROPERY_TYPE_FIAT];
+        $types = [self::PROPERTY_TYPE_FIAT];
         if ($isImplode) {
             return implode(',', $types);
         }
@@ -56,7 +55,7 @@ class InsuranceObject extends BaseModel
      *
      * @return string|string[]
      */
-    public static function types($isImplode = false)
+    public static function types(bool $isImplode = false)
     {
         $types = [self::TYPE_LIFE, self::TYPE_PROPERTY];
         if ($isImplode) {
@@ -76,18 +75,24 @@ class InsuranceObject extends BaseModel
 
     /**
      * @param  array  $value
+     *
+     * @throws \JsonException
      */
     public function setValueAttribute(array $value): void
     {
-        $this->attributes['value'] = json_encode($value, JSON_UNESCAPED_UNICODE);
+        $this->attributes['value'] = json_encode(
+            $value,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+        );
     }
 
     /**
      * @return array
+     * @throws \JsonException
      */
     public function getValueAttribute(): array
     {
-        return json_decode($this->attributes['value'], true);
+        return json_decode($this->attributes['value'], true, 512, JSON_THROW_ON_ERROR);
     }
 
     /**
@@ -105,22 +110,21 @@ class InsuranceObject extends BaseModel
     }
 
     /**
-     * @param $contractId
+     * @param  string  $contractId
      *
      * @return array
      */
     public static function contractObjects(string $contractId): array
     {
         return self::query()->where('contract_id', '=', $contractId)->get()->keyBy('product')->map(
-                function (InsuranceObject $object)
-                {
-                    $val = $object->getValueAttribute();
-                    $val = Arr::add($val, 'policyNumber', $object->number);
-                    $val = Arr::add($val, 'premium', $object->premium);
+            function (InsuranceObject $object)
+            {
+                $val = $object->getValueAttribute();
+                $val = Arr::add($val, 'policyNumber', $object->number);
 
-                    return $val;
-                }
-            )->toArray();
+                return Arr::add($val, 'premium', $object->premium);
+            }
+        )->toArray();
     }
 
     /**

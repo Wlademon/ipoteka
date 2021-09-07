@@ -19,7 +19,7 @@ class CustomizeFormatter
      * @param  Logger  $logger
      * @return void
      */
-    public function __invoke($logger)
+    public function __invoke(Logger $logger)
     {
         foreach ($logger->getHandlers() as $handler) {
 //            $sessionId = Request::session()->getId();

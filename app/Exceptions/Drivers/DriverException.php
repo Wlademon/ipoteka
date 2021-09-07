@@ -22,7 +22,7 @@ abstract class DriverException extends Exception implements DriverExceptionInter
 
     public function __construct(
         string $method,
-        string $message = "",
+        string $message = '',
         int $code = self::DEFAULT_CODE,
         Throwable $previous = null
     ) {
@@ -37,7 +37,7 @@ abstract class DriverException extends Exception implements DriverExceptionInter
      * @param  Throwable|null  $exception
      * @param  string          $message
      */
-    protected function log(?Throwable $exception, string $message = '')
+    protected function log(?Throwable $exception, string $message = ''): void
     {
         $context = [];
         if (config('app.debug')) {

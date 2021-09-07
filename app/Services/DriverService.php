@@ -52,7 +52,7 @@ class DriverService
      */
     protected function setDriver(string $driver = null): void
     {
-        $driverCode = trim(strtolower($driver));
+        $driverCode = strtolower(trim($driver));
         $this->driver = App::make($driverCode);
 
         if (!$this->driver) {
@@ -73,7 +73,7 @@ class DriverService
      */
     protected function getDriverByCode(string $code, bool $reset = false): DriverInterface
     {
-        $actualCode = trim(strtolower($code));
+        $actualCode = strtolower(trim($code));
         if (!$this->driver || $reset) {
             $this->setDriver($actualCode);
         }
@@ -94,6 +94,7 @@ class DriverService
      * @param  PayLinks  $links
      *
      * @return PayLinkInterface
+     * @throws Exception
      */
     public function getPayLink(Contract $contract, PayLinks $links): PayLinkInterface
     {
@@ -137,7 +138,7 @@ class DriverService
     protected function minStartValidator(Program $program, array $data): void
     {
         $maxStartDateSelection = $program->conditions->maxStartDateSelection ?? '3m';
-        preg_match("/([0-9]+)([dmy]+)/", $maxStartDateSelection, $maxSds);
+        preg_match('/(\d+)([dmy]+)/', $maxStartDateSelection, $maxSds);
         $startDate = Carbon::now()->startOfDay();
         switch ($maxSds[2]) {
             case 'd':
@@ -167,13 +168,13 @@ class DriverService
      * @param  array  $data
      *
      * @return array
-     * @throws DriverServiceException
+     * @throws DriverServiceException|Throwable
      */
     public function savePolicy(array $data): array
     {
         DB::beginTransaction();
         $model = new Contract();
-        Log::info(__METHOD__ . ". getTrafficSource");
+        Log::info(__METHOD__ . '. getTrafficSource');
         $data['options'] = array_merge(
             request()->except(['object', 'subject']),
             ['trafficSource' => Helper::getTrafficSource(request())]

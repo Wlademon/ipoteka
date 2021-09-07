@@ -2,12 +2,13 @@
 
 namespace App\Drivers\Source\Renins;
 
+use App\Exceptions\Drivers\DriverException;
 use App\Exceptions\Drivers\ReninsException;
 use App\Services\HttpClientService;
 use GuzzleHttp\Client;
-use Illuminate\Config\Repository;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -18,7 +19,7 @@ use Throwable;
  */
 class ReninsClientService
 {
-    const ISSUE_ERROR = 'ISSUE_ERROR';
+    public const ISSUE_ERROR = 'ISSUE_ERROR';
     protected string $tempPath;
     protected array $actions;
     protected HttpClientService $client;
@@ -26,10 +27,9 @@ class ReninsClientService
     /**
      * ReninsClientService constructor.
      *
-     * @param  Repository  $repository
-     * @param  string      $prefix
-     *
-     * @throws ReninsException
+     * @param  HttpClientService  $clientService
+     * @param  array              $actions
+     * @param  string             $tempPath
      */
     public function __construct(HttpClientService $clientService, array $actions, string $tempPath)
     {
@@ -66,10 +66,11 @@ class ReninsClientService
      *
      * @return array|null
      * @throws ReninsException
+     * @throws \JsonException
      */
-    public function calculate(Arrayable $data)
+    public function calculate(Arrayable $data): ?array
     {
-        \Log::info(
+        Log::info(
             __METHOD__ . ' расчет полиса',
             [
                 'request' => $data->toArray(),
@@ -77,9 +78,14 @@ class ReninsClientService
         );
         $result = $this->send($data, Arr::get($this->actions, 'URL_CALCULATE'));
         if ($errors = Arr::get($result, 'calcPolicyResult.calcResults.errors')) {
-            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__,
+                                      json_encode(
+                                          $errors,
+                                          JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+                                      )
+            );
         }
-        \Log::info(
+        Log::info(
             __METHOD__ . ' расчет полиса завершен',
             [
                 'response' => $result,
@@ -93,11 +99,11 @@ class ReninsClientService
      * @param  Arrayable  $data
      *
      * @return array|null
-     * @throws ReninsException
+     * @throws ReninsException|\JsonException
      */
     public function import(Arrayable $data): ?array
     {
-        \Log::info(
+        Log::info(
             __METHOD__ . ' сохранение полиса',
             [
                 'request' => $data->toArray(),
@@ -105,9 +111,14 @@ class ReninsClientService
         );
         $result = $this->send($data, Arr::get($this->actions, 'URL_IMPORT'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__,
+                                      json_encode(
+                                          $errors,
+                                          JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+                                      )
+            );
         }
-        \Log::info(
+        Log::info(
             __METHOD__ . ' сохранение полиса завершено',
             [
                 'response' => $result,
@@ -121,11 +132,11 @@ class ReninsClientService
      * @param  Arrayable  $data
      *
      * @return array|null
-     * @throws ReninsException
+     * @throws ReninsException|\JsonException
      */
     public function issue(Arrayable $data): ?array
     {
-        \Log::info(
+        Log::info(
             __METHOD__ . '  оформление полиса',
             [
                 'request' => $data->toArray(),
@@ -133,9 +144,14 @@ class ReninsClientService
         );
         $result = $this->send($data, Arr::get($this->actions, 'URL_ISSUE'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__,
+                                      json_encode(
+                                          $errors,
+                                          JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+                                      )
+            );
         }
-        \Log::info(
+        Log::info(
             __METHOD__ . '  оформление полиса завершено',
             [
                 'response' => $result,
@@ -149,11 +165,11 @@ class ReninsClientService
      * @param  Arrayable  $data
      *
      * @return array|null
-     * @throws ReninsException
+     * @throws ReninsException|\JsonException
      */
     public function payLink(Arrayable $data): ?array
     {
-        \Log::info(
+        Log::info(
             __METHOD__ . ' получение ссылки на оплату',
             [
                 'request' => $data->toArray(),
@@ -161,9 +177,14 @@ class ReninsClientService
         );
         $result = $this->send($data, Arr::get($this->actions, 'URL_PAY'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__,
+                                      json_encode(
+                                          $errors,
+                                          JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+                                      )
+            );
         }
-        \Log::info(
+        Log::info(
             __METHOD__ . ' ссылка на оплату получена',
             [
                 'response' => $result,
@@ -177,11 +198,11 @@ class ReninsClientService
      * @param  Arrayable  $data
      *
      * @return string
-     * @throws ReninsException
+     * @throws ReninsException|\JsonException
      */
     public function getStatus(Arrayable $data): string
     {
-        \Log::info(
+        Log::info(
             __METHOD__ . ' получение статуса',
             [
                 'request' => $data->toArray(),
@@ -189,12 +210,22 @@ class ReninsClientService
         );
         $result = $this->send($data, Arr::get($this->actions, 'URL_STATUS'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__,
+                                      json_encode(
+                                          $errors,
+                                          JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+                                      )
+            );
         }
         if (($state = Arr::get($result, 'state')) === self::ISSUE_ERROR) {
-            throw new ReninsException(__METHOD__, json_encode($result, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__,
+                                      json_encode(
+                                          $result,
+                                          JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+                                      )
+            );
         }
-        \Log::info(
+        Log::info(
             __METHOD__ . ' статус получен',
             [
                 'response' => $result,
@@ -208,11 +239,11 @@ class ReninsClientService
      * @param  Arrayable  $data
      *
      * @return string
-     * @throws ReninsException
+     * @throws ReninsException|\JsonException
      */
     public function print(Arrayable $data): string
     {
-        \Log::info(
+        Log::info(
             __METHOD__ . ' получение ссылки на полис',
             [
                 'request' => $data->toArray(),
@@ -220,9 +251,14 @@ class ReninsClientService
         );
         $result = $this->send($data, Arr::get($this->actions, 'URL_PRINT'));
         if ($errors = Arr::get($result, 'errors.errors')) {
-            throw new ReninsException(__METHOD__, json_encode($errors, JSON_UNESCAPED_UNICODE));
+            throw new ReninsException(__METHOD__,
+                                      json_encode(
+                                          $errors,
+                                          JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE
+                                      )
+            );
         }
-        \Log::info(
+        Log::info(
             __METHOD__ . ' ссылка на полис получена',
             [
                 'response' => $result,
@@ -237,10 +273,11 @@ class ReninsClientService
      *
      * @return string
      * @throws ReninsException
+     * @throws Throwable
      */
     public function getFile(string $url): string
     {
-        \Log::info(
+        Log::info(
             __METHOD__ . ' получение файла с полисами',
             [
                 'url' => $url,
@@ -253,21 +290,21 @@ class ReninsClientService
                     'verify' => false,
                 ]
             ))->get($url);
-            $content = $response->getBody()->getContents();
-            throw_if($response->getStatusCode() !== 200, new ReninsException(__METHOD__, $content));
-            $path = $this->tempPath . uniqid(date('Y_m_d_H_i_s'), false) . '.zip';
-            Storage::put(
-                $path,
-                $content
-            );
-            throw_if(
-                !file_exists(storage_path('app/' . $path)),
-                new ReninsException(__METHOD__, 'File not saved.')
-            );
         } catch (Throwable $throwable) {
             throw new ReninsException(__METHOD__, $throwable->getMessage());
         }
-        \Log::info(__METHOD__ . ' файл получен и сохранен: ' . storage_path('app/' . $path));
+        $content = $response->getBody()->getContents();
+        throw_if($response->getStatusCode() !== 200, new ReninsException(__METHOD__, $content));
+        $path = $this->tempPath . uniqid(date('Y_m_d_H_i_s'), false) . '.zip';
+        Storage::put(
+            $path,
+            $content
+        );
+        throw_if(
+            !file_exists(storage_path('app/' . $path)),
+            new ReninsException(__METHOD__, 'File not saved.')
+        );
+        Log::info(__METHOD__ . ' файл получен и сохранен: ' . storage_path('app/' . $path));
 
         return 'app/' . $path;
     }

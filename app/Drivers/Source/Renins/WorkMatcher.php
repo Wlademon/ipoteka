@@ -14,14 +14,15 @@ class WorkMatcher
      */
     public static function match(array $works): string
     {
+        $result = 'Работник по найму';
         if (count($works) === 0) {
-            return 'Официально не трудоустроен';
+            $result = 'Официально не трудоустроен';
         }
         $work = $works[0];
         if (mb_stripos($work, 'индивидуальный предприниматель') !== false || mb_strtolower($work) === 'ип') {
-            return 'Собственник бизнеса, Индивидуальный предприниматель';
+            $result = 'Собственник бизнеса, Индивидуальный предприниматель';
         }
 
-        return 'Работник по найму';
+        return $result;
     }
 }

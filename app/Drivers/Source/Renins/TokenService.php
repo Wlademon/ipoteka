@@ -15,7 +15,7 @@ use function hash;
  */
 class TokenService
 {
-    const URL_AUTHORIZE = '/token';
+    public const URL_AUTHORIZE = '/token';
     protected HttpClientService $client;
     protected string $login;
     protected string $pass;
@@ -46,7 +46,7 @@ class TokenService
      * @param  string  $pass
      *
      * @return string
-     * @throws ReninsException
+     * @throws ReninsException|\Psr\SimpleCache\InvalidArgumentException
      */
     public static function getToken(string $host, string $login, string $pass): string
     {
@@ -82,7 +82,7 @@ class TokenService
 
     /**
      * @return string
-     * @throws ReninsException
+     * @throws ReninsException|\GuzzleHttp\Exception\GuzzleException|\JsonException
      */
     protected function authorize(): string
     {
@@ -101,11 +101,11 @@ class TokenService
             );
         }
 
-        return json_decode($result->getBody()->getContents(), true)['access_token'];
+        return json_decode($result->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR)['access_token'];
     }
 
     /**
-     * @param $token
+     * @param  string  $token
      *
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */

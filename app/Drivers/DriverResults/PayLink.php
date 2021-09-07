@@ -11,7 +11,7 @@ use Illuminate\Support\Arr;
  */
 class PayLink implements PayLinkInterface
 {
-    protected $data = [];
+    protected array $data = [];
 
     public function __construct(string $orderId, string $url, string $invoiceNum)
     {

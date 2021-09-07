@@ -8,21 +8,24 @@ use Illuminate\Database\Eloquent\Model;
 abstract class Repository extends BaseRepository
 {
     /** @var BaseModel $model */
-    protected $model;
+    protected BaseModel $model;
 
     public function __construct(BaseModel $model)
     {
         $this->model = $model;
     }
 
-    public function setModel($model)
+    /**
+     * @param BaseModel $model
+     */
+    public function setModel(BaseModel $model): void
     {
         $this->model = $model;
     }
 
     /**
-     * @param array $attributes
-     * @param bool|true $addOwner
+     * @param  array  $attributes
+     *
      * @return BaseModel|Model
      */
     public function create(array $attributes = [])
@@ -31,8 +34,8 @@ abstract class Repository extends BaseRepository
     }
 
     /**
-     * @param array $options
-     * @param bool|false $logging
+     * @param  array  $options
+     *
      * @return bool
      */
     public function save(array $options = [])
@@ -44,7 +47,7 @@ abstract class Repository extends BaseRepository
      * @param array $attributes
      * @return BaseModel
      */
-    public function update(array $attributes = [])
+    public function update(array $attributes = []): BaseModel
     {
         $this->model->update($attributes);
 

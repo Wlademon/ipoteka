@@ -4,6 +4,11 @@ namespace App\Services\PayService;
 
 use App\Drivers\DriverResults\PayLinkInterface;
 
+/**
+ * Class PayLinkResult
+ *
+ * @package App\Services\PayService
+ */
 class PayLinkResult implements PayLinkInterface
 {
     protected string $orderId;
@@ -31,7 +36,9 @@ class PayLinkResult implements PayLinkInterface
         return $this->url;
     }
 
-
+    /**
+     * @return array
+     */
     public function toArray(): array
     {
         return [
@@ -40,6 +47,9 @@ class PayLinkResult implements PayLinkInterface
         ];
     }
 
+    /**
+     * @return string
+     */
     public function getInvoiceNum(): string
     {
         return '';

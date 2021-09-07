@@ -26,13 +26,13 @@ class MerchantServices
     private $soapMerchantServicesLogin = "E_PARTNER";
     private $soap_wsse_nonce = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary";
     /** @var string */
-    protected $idToken;
+    protected string $idToken;
     /** @var string */
-    protected $nonceXML;
+    protected string $nonceXML;
     /** @var string */
-    protected $timestamp;
+    protected string $timestamp;
     /** @var string */
-    protected $passDigest;
+    protected string $passDigest;
     /** @var string */
     protected string $host;
     protected array $data = [];

@@ -16,6 +16,12 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 class ContractController extends BaseController
 {
+    /**
+     * ContractController constructor.
+     *
+     * @param  Contract        $model
+     * @param  ContractFilter  $filter
+     */
     public function __construct(Contract $model, ContractFilter $filter)
     {
         $this->model = $model;

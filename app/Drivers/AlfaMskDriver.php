@@ -421,7 +421,7 @@ class AlfaMskDriver implements DriverInterface, OutPrintDriverInterface
         $files = [];
         foreach ($objects as $object) {
             $filePathObject = self::createFilePath($contract, $object->id);
-            if (!$this->isFilePoliceExitst($contract, $filePathObject)) {
+            if (!$this->isFilePoliceExist($contract, $filePathObject)) {
                 $this->printPolicy($contract, false, true);
             }
             $files[] = public_path($filePathObject);

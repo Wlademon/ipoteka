@@ -31,13 +31,13 @@ class DriverServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         $this->app->singleton(
             DriverService::class,
             function ($app)
             {
-                return new DriverService();
+                return new DriverService($this->app->make(PolicyPrinter::class));
             }
         );
         $this->app->singleton(

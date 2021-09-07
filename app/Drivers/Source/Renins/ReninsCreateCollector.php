@@ -11,12 +11,12 @@ use Illuminate\Support\Arr;
  */
 class ReninsCreateCollector extends ReninsCalcCollector
 {
-    const CITIZENSHIP = 'Россия';
-    const COUNTRY = 'Россия';
-    const DOC_TYPE = 'ПАСПОРТ_РФ';
-    const POST_INDEX_MOSCOW = '111000';
-    const CREDIT_CITY = 'Москва';
-    const CURRENCY = 'RUR';
+    public const CITIZENSHIP = 'Россия';
+    public const COUNTRY = 'Россия';
+    public const DOC_TYPE = 'ПАСПОРТ_РФ';
+    public const POST_INDEX_MOSCOW = '111000';
+    public const CREDIT_CITY = 'Москва';
+    public const CURRENCY = 'RUR';
 
     /**
      * ReninsCreateCollector constructor.
@@ -108,8 +108,8 @@ class ReninsCreateCollector extends ReninsCalcCollector
     }
 
     /**
-     * @param         $dateStart
-     * @param  float  $sum
+     * @param  string  $dateStart
+     * @param  float   $sum
      */
     public function setPayPlan(string $dateStart, float $sum): void
     {

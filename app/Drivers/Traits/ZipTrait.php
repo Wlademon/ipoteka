@@ -14,13 +14,13 @@ use ZipArchive;
  */
 trait ZipTrait
 {
-    protected static $tempPathZip = 'temp/zip/';
+    protected static string $tempPathZip = 'temp/zip/';
 
     /**
-     * @param $file
+     * @param  string  $file
      *
      * @return string
-     * @throws Throwable
+     * @throws ReninsException
      */
     public static function unpackZip(string $file): string
     {

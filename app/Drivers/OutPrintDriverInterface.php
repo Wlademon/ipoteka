@@ -15,10 +15,9 @@ interface OutPrintDriverInterface
     /**
      * Функция печати полиса
      *
-     * @param  Contract     $contract
-     * @param  bool         $sample    Шаблон
-     * @param  bool         $reset     Перепечатать
-     * @param  string|null  $filePath  Путь сохранения файла
+     * @param  Contract  $contract
+     * @param  bool      $sample  Шаблон
+     * @param  bool      $reset   Перепечатать
      *
      * @return string|array Файл в формате base64
      */

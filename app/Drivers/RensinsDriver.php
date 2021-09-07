@@ -35,8 +35,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
     use PrintPdfTrait;
     use ZipTrait;
 
-    const CREDIT_CITY = 'Москва';
-    const ISSUE_SUCCESSFUL = 'ISSUE_SUCCESSFUL';
+    public const CREDIT_CITY = 'Москва';
+    public const ISSUE_SUCCESSFUL = 'ISSUE_SUCCESSFUL';
     /** @var ReninsClientService */
     protected ReninsClientService $httpClient;
     protected ?Program $program = null;
@@ -103,6 +103,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
      * @param  bool   $Life
      *
      * @return Arrayable
+     * @throws ReninsException
      */
     protected function collectCalcData(array $data, bool $Life = false): Arrayable
     {
@@ -164,7 +165,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
     }
 
     /**
-     * @param $programCode
+     * @param  string  $programCode
      *
      * @return Program
      */
@@ -181,6 +182,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
      * @param  array  $data
      *
      * @return bool
+     * @throws ReninsException
      */
     protected function isLive(array $data): bool
     {
@@ -197,6 +199,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
      * @param  array  $data
      *
      * @return bool
+     * @throws ReninsException
      */
     protected function isProperty(array $data): bool
     {
@@ -284,8 +287,8 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
 
         return new CreatedPolicy(
             null,
-            isset($policyIdLife) ? $policyIdLife : null,
-            isset($policyIdProperty) ? $policyIdProperty : null,
+            $policyIdLife ?? null,
+            $policyIdProperty ?? null,
             $lifeSum ?? null,
             $propSum ?? null,
             $policyNumberLife ?? null,
@@ -357,6 +360,7 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
 
     /**
      * @inheritDoc
+     * @throws ReninsException|Throwable
      */
     public function printPolicy(
         Contract $contract,
@@ -403,11 +407,19 @@ class RensinsDriver implements DriverInterface, LocalPaymentDriverInterface, Out
     {
     }
 
+    /**
+     * @return string
+     */
     public static function code(): string
     {
         return 'rensins';
     }
 
+    /**
+     * @param  Contract  $contract
+     *
+     * @return array
+     */
     public function getPoliceIds(Contract $contract): array
     {
         return $contract->objects->pluck('id')->all();

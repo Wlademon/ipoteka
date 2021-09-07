@@ -21,6 +21,14 @@ class HttpClientService
     protected string $login;
     protected string $pass;
 
+    /**
+     * HttpClientService constructor.
+     *
+     * @param  string  $host
+     * @param  array   $options
+     * @param  string  $login
+     * @param  string  $pass
+     */
     public function __construct(string $host, array $options, string $login, string $pass)
     {
         $this->host = $host;
@@ -40,7 +48,7 @@ class HttpClientService
     /**
      * @return Client
      */
-    public function getCurretClient(): Client
+    public function getCurrentClient(): Client
     {
         if (!$this->client) {
             $this->client = $this->getClient($this->options);
@@ -72,11 +80,18 @@ class HttpClientService
      *
      * @return Client
      */
-    protected function getClient(array $options)
+    protected function getClient(array $options): Client
     {
         return new Client($options);
     }
 
+    /**
+     * @param  string  $url
+     * @param  array   $data
+     *
+     * @return array|null
+     * @throws \JsonException
+     */
     public function sendJson(string $url, array $data): ?array
     {
         $response = $this->sendPost(
@@ -88,10 +103,15 @@ class HttpClientService
 
         $statusCode = $response->getStatusCode();
         if ($statusCode >= 200 && $statusCode < 300) {
-            return json_decode($response->getBody()->getContents(), true);
+            return json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
         }
         if ($statusCode >= 400) {
-            $this->lastError = json_decode($response->getBody()->getContents(), true);
+            $this->lastError = json_decode(
+                $response->getBody()->getContents(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
         }
 
         return null;
@@ -101,36 +121,62 @@ class HttpClientService
      * @param  string  $url
      *
      * @return mixed|null
+     * @throws \JsonException
      */
     public function sendGetJson(string $url)
     {
         $response = $this->sendGet($url);
         $statusCode = $response->getStatusCode();
-        if ($statusCode != 200) {
+        if ($statusCode !== 200) {
             if ($statusCode > 400) {
-                $this->lastError = json_decode($response->getBody()->getContents(), true);
+                $this->lastError = json_decode(
+                    $response->getBody()->getContents(),
+                    true,
+                    512,
+                    JSON_THROW_ON_ERROR
+                );
             }
 
             return null;
         }
 
-        return json_decode($response->getBody()->getContents(), true);
+        return json_decode($response->getBody()->getContents(), true, 512, JSON_THROW_ON_ERROR);
     }
 
+    /**
+     * @param  string  $url
+     *
+     * @return ResponseInterface
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function sendGet(string $url): ResponseInterface
     {
         $this->lastError = null;
 
-        return $this->getCurretClient()->get($this->createUrl($url));
+        return $this->getCurrentClient()->get($this->createUrl($url));
     }
 
+    /**
+     * @param  string  $url
+     * @param  array   $options
+     *
+     * @return ResponseInterface
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function sendPost(string $url, array $options): ResponseInterface
     {
         $this->lastError = null;
 
-        return $this->getCurretClient()->post($this->createUrl($url), $options);
+        return $this->getCurrentClient()->post($this->createUrl($url), $options);
     }
 
+    /**
+     * @param  string  $url
+     * @param  array   $data
+     *
+     * @return string|null
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function sendJsonGetFile(string $url, array $data): ?string
     {
         $response = $this->sendPost(

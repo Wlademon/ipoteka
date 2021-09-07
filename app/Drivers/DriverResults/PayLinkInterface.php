@@ -11,7 +11,18 @@ use Illuminate\Contracts\Support\Arrayable;
  */
 interface PayLinkInterface extends Arrayable
 {
+    /**
+     * @return string
+     */
     public function getOrderId(): string;
+
+    /**
+     * @return string
+     */
     public function getUrl(): string;
+
+    /**
+     * @return string
+     */
     public function getInvoiceNum(): string;
 }

@@ -18,7 +18,7 @@ use setasign\Fpdi\Fpdi;
 trait PrintPdfTrait
 {
     /**
-     * @param $path
+     * @param string $path
      *
      * @return string
      */
@@ -29,7 +29,7 @@ trait PrintPdfTrait
 
     /**
      * @param  Contract  $contract
-     * @param            $sample    boolean
+     * @param  bool      $sample
      * @param  string    $filename  PDF filename with path
      *
      * @return string
@@ -43,7 +43,6 @@ trait PrintPdfTrait
 
         $sportCats = [];
 
-        /** @var PDF $pdf */
         $pdf = PDF::setOptions(
             [
                 'logOutputFile' => storage_path('logs/ns-generate-pdf.htm'),
@@ -62,10 +61,8 @@ trait PrintPdfTrait
                         sha1($contract->id . $contract->number) . $sampleText . '.pdf';
         }
         $dir = substr($filename, 0, strrpos($filename, DIRECTORY_SEPARATOR) + 1);
-        if (!file_exists($dir)) {
-            if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                throw new RuntimeException('Directory "%s" was not created :' . $dir);
-            }
+        if (!file_exists($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+            throw new RuntimeException('Directory "%s" was not created :' . $dir);
         }
         $pdf->save($filename);
 
@@ -81,22 +78,19 @@ trait PrintPdfTrait
     protected static function saveFileFromContent(string $path, string $content): bool
     {
         $dir = substr($path, 0, strrpos($path, DIRECTORY_SEPARATOR));
-        if (!file_exists($dir)) {
-            if (!mkdir($dir, 0777, true) && !is_dir($dir)) {
-                throw new RuntimeException("Directory '$dir' was not created");
-            }
+        if (!file_exists($dir) && !mkdir($dir, 0777, true) && !is_dir($dir)) {
+            throw new RuntimeException("Directory '$dir' was not created");
         }
 
         return (bool)file_put_contents($path, $content);
     }
 
     /**
-     * @param $pathPdf
-     * @param $pathWatermark
-     * @param $resultPath
+     * @param  string  $pathPdf
+     * @param  string  $pathWatermark
+     * @param  string  $resultPath
      *
      * @return string
-     * @throws \Exception
      */
     public static function setWatermark(
         string $pathPdf,

@@ -46,7 +46,7 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
      * @param  array     $data
      *
      * @return CreatedPolicyInterface
-     * @throws \App\Exceptions\Services\PolicyServiceException
+     * @throws SberinsException
      */
     public function createPolicy(Contract $contract, array $data): CreatedPolicyInterface
     {
@@ -64,35 +64,6 @@ class SberinsDriver implements LocalDriverInterface, LocalPaymentDriverInterface
         return new CreatedPolicy(
             $contract->id, null, null, null, $propertyPremium, null, $propertyPolicyNumber,
         );
-    }
-
-    /**
-     * @param  Contract     $contract
-     * @param  bool         $sample
-     * @param  bool         $reset
-     * @param  string|null  $filePath
-     *
-     * @return string
-     */
-    public function printPolicy(
-        Contract $contract,
-        bool $sample,
-        bool $reset = false,
-        ?string $filePath = null
-    ): string {
-        $sampleText = $sample ? '_sample' : '';
-        if (!$filePath) {
-            $filename = public_path() . '/' . config('mortgage.pdf.path') . sha1(
-                    $contract->id . $contract->number
-                ) . $sampleText . '.pdf';
-        } else {
-            $filename = $filePath;
-        }
-        if (!file_exists($filename) || $reset) {
-            $filename = self::generatePdf($contract, $sample, $filename);
-        }
-
-        return self::generateBase64($filename);
     }
 
     /**
